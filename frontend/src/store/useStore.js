@@ -16,7 +16,15 @@ export const DEF = {
   // server pull, backup import) still falls back to the `showRir` boolean this replaced and
   // keeps the column it had. See effortOf.
   reminder: { on: false, time: '08:00', tz: null }, effort: null,
-  nutrition: { sex: null, age: null, heightCm: null, activityLevel: 'sedentary', workoutsPerWeek: null, bmr: null, tdee: null }
+  nutrition: {
+    sex: null, age: null, heightCm: null, activityLevel: 'sedentary', workoutsPerWeek: null,
+    bmr: null, tdee: null,
+    history: [],
+    goal: 'maintain', goalDelta: 0, targetKcal: null,
+    diet: { type: 'omnivore', mealsPerDay: 3, snacksPerDay: 1, allergens: [], excludedFoods: [] },
+    macros: { protG: null, carbsG: null, fatG: null, fiberG: null }
+  },
+  nutritionLog: {}
 }
 const clone = o => JSON.parse(JSON.stringify(o))
 

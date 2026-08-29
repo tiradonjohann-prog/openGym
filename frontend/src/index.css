@@ -891,6 +891,121 @@ h4.sec{
   letter-spacing:-.012em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;
 }
 
+/* ====================================================== nutrition ====== */
+
+/* Semantic colour tokens — map to existing system palette */
+:root{
+  --nut-kcal:var(--orange);
+  --nut-prot:var(--blue);
+  --nut-carbs:var(--yellow);
+  --nut-fat:var(--purple);
+  --nut-fiber:var(--teal);
+}
+
+/* NutriRing — circular SVG gauge */
+.nring-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.nring-wrap .nring-label{font-size:13px;font-weight:500;color:var(--label-2);text-align:center}
+.nring svg{overflow:visible}
+.nring-track{transition:none}
+.nring-fill{transition:stroke-dashoffset 400ms var(--ease)}
+@media(prefers-reduced-motion:reduce){.nring-fill{transition:none}}
+
+/* Dynamic colour states on gauge fill */
+.gauge-ok   .nring-fill{stroke:var(--green)}
+.gauge-over .nring-fill{stroke:var(--orange)}
+.gauge-max  .nring-fill{stroke:var(--red)}
+
+/* NutriBar — horizontal macro progress bar */
+.nbar{display:flex;flex-direction:column;gap:4px}
+.nbar-head{display:flex;align-items:baseline;justify-content:space-between}
+.nbar-title{font-size:14px;font-weight:500;color:var(--label)}
+.nbar-value{font-size:13px;color:var(--label-2)}
+.nbar-track{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.nbar-fill{height:100%;border-radius:3px;transition:width 400ms var(--ease)}
+@media(prefers-reduced-motion:reduce){.nbar-fill{transition:none}}
+.nbar .gauge-over .nbar-fill,.nbar.gauge-over .nbar-fill{background:var(--orange)!important}
+.nbar .gauge-max  .nbar-fill,.nbar.gauge-max  .nbar-fill{background:var(--red)!important}
+
+/* NutriTip card */
+.nutri-tip{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 14px;border-radius:var(--r);margin:0 16px 8px;
+}
+.nutri-tip.tip-soft{background:color-mix(in srgb,var(--orange) 12%,var(--surface))}
+.nutri-tip.tip-info{background:color-mix(in srgb,var(--blue)   12%,var(--surface))}
+.nutri-tip.tip-ok  {background:color-mix(in srgb,var(--green)  12%,var(--surface))}
+.nutri-tip .tip-icon{flex-shrink:0;opacity:.85;margin-top:1px}
+.nutri-tip .tip-text{font-size:14px;line-height:1.45;color:var(--label);flex:1}
+.nutri-tip .tip-close{flex-shrink:0;opacity:.5;padding:2px}
+.nutri-tip .tip-close:hover{opacity:1}
+
+/* Nutrition sub-navigation */
+.nut-nav{
+  display:flex;gap:0;padding:0 16px 16px;
+}
+.nut-nav button{
+  flex:1;padding:7px 4px;font-size:14px;font-weight:500;
+  color:var(--label-2);border-bottom:2px solid var(--sep);
+  transition:color var(--fast),border-color var(--fast);
+}
+.nut-nav button.on{color:var(--acc);border-color:var(--acc)}
+
+/* Food log list */
+.meal-slot{margin-bottom:4px}
+.meal-slot-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px 4px;
+}
+.meal-slot-hd .slot-name{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--label-3)}
+.meal-slot-hd .slot-kcal{font-size:13px;color:var(--label-3)}
+.meal-item-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;background:var(--surface);border-top:var(--hair) solid var(--sep);
+}
+.meal-item-row:first-of-type{border-top:none}
+.meal-item-row .mi-name{flex:1;font-size:15px;color:var(--label)}
+.meal-item-row .mi-kcal{font-size:13px;color:var(--label-2);white-space:nowrap}
+.meal-item-row .mi-del{opacity:.4;padding:4px}
+.meal-item-row .mi-del:hover{opacity:.9;color:var(--red)}
+
+/* Cardio type chips */
+.cardio-chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 4px}
+.cardio-chips .chip{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:var(--r-xl);
+  font-size:14px;font-weight:500;
+  background:var(--surface-2);color:var(--label-2);
+  transition:background var(--fast),color var(--fast);
+}
+.cardio-chips .chip.on{background:var(--acc-soft);color:var(--acc)}
+.cardio-chips .chip svg{width:16px;height:16px}
+
+/* Balance dashboard gauges */
+.balance-row{
+  display:flex;flex-direction:column;gap:6px;
+  padding:12px 16px;
+}
+.balance-total{
+  text-align:center;padding:20px 16px 4px;
+}
+.balance-total .bt-delta{
+  font-size:42px;font-weight:700;letter-spacing:-.03em;line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.balance-total .bt-label{font-size:14px;color:var(--label-2);margin-top:4px}
+.bt-deficit{color:var(--blue)}
+.bt-surplus-ok{color:var(--green)}
+.bt-surplus-warn{color:var(--orange)}
+.bt-surplus-max{color:var(--red)}
+
+/* Weekly sparkline */
+.week-spark{padding:0 16px;display:flex;align-items:flex-end;gap:3px;height:48px}
+.ws-bar{flex:1;border-radius:3px 3px 0 0;min-height:2px;transition:height 300ms var(--ease)}
+@media(prefers-reduced-motion:reduce){.ws-bar{transition:none}}
+
+/* Search field wrapper for food search */
+.food-search-wrap{padding:0 16px 8px}
+
 /* --------------------------------------------------- desktop (≥1000px) --- */
 .cols{display:block}
 @media (min-width:1000px){
