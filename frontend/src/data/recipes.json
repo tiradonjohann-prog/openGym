@@ -1,0 +1,127 @@
+[
+  {
+    "id": "r001", "name": "Grilled chicken breast",
+    "tags": ["high-protein", "low-carb"], "diet": "omnivore", "allergens": [],
+    "kcal": 165, "prot": 31, "carbs": 0, "fat": 3.6, "fiber": 0
+  },
+  {
+    "id": "r002", "name": "Salmon fillet with vegetables",
+    "tags": ["high-protein", "omega3"], "diet": "omnivore", "allergens": ["fish"],
+    "kcal": 290, "prot": 34, "carbs": 8, "fat": 13, "fiber": 3
+  },
+  {
+    "id": "r003", "name": "Greek yogurt with berries",
+    "tags": ["high-protein", "breakfast"], "diet": "vegetarian", "allergens": ["dairy"],
+    "kcal": 180, "prot": 18, "carbs": 20, "fat": 3, "fiber": 2
+  },
+  {
+    "id": "r004", "name": "Lentil soup",
+    "tags": ["high-fiber", "plant-protein"], "diet": "vegan", "allergens": [],
+    "kcal": 230, "prot": 16, "carbs": 38, "fat": 2, "fiber": 12
+  },
+  {
+    "id": "r005", "name": "Oatmeal with banana",
+    "tags": ["high-carb", "breakfast", "energy"], "diet": "vegan", "allergens": ["gluten"],
+    "kcal": 310, "prot": 8, "carbs": 58, "fat": 5, "fiber": 7
+  },
+  {
+    "id": "r006", "name": "Quinoa bowl with chickpeas",
+    "tags": ["plant-protein", "complete-protein"], "diet": "vegan", "allergens": [],
+    "kcal": 380, "prot": 18, "carbs": 52, "fat": 10, "fiber": 9
+  },
+  {
+    "id": "r007", "name": "Scrambled eggs with spinach",
+    "tags": ["high-protein", "breakfast"], "diet": "vegetarian", "allergens": ["eggs", "dairy"],
+    "kcal": 220, "prot": 20, "carbs": 4, "fat": 14, "fiber": 1
+  },
+  {
+    "id": "r008", "name": "Tuna salad",
+    "tags": ["high-protein", "low-carb"], "diet": "omnivore", "allergens": ["fish"],
+    "kcal": 190, "prot": 30, "carbs": 5, "fat": 6, "fiber": 2
+  },
+  {
+    "id": "r009", "name": "Brown rice with black beans",
+    "tags": ["high-fiber", "plant-protein"], "diet": "vegan", "allergens": [],
+    "kcal": 340, "prot": 14, "carbs": 62, "fat": 3, "fiber": 11
+  },
+  {
+    "id": "r010", "name": "Cottage cheese with cucumber",
+    "tags": ["high-protein", "low-calorie", "snack"], "diet": "vegetarian", "allergens": ["dairy"],
+    "kcal": 130, "prot": 18, "carbs": 5, "fat": 3, "fiber": 1
+  },
+  {
+    "id": "r011", "name": "Beef stir-fry with broccoli",
+    "tags": ["high-protein"], "diet": "omnivore", "allergens": ["soy", "gluten"],
+    "kcal": 350, "prot": 35, "carbs": 18, "fat": 15, "fiber": 4
+  },
+  {
+    "id": "r012", "name": "Avocado toast",
+    "tags": ["healthy-fat", "breakfast"], "diet": "vegan", "allergens": ["gluten"],
+    "kcal": 270, "prot": 7, "carbs": 28, "fat": 16, "fiber": 7
+  },
+  {
+    "id": "r013", "name": "Tofu with sweet potato",
+    "tags": ["plant-protein", "complex-carbs"], "diet": "vegan", "allergens": ["soy"],
+    "kcal": 310, "prot": 18, "carbs": 42, "fat": 8, "fiber": 6
+  },
+  {
+    "id": "r014", "name": "Whey protein smoothie",
+    "tags": ["high-protein", "post-workout", "snack"], "diet": "vegetarian", "allergens": ["dairy"],
+    "kcal": 250, "prot": 30, "carbs": 22, "fat": 4, "fiber": 2
+  },
+  {
+    "id": "r015", "name": "Turkey meatballs with zucchini noodles",
+    "tags": ["high-protein", "low-carb"], "diet": "omnivore", "allergens": ["eggs", "gluten"],
+    "kcal": 280, "prot": 32, "carbs": 8, "fat": 13, "fiber": 2
+  },
+  {
+    "id": "r016", "name": "Mixed nuts and dried fruit",
+    "tags": ["snack", "energy-dense", "healthy-fat"], "diet": "vegan", "allergens": ["tree nuts"],
+    "kcal": 280, "prot": 7, "carbs": 28, "fat": 18, "fiber": 4
+  },
+  {
+    "id": "r017", "name": "Pasta with tomato sauce and ground beef",
+    "tags": ["high-carb", "post-workout"], "diet": "omnivore", "allergens": ["gluten"],
+    "kcal": 480, "prot": 28, "carbs": 64, "fat": 12, "fiber": 5
+  },
+  {
+    "id": "r018", "name": "Chickpea curry",
+    "tags": ["plant-protein", "high-fiber"], "diet": "vegan", "allergens": [],
+    "kcal": 320, "prot": 14, "carbs": 46, "fat": 8, "fiber": 10
+  },
+  {
+    "id": "r019", "name": "Baked cod with asparagus",
+    "tags": ["high-protein", "low-calorie"], "diet": "omnivore", "allergens": ["fish"],
+    "kcal": 185, "prot": 32, "carbs": 5, "fat": 4, "fiber": 3
+  },
+  {
+    "id": "r020", "name": "Egg white omelette with mushrooms",
+    "tags": ["high-protein", "low-fat", "breakfast"], "diet": "vegetarian", "allergens": ["eggs"],
+    "kcal": 140, "prot": 22, "carbs": 5, "fat": 3, "fiber": 1
+  },
+  {
+    "id": "r021", "name": "Edamame with sea salt",
+    "tags": ["plant-protein", "snack"], "diet": "vegan", "allergens": ["soy"],
+    "kcal": 120, "prot": 11, "carbs": 9, "fat": 5, "fiber": 4
+  },
+  {
+    "id": "r022", "name": "Beef and vegetable stew",
+    "tags": ["high-protein", "comfort"], "diet": "omnivore", "allergens": ["gluten"],
+    "kcal": 380, "prot": 30, "carbs": 30, "fat": 14, "fiber": 6
+  },
+  {
+    "id": "r023", "name": "Rice cakes with peanut butter",
+    "tags": ["snack", "pre-workout"], "diet": "vegan", "allergens": ["peanuts"],
+    "kcal": 200, "prot": 7, "carbs": 24, "fat": 9, "fiber": 2
+  },
+  {
+    "id": "r024", "name": "Vegetable stir-fry with tempeh",
+    "tags": ["plant-protein", "high-fiber"], "diet": "vegan", "allergens": ["soy", "gluten"],
+    "kcal": 290, "prot": 20, "carbs": 28, "fat": 10, "fiber": 8
+  },
+  {
+    "id": "r025", "name": "Sweet potato and chicken bowl",
+    "tags": ["balanced", "post-workout"], "diet": "omnivore", "allergens": [],
+    "kcal": 420, "prot": 35, "carbs": 45, "fat": 8, "fiber": 5
+  }
+]
