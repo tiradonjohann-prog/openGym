@@ -157,6 +157,12 @@ export default {
   'Add set': 'Ajouter une série',
   'Cardio logged': 'Cardio noté',
   'New PR — {0} {1}!': 'Nouveau record — {0} {1} !',
+  'New {0}-rep best — {1} {2}!': 'Nouveau record {0} reps — {1} {2} !',
+  'New estimated 1RM — {0} {1}!': 'Nouveau 1RM estimé — {0} {1} !',
+  'Personal records': 'Records personnels',
+  'Show less': 'Voir moins',
+  'Show all {0}': 'Voir tout ({0})',
+  'Est. 1RM': '1RM est.',
   'Discard workout?': 'Abandonner la séance ?',
   'The sets you logged in this session will be lost.': 'Les séries notées dans cette session seront perdues.',
   'Superset {0} / {1}': 'Superset {0} / {1}',
@@ -1095,4 +1101,30 @@ export default {
   'e.g. Evening bowl': 'ex. Bowl du soir',
   'ingredients': 'ingrédients',
   '/ portion': '/ portion',
+
+  // --- home: last workout card + smart nudges ---
+  'Last workout': 'Dernier entraînement',
+  'Workout': 'Entraînement',
+  'No weight logged for {0} days — quick update?': 'Pas de poids noté depuis {0} jours — mise à jour rapide ?',
+  'Last workout was {0} days ago — time to get moving!': 'Dernière séance il y a {0} jours — il est temps de bouger !',
+
+  // --- measurements sheet & view ---
+  'Body measurements': 'Mensurations',
+  'Measurements': 'Mensurations',
+  'Log in cm — only fill the ones you measured.': 'Saisie en cm — remplis uniquement celles que tu as mesurées.',
+  'Chest': 'Poitrine',
+  'Waist': 'Tour de taille',
+  'Hips': 'Hanches',
+  'Arm': 'Bras',
+  'Thigh': 'Cuisse',
+  'Calf': 'Mollet',
+  'Shoulder': 'Épaules',
+  'Neck': 'Cou',
+  'Measurements saved': 'Mensurations enregistrées',
+  'Enter at least one measurement': 'Saisis au moins une mensuration',
+  'No measurements yet — log your first set to track progress.': 'Pas encore de mensurations — note ton premier relevé pour suivre ta progression.',
+  'Recent entries': 'Dernières entrées',
+
+  // --- finish summary: PR by kind ---
+  '{0}RM': '{0}RM',
 }

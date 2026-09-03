@@ -17,6 +17,7 @@ export const DEF = {
   // server pull, backup import) still falls back to the `showRir` boolean this replaced and
   // keeps the column it had. See effortOf.
   reminder: { on: false, time: '08:00', tz: null }, effort: null, simpleMode: false, promptWeighBefore: false,
+  measurements: [], // [{ d: ISO, values: { chest, waist, hip, arm, thigh, calf, shoulder, neck } }]
   nutritionFavorites: [],
   nutrition: {
     sex: null, age: null, heightCm: null, activityLevel: 'sedentary', workoutsPerWeek: null,

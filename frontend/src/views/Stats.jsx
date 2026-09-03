@@ -12,6 +12,7 @@ import Icon from '../components/Icon.jsx'
 import BodyMap, { BodyMapLegend } from '../components/BodyMap.jsx'
 import { loadOfWorkouts, rankOf, MUSCLE_NAME } from '../lib/muscles.js'
 import { e1rmSeries, best1RM } from '../lib/onerm.js'
+import { allTimePRs } from '../lib/prs.js'
 import {
   hasEffort, displayScale, scaleName, toScale, avgRir, effortSummary, effortWeeks,
   effortHistogram, isHardSet, HARD_RIR
@@ -363,6 +364,58 @@ function VolumeChart({ S }) {
   )
 }
 
+/* ── personal records board ──────────────────────────────────────── */
+function PRBoard({ S }) {
+  const [showAll, setShowAll] = useState(false)
+  const prs = allTimePRs(S)
+  if (!prs.length) return null
+  const visible = showAll ? prs : prs.slice(0, 8)
+  return (
+    <div className="card">
+      <div className="row between" style={{ marginBottom: 10 }}>
+        <h2 style={{ margin: 0 }}>{t('Personal records')}</h2>
+        <span className="tag nocap" style={{ background: 'color-mix(in srgb,var(--yellow) 16%,transparent)', color: 'var(--yellow)' }}>
+          {prs.length}
+        </span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {visible.map(({ exId, weight, weightDate, e1rm, e1rmDate }) => {
+          const ex = EXIDX[exId]
+          if (!ex) return null
+          const latestDate = [weightDate, e1rmDate].filter(Boolean).sort().pop()
+          return (
+            <div key={exId} className="row between" style={{ padding: '9px 0', borderBottom: 'var(--hair) solid var(--sep)', gap: 8, alignItems: 'center' }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 500, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.n}</div>
+                {latestDate && <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{fmtDate(latestDate, true)}</div>}
+              </div>
+              <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignItems: 'center' }}>
+                {e1rm > 0 && (
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--yellow)', lineHeight: 1.1 }}>{fmtNum(e1rm)}</div>
+                    <div style={{ fontSize: 10, color: 'var(--label-4)' }}>{t('Est. 1RM')}</div>
+                  </div>
+                )}
+                {weight > 0 && (
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--acc)', lineHeight: 1.1 }}>{fmtNum(weight)}</div>
+                    <div style={{ fontSize: 10, color: 'var(--label-4)' }}>{S.unit}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      {prs.length > 8 && (
+        <button className="btn ghost" style={{ marginTop: 12, width: '100%', fontSize: 14 }} onClick={() => setShowAll(v => !v)}>
+          {showAll ? t('Show less') : t('Show all {0}', prs.length)}
+        </button>
+      )}
+    </div>
+  )
+}
+
 /* ── main Stats view ──────────────────────────────────────────────── */
 export default function Stats() {
   const nav = useNavigate()
@@ -524,6 +577,8 @@ export default function Stats() {
         </> : <div className="muted small">{t('Finish your first workout to see progress curves here.')}</div>}
       </div>
     </div>
+
+    <PRBoard S={S} />
 
     {/* ── recent workouts ── */}
     {S.workouts.length > 0 && <>

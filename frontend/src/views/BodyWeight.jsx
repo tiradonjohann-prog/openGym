@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { fmtNum, fmtDate, todayISO, uid } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { bwSheet, goalSheet, bwDeltaColor } from '../sheets.jsx'
+import { bwSheet, goalSheet, bwDeltaColor, measurementsSheet } from '../sheets.jsx'
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button, Check } from '../components/ui.jsx'
+import { MEASURE_FIELDS, latestMeasurements, measureSeries } from '../lib/measurements.js'
 
 const DAY_MS = 86_400_000
 const WEEK_MS = 7 * DAY_MS
@@ -297,6 +298,46 @@ export default function BodyWeight() {
           </div>
         )}
       </div>
+
+      {/* ── Body measurements ── */}
+      {(() => {
+        const latest = latestMeasurements(S)
+        const hasAny = Object.keys(latest).length > 0
+        const tracked = MEASURE_FIELDS.filter(f => latest[f.key])
+        return (
+          <div className="card">
+            <div className="row between" style={{ marginBottom: hasAny ? 12 : 0 }}>
+              <h2 style={{ margin: 0 }}>{t('Measurements')}</h2>
+              <Button size="sm" icon="plus" onClick={measurementsSheet}>{t('Log')}</Button>
+            </div>
+            {hasAny ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {tracked.map(f => {
+                  const series = measureSeries(S, f.key)
+                  const cur = latest[f.key]
+                  const prev = series.length >= 2 ? series[series.length - 2].y : null
+                  const delta = prev !== null ? Math.round((cur.v - prev) * 10) / 10 : null
+                  return (
+                    <div key={f.key} style={{
+                      background: 'var(--surface-2)', borderRadius: 10, padding: '10px 12px',
+                    }}>
+                      <div className="small muted" style={{ marginBottom: 3 }}>{t(f.label)}</div>
+                      <div style={{ fontWeight: 700, fontSize: 16 }}>{cur.v} <span className="muted" style={{ fontSize: 11, fontWeight: 400 }}>cm</span></div>
+                      {delta !== null && (
+                        <div style={{ fontSize: 11, color: delta === 0 ? 'var(--label-4)' : delta < 0 ? 'var(--teal)' : 'var(--orange)', marginTop: 2 }}>
+                          {delta > 0 ? '+' : ''}{delta}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="muted small">{t('No measurements yet — log your first set to track progress.')}</div>
+            )}
+          </div>
+        )
+      })()}
     </div>
   )
 }

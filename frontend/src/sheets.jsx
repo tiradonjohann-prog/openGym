@@ -142,6 +142,80 @@ export function bwSheet(opts = {}) {
   return h
 }
 
+/* ============================ body measurements ============================ */
+import { MEASURE_FIELDS, latestMeasurements } from './lib/measurements.js'
+
+function MeasurementsSheet({ close }) {
+  const st = useStore(s => s.S)
+  const latest = latestMeasurements(st)
+  const [vals, setVals] = useState(() => {
+    const init = {}
+    MEASURE_FIELDS.forEach(f => { init[f.key] = latest[f.key]?.v ?? '' })
+    return init
+  })
+  const set = (k, raw) => {
+    const v = raw === '' ? '' : Math.max(0, Math.round(parseFloat(raw) * 10) / 10) || ''
+    setVals(prev => ({ ...prev, [k]: v }))
+  }
+  const save = () => {
+    const values = {}
+    MEASURE_FIELDS.forEach(f => { if (vals[f.key] > 0) values[f.key] = vals[f.key] })
+    if (!Object.keys(values).length) { toast(t('Enter at least one measurement')); return }
+    update(s => {
+      if (!s.measurements) s.measurements = []
+      const d = todayISO()
+      const ex = s.measurements.find(m => m.d === d)
+      if (ex) ex.values = { ...ex.values, ...values }
+      else s.measurements.push({ d, values })
+      s.measurements.sort((a, b) => a.d < b.d ? -1 : 1)
+    })
+    close(); toast(t('Measurements saved'))
+  }
+  const recent = [...(st.measurements || [])].reverse().slice(0, 3)
+  const FIELD_LABELS = Object.fromEntries(MEASURE_FIELDS.map(f => [f.key, t(f.label)]))
+  return <>
+    <h3>{t('Body measurements')}</h3>
+    <div className="muted small" style={{ marginBottom: 14 }}>{t('Log in cm — only fill the ones you measured.')}</div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
+      {MEASURE_FIELDS.map(f => (
+        <div key={f.key}>
+          <div className="small muted" style={{ marginBottom: 4 }}>{t(f.label)}</div>
+          <div className="row" style={{ gap: 4 }}>
+            <input
+              type="number" inputMode="decimal" className="input" min="0" step="0.1"
+              placeholder={latest[f.key] ? String(latest[f.key].v) : '—'}
+              value={vals[f.key]}
+              onChange={e => set(f.key, e.target.value)}
+              style={{ flex: 1, padding: '9px 10px', textAlign: 'right', fontSize: 15 }}
+            />
+            <span className="small muted" style={{ alignSelf: 'center', width: 24, flexShrink: 0 }}>cm</span>
+          </div>
+        </div>
+      ))}
+    </div>
+    <Button variant="primary" onClick={save}>{t('Save')}</Button>
+    {recent.length > 0 && <>
+      <h4 className="sec">{t('Recent entries')}</h4>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {recent.map(entry => (
+          <div key={entry.d} className="card" style={{ padding: '10px 12px' }}>
+            <div className="small muted" style={{ marginBottom: 6 }}>{fmtDate(entry.d, true)}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
+              {MEASURE_FIELDS.filter(f => entry.values[f.key] > 0).map(f => (
+                <span key={f.key} className="small">
+                  <span className="muted">{FIELD_LABELS[f.key]}: </span>
+                  <b>{entry.values[f.key]} cm</b>
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>}
+  </>
+}
+export const measurementsSheet = () => ui().openSheet(close => <MeasurementsSheet close={close} />)
+
 /* ============================ import from another app ============================ */
 // Shows what a parsed export would actually do before anything is written. An import is
 // the one action where "just try it" is expensive — it's someone's entire training
@@ -1088,7 +1162,7 @@ function WorkoutComplete({ close }) {
 }
 export const workoutCompleteSheet = () => ui().openSheet(close => <WorkoutComplete close={close} />, { kind: 'center' })
 
-function FinishSummary({ w, prs, e1prs = [], close }) {
+function FinishSummary({ w, prDetails = [], close }) {
   const st = useStore(s => s.S)
   return <div style={{ textAlign: 'center', padding: '8px 0' }}>
     <div className="finish-trophy"><Icon name="trophy" /></div>
@@ -1098,19 +1172,32 @@ function FinishSummary({ w, prs, e1prs = [], close }) {
       <div className="tile colored" style={{ '--card-color': 'var(--teal)' }}><div className="l">{t('Duration')}</div><div className="v">{fmtDur(w.end - w.start)}</div></div>
       <div className="tile colored" style={{ '--card-color': 'var(--blue)' }}><div className="l">{t('Volume')}</div><div className="v">{fmtVol(w.vol, st.unit)}</div></div>
       <div className="tile colored" style={{ '--card-color': 'var(--purple)' }}><div className="l">{t('Sets')}</div><div className="v">{setsDone(w)}</div></div>
-      <div className="tile colored" style={{ '--card-color': 'var(--yellow)' }}><div className="l">{t('PRs')}</div><div className="v">{prs.length || '—'}</div></div>
+      <div className="tile colored" style={{ '--card-color': 'var(--yellow)' }}><div className="l">{t('PRs')}</div><div className="v">{prDetails.length || '—'}</div></div>
     </div>
-    {(prs.length > 0 || e1prs.length > 0) && <div style={{ textAlign: 'left', marginBottom: 12 }}>
-      {prs.map((id, i) => <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'color-mix(in srgb,var(--yellow) 10%,var(--surface))', borderRadius: 10, padding: '8px 12px', marginBottom: 5, border: '1px solid color-mix(in srgb,var(--yellow) 22%,transparent)', animation: `badgePop ${300 + i * 60}ms var(--ease) both`, animationDelay: `${i * 60}ms` }}>
-        <Icon name="trophy" style={{ fontSize: 15, color: 'var(--yellow)', flexShrink: 0 }} />
-        <span className="capitalize" style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'var(--label)' }}>{(EXIDX[id] || {}).n || id}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--yellow)', letterSpacing: '.04em', textTransform: 'uppercase' }}>PR</span>
-      </div>)}
-      {e1prs.map((p, i) => <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'color-mix(in srgb,var(--acc) 10%,var(--surface))', borderRadius: 10, padding: '8px 12px', marginBottom: 5, border: '1px solid color-mix(in srgb,var(--acc) 22%,transparent)', animation: `badgePop ${300 + (prs.length + i) * 60}ms var(--ease) both`, animationDelay: `${(prs.length + i) * 60}ms` }}>
-        <Icon name="chartLine" style={{ fontSize: 15, color: 'var(--acc)', flexShrink: 0 }} />
-        <span className="capitalize" style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'var(--label)' }}>{(EXIDX[p.id] || {}).n || p.id}</span>
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--acc)' }}>{fmtNum(p.est)} {st.unit}</span>
-      </div>)}
+    {prDetails.length > 0 && <div style={{ textAlign: 'left', marginBottom: 12 }}>
+      {prDetails.map((pr, i) => {
+        const exName = (EXIDX[pr.id] || {}).n || pr.id
+        const isWeight = pr.kinds.includes('weight')
+        const isE1rm = pr.kinds.includes('e1rm') && !isWeight
+        const isReprange = pr.kinds.includes('reprange') && !isWeight
+        const color = isWeight ? 'var(--yellow)' : isReprange ? 'var(--blue)' : 'var(--acc)'
+        const icon = isWeight ? 'trophy' : isReprange ? 'dumbbell' : 'chartLine'
+        const badge = isWeight ? 'PR'
+          : isReprange && pr.repBests.length ? pr.repBests.map(rb => t('{0}RM', rb.r)).join(' ') + ' PR'
+          : t('Est. 1RM')
+        return <div key={pr.id} style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: `color-mix(in srgb,${color} 10%,var(--surface))`,
+          borderRadius: 10, padding: '8px 12px', marginBottom: 5,
+          border: `1px solid color-mix(in srgb,${color} 22%,transparent)`,
+          animation: `badgePop ${300 + i * 60}ms var(--ease) both`,
+          animationDelay: `${i * 60}ms`
+        }}>
+          <Icon name={icon} style={{ fontSize: 15, color, flexShrink: 0 }} />
+          <span className="capitalize" style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exName}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: '.04em', textTransform: 'uppercase', flexShrink: 0 }}>{badge}</span>
+        </div>
+      })}
     </div>}
     <h4 className="sec" style={{ textAlign: 'left' }}>{t('What you just trained')}</h4>
     <BodyMap load={loadOfWorkouts([w])} body={st.body} />
@@ -1131,15 +1218,31 @@ function doFinishWorkout() {
   const st = S()
   const A = st.active
   if (!A) return
-  const prs = []
-  const e1prs = []
+
+  // Collect PR info from flags stored on each set by prs.js during the workout.
+  const prByEx = {} // exId → Set<'weight'|'reprange'|'e1rm'>
   A.entries.forEach(e => {
-    const mx = Math.max(0, ...e.sets.filter(s => s.done).map(s => s.w))
-    if (mx > 0 && mx > bestWeightFor(st, e.id)) prs.push(e.id)
-    // A heavier estimate without a heavier top set is its own kind of progress —
-    // same weight for more reps. Reported separately so it can't be read as a load PR.
-    const rec = is1RMRecord(st, e.id, e)
-    if (rec && !prs.includes(e.id)) e1prs.push({ id: e.id, ...rec })
+    e.sets.filter(s => s.done && s.pr).forEach(s => {
+      if (!prByEx[e.id]) prByEx[e.id] = new Set()
+      prByEx[e.id].add(s.pr)
+    })
+    // Legacy fallback for exercises where prs.js didn't fire (bodyweight, cardio…).
+    if (!prByEx[e.id]) {
+      const mx = Math.max(0, ...e.sets.filter(s => s.done).map(s => s.w))
+      if (mx > 0 && mx > bestWeightFor(st, e.id)) prByEx[e.id] = new Set(['weight'])
+      else { const rec = is1RMRecord(st, e.id, e); if (rec) prByEx[e.id] = new Set(['e1rm']) }
+    }
+  })
+  const prs = Object.keys(prByEx)
+  const prDetails = Object.entries(prByEx).map(([id, kinds]) => {
+    const entry = A.entries.find(e => e.id === id)
+    const repBests = entry ? [...new Map(
+      entry.sets
+        .filter(s => s.done && s.pr === 'reprange' && s.r > 0 && s.w > 0)
+        .sort((a, b) => a.r - b.r)
+        .map(s => [Math.round(s.r), s.w])
+    ).entries()].map(([r, wt]) => ({ r, w: wt })) : []
+    return { id, kinds: [...kinds], repBests }
   })
   const w = {
     id: A.id, d: A.d, start: A.start, end: Date.now(), routineId: A.routineId, name: A.name, bw: A.bw,
@@ -1175,7 +1278,7 @@ function doFinishWorkout() {
   })
   useUI.getState().stopRest()
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)
-  ui().openSheet(close => <FinishSummary w={w} prs={prs} e1prs={e1prs} close={close} />, { kind: 'center', locked: true })
+  ui().openSheet(close => <FinishSummary w={w} prDetails={prDetails} close={close} />, { kind: 'center', locked: true })
 }
 
 /* ============================ programme create / edit ============================ */

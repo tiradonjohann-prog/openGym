@@ -912,6 +912,16 @@ input.num::-webkit-inner-spin-button{display:none}
 }
 .pr .icn{font-size:13px}
 
+/* --- PR hit badge on set number circle --- */
+.setrow .n.pr-hit{
+  background:linear-gradient(135deg,var(--yellow),oklch(75% .18 55));
+  color:#000;font-weight:700;
+}
+.setrow.done .n.pr-hit{
+  background:linear-gradient(135deg,var(--yellow),oklch(75% .18 55));
+  color:#000;font-weight:700;
+}
+
 /* --- toast --- */
 #toast{
   position:fixed;left:50%;transform:translateX(-50%) translateY(6px);

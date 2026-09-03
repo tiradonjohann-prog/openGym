@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
-import { fmtNum, fmtDate, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
+import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, programmeCreateSheet, cardioLogSheet } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, programmeCreateSheet, cardioLogSheet, workoutDetailSheet, measurementsSheet } from '../sheets.jsx'
 import { isCardioSport } from '../lib/sports.js'
 import { dayTotals } from '../lib/foodSearch.js'
 import LineChart from '../components/LineChart.jsx'
@@ -56,6 +56,109 @@ function NutriWidget({ S, nav }) {
       )}
     </div>
   )
+}
+
+// ── Quick-look card for the last completed workout ────────────────────────────
+function LastWorkoutCard({ S }) {
+  const last = S.workouts.length ? S.workouts[S.workouts.length - 1] : null
+  if (!last) return null
+  const dur = last.end && last.start ? fmtDur(last.end - last.start) : null
+  return (
+    <div className="card tap" onClick={() => workoutDetailSheet(last)}>
+      <div className="row between" style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: 'var(--label-3)' }}>{t('Last workout')}</div>
+        <Icon name="chevronRight" className="chev" />
+      </div>
+      <div className="row" style={{ gap: 10, marginBottom: 10, alignItems: 'center' }}>
+        <span className="lrow-i" style={{ background: 'var(--surface-2)', flexShrink: 0 }}>
+          <Icon name="dumbbell" />
+        </span>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{last.name || t('Workout')}</div>
+          <div className="small muted">{fmtDate(last.d, true)}</div>
+        </div>
+      </div>
+      <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+        {dur && <span className="tag nocap"><Icon name="timer" style={{ fontSize: 11 }} />{' '}{dur}</span>}
+        {last.vol > 0 && <span className="tag nocap"><Icon name="weight" style={{ fontSize: 11 }} />{' '}{fmtVol(last.vol, S.unit)}</span>}
+        {last.prs?.length > 0 && (
+          <span className="tag nocap" style={{ background: 'color-mix(in srgb,var(--yellow) 16%,transparent)', color: 'var(--yellow)' }}>
+            <Icon name="trophy" style={{ fontSize: 11 }} />{' '}{last.prs.length} PR{last.prs.length > 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Smart in-app nudges ────────────────────────────────────────────────────────
+function SmartNudge({ S }) {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('nudges_dismissed') || '{}') } catch { return {} }
+  })
+  const dismiss = key => {
+    const next = { ...dismissed, [key]: true }
+    setDismissed(next)
+    sessionStorage.setItem('nudges_dismissed', JSON.stringify(next))
+  }
+
+  const today = todayISO()
+  const lastW = S.workouts.length ? S.workouts[S.workouts.length - 1] : null
+  const lastBWEntry = S.bodyweight.length ? S.bodyweight[S.bodyweight.length - 1] : null
+
+  const nudges = []
+
+  // Nudge 1 — poids du corps non noté depuis 5+ jours
+  if (lastBWEntry) {
+    const daysSinceBW = Math.round((new Date(today) - new Date(lastBWEntry.d)) / 86400000)
+    if (daysSinceBW >= 5 && !dismissed['bw_' + lastBWEntry.d]) {
+      nudges.push({
+        key: 'bw_' + lastBWEntry.d,
+        icon: 'scale',
+        color: 'var(--blue)',
+        text: t('No weight logged for {0} days — quick update?', daysSinceBW),
+        action: () => bwSheet(),
+        actionLabel: t('Log'),
+      })
+    }
+  }
+
+  // Nudge 2 — pas d'entraînement depuis 4+ jours
+  if (lastW) {
+    const daysSince = Math.round((new Date(today) - new Date(lastW.d)) / 86400000)
+    if (daysSince >= 4 && !dismissed['wo_' + lastW.d]) {
+      nudges.push({
+        key: 'wo_' + lastW.d,
+        icon: 'dumbbell',
+        color: 'var(--acc)',
+        text: t('Last workout was {0} days ago — time to get moving!', daysSince),
+        action: null,
+        actionLabel: null,
+      })
+    }
+  }
+
+  if (!nudges.length) return null
+
+  return <>
+    {nudges.slice(0, 1).map(n => (
+      <div key={n.key} className="card" style={{
+        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+        border: `1.5px solid color-mix(in srgb,${n.color} 25%,transparent)`,
+        background: `color-mix(in srgb,${n.color} 7%,var(--surface))`,
+        position: 'relative',
+      }}>
+        <Icon name={n.icon} style={{ fontSize: 18, color: n.color, flexShrink: 0 }} />
+        <span style={{ fontSize: 13, flex: 1, lineHeight: 1.4 }}>{n.text}</span>
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          {n.action && <button className="chip on" style={{ fontSize: 12, padding: '4px 10px' }} onClick={n.action}>{n.actionLabel}</button>}
+          <button className="iconbtn" style={{ width: 26, height: 26, fontSize: 12, color: 'var(--label-4)' }} onClick={() => dismiss(n.key)} aria-label={t('Dismiss')}>
+            <Icon name="xmark" />
+          </button>
+        </div>
+      </div>
+    ))}
+  </>
 }
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
@@ -111,6 +214,9 @@ function ProgrammeHome({ S, user, nav }) {
           {t('New programme')}
         </button>
       </div>
+
+      <SmartNudge S={S} />
+      <LastWorkoutCard S={S} />
 
       {/* compact nutrition widget */}
       <NutriWidget S={S} nav={nav} />
@@ -245,6 +351,9 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
           : <Icon name="plus" className="chev" />}
       </div>
     </div>
+
+    <SmartNudge S={S} />
+    <LastWorkoutCard S={S} />
 
     {!S.routines.length && !S.active && (
       <div className="card">

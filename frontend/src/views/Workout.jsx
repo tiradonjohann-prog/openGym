@@ -13,6 +13,8 @@ import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeigh
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
 import { nextPrescription, applyPrescription } from '../lib/progression.js'
+import { historicalBests, prKindOf } from '../lib/prs.js'
+import { estimate1RM } from '../lib/onerm.js'
 import { glyphOf } from '../lib/glyphs.js'
 
 /* ---------- start chooser (no active workout) ---------- */
@@ -136,7 +138,7 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       {/* the header carries the same eff3 sizing as the rows, or the labels drift off their columns */}
       <div className={'sethead' + (col3 ? ' eff3' : '')}><span className="n-sp" /><span className="w-sp">{col1.hd}</span>{col2 && <span className="r-sp">{col2.hd}</span>}{col3 && <span className="eff-sp">{col3.hd}</span>}{timed && <span className="ck-sp" />}<span className="ck-sp" /></div>
       {entry.sets.map((s, i) => <div key={i} className={'setrow' + (s.done ? ' done' : '') + (col3 ? ' eff3' : '')}>
-        <div className="n">{i + 1}</div>
+        <div className={'n' + (s.pr ? ' pr-hit' : '')}>{i + 1}</div>
         {cell(s, i, col1, 'w')}
         {col2 && cell(s, i, col2, 'r')}
         {col3 && cell(s, i, col3, 'eff')}
@@ -207,16 +209,24 @@ function ActiveWorkout() {
     // so it reflects the all-time best before this session's active sets.
     const entrySnap = A.entries[idx]
     const isLoadedReps = m === 'reps' && !isBw({ ...(entrySnap.target || {}), id: entrySnap.id })
-    const preBest = isLoadedReps
-      ? Math.max(bestWeightFor(S, entrySnap.id), (S.exWeights[entrySnap.id] || {}).w || 0)
-      : 0
     const setWeight = entrySnap.sets[i]?.w || 0
-    let askTop = false, exJustDone = false, workoutDone = false, isNewPR = false
+    const setReps = entrySnap.sets[i]?.r || 0
+    // Compute bests before the set is mutated (so this set doesn't count against itself).
+    const histBests = isLoadedReps ? (() => {
+      const b = historicalBests(S, entrySnap.id)
+      const exW = (S.exWeights[entrySnap.id] || {}).w || 0
+      if (exW > b.weight) b.weight = exW
+      return b
+    })() : null
+    let askTop = false, exJustDone = false, workoutDone = false, prKind = null
     mutEntry(idx, e => {
       e.sets[i].done = !e.sets[i].done
       if (e.sets[i].done) {
         beep(S.sound, 1040, 0.12); vibrate(30)
-        if (isLoadedReps && setWeight > 0 && setWeight > preBest) isNewPR = true
+        if (isLoadedReps && setWeight > 0 && setReps > 0) {
+          prKind = prKindOf(histBests, setWeight, setReps)
+          if (prKind) e.sets[i].pr = prKind
+        }
         const isLastExInUnit = idx === unit[unit.length - 1]
         const unitDone = unit.every(ui => (ui === idx ? e : A.entries[ui]).sets.every(x => x.done))
         if (isLastExInUnit && !unitDone) startRest(S.restSec)
@@ -224,9 +234,16 @@ function ActiveWorkout() {
         if (unitDone && isLastUnit) workoutDone = true      // last exercise's last set → done
         const loaded = m === 'reps' && !(isBw({ ...(e.target || {}), id: e.id }) && !e.sets.some(x => x.w > 0))
         if (e.sets.every(x => x.done)) { exJustDone = true; if (loaded && !e.asked) { e.asked = true; askTop = true } }
+      } else {
+        delete e.sets[i].pr
       }
     })
-    if (isNewPR) { vibrate([80, 60, 80, 60, 200]); useUI.getState().toast(t('New PR — {0} {1}!', fmtNum(setWeight), S.unit), 'pr') }
+    if (prKind) {
+      vibrate([80, 60, 80, 60, 200])
+      if (prKind === 'weight') useUI.getState().toast(t('New PR — {0} {1}!', fmtNum(setWeight), S.unit), 'pr')
+      else if (prKind === 'reprange') useUI.getState().toast(t('New {0}-rep best — {1} {2}!', Math.round(setReps), fmtNum(setWeight), S.unit), 'pr')
+      else { const est = estimate1RM(setWeight, setReps); useUI.getState().toast(t('New estimated 1RM — {0} {1}!', fmtNum(est), S.unit), 'pr') }
+    }
     if (askTop) topWeightSheet(idx)
     else if (workoutDone) workoutCompleteSheet()
     else if (exJustDone && cardioEntry) useUI.getState().toast(t('Cardio logged'))
