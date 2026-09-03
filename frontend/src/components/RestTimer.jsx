@@ -22,6 +22,8 @@ export default function RestTimer() {
   }, [!!on])
   if (!on) return null
   const pct = (on.left / on.total) * 100
+  const restBarColor = pct > 60 ? 'var(--teal)' : pct > 30 ? 'var(--orange)' : 'var(--red)'
+  const isUrgent = !work && pct <= 20
 
   if (work) return (
     <div id="timer" className="working">
@@ -39,10 +41,10 @@ export default function RestTimer() {
   // read at a glance, controls get their own row. −15 and +15 sit together in number-line
   // order; Skip is pushed to the far edge, away from the button you tap to buy more time.
   return (
-    <div id="timer" className="rest">
+    <div id="timer" className={'rest' + (isUrgent ? ' urgent' : '')}>
       <div className="head">
-        <div className="t">{clock(timer.left)}</div>
-        <div className="bar"><i style={{ width: pct + '%' }} /></div>
+        <div className={'t' + (isUrgent ? ' urgent' : '')}>{clock(timer.left)}</div>
+        <div className="bar"><i style={{ width: pct + '%', background: restBarColor }} /></div>
       </div>
       <div className="acts">
         <Button size="sm" icon="minus" onClick={() => addRest(-15)}>15s</Button>

@@ -25,6 +25,9 @@ import Library from './views/Library.jsx'
 import Settings from './views/Settings.jsx'
 import Admin from './views/Admin.jsx'
 import Nutrition from './views/Nutrition.jsx'
+import BodyWeight from './views/BodyWeight.jsx'
+import CardioWorkout from './views/CardioWorkout.jsx'
+import Onboarding from './views/Onboarding.jsx'
 
 bindUI(useUI)   // lets the shared controls open sheets without importing the store at module scope
 
@@ -66,7 +69,7 @@ function Shell() {
           re-mounts the boundary, so the tab bar is always a way out */}
       <div id="app" className="vfade" key={loc.pathname}>
         <ErrorBoundary>
-          {!authed ? <Login /> : (
+          {!authed ? <Login /> : !S.onboardingDone ? <Onboarding /> : (
             <Routes>
               <Route path="/home" element={<Home />} />
               <Route path="/plan" element={<Plan />} />
@@ -77,13 +80,15 @@ function Shell() {
               <Route path="/library" element={<Library />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/nutrition" element={<Nutrition />} />
+              <Route path="/bodyweight" element={<BodyWeight />} />
+              <Route path="/cardio" element={<CardioWorkout />} />
               <Route path="/admin" element={user?.admin ? <Admin /> : <Navigate to="/home" replace />} />
               <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
           )}
         </ErrorBoundary>
       </div>
-      <TabBar onStart={startFlow} />
+      {authed && S.onboardingDone && <TabBar onStart={startFlow} />}
       <RestTimer />
       <Modals />
       <Toast />

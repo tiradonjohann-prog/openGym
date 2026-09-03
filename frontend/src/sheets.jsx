@@ -11,15 +11,20 @@ import { starterRoutines } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
 import Stepper from './components/Stepper.jsx'
 import Icon from './components/Icon.jsx'
-import { Button, Slider, Switch, Segmented, SelectRow, Row } from './components/ui.jsx'
+import { Button, Slider, Switch, Segmented, SelectRow, Row, SearchField } from './components/ui.jsx'
 import { glyphOf, GLYPH_GROUPS, DEFAULT_GLYPH } from './lib/glyphs.js'
 import BodyMap from './components/BodyMap.jsx'
 import { loadOfWorkouts } from './lib/muscles.js'
 import { parseImport, mergeImport } from './lib/import-csv.js'
+import { parseProgram } from './lib/programImport.js'
+import { downloadExcelTemplate } from './lib/excelTemplate.js'
 import { buildPlanBundle, parsePlan, mergePlan, printPlan } from './lib/plan-share.js'
 import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS } from './lib/progression.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
+import { isCardioSport, SPORTS } from './lib/sports.js'
+import { sessionStates, isWeekComplete, isProgrammeComplete } from './lib/programme.js'
+import { CardioForm } from './views/nutrition/CardioEntry.jsx'
 
 const S = () => useStore.getState().S
 const update = (...a) => useStore.getState().update(...a)
@@ -45,9 +50,16 @@ export function confirmSheet(opts) {
 /* ============================ starter plan ============================ */
 export function loadStarterPlan() {
   const [push, pull, legs] = starterRoutines()
+  const prog = {
+    id: uid(), name: 'Push / Pull / Legs',
+    routineIds: [push.id, pull.id, legs.id],
+    totalWeeks: 8, currentWeek: 1, weekProgress: {},
+  }
   update(st => {
     st.routines.push(push, pull, legs)
     st.week[1] = push.id; st.week[3] = pull.id; st.week[5] = legs.id
+    if (!st.programmes) st.programmes = []
+    st.programmes.push(prog)
   })
   toast(t('Starter plan loaded — Mon Push · Wed Pull · Fri Legs'))
 }
@@ -251,6 +263,30 @@ function GoalSheet({ close }) {
 }
 export const goalSheet = () => ui().openSheet(close => <GoalSheet close={close} />)
 
+export const cardioLogSheet = () => {
+  const st = S()
+  const bw = lastBW(st)
+  const weightKg = bw ? (st.unit === 'lb' ? bw.w / 2.2046 : bw.w) : null
+  ui().openSheet(close => (
+    <>
+      <h3>{t('Log activity')}</h3>
+      <CardioForm
+        weightKg={weightKg}
+        onSave={entry => {
+          const d = entry.date || todayISO()
+          update(s => {
+            if (!s.nutritionLog)     s.nutritionLog = {}
+            if (!s.nutritionLog[d])  s.nutritionLog[d] = { meals: [], sport: [] }
+            s.nutritionLog[d].sport.push(entry)
+          })
+          close()
+        }}
+        onCancel={close}
+      />
+    </>
+  ))
+}
+
 /* ============================ exercise detail ============================ */
 // Estimated 1RM for one exercise (issue #18): what the log already implies, plus a calculator
 // for a set you have not done — so the number is reachable before there is any history.
@@ -428,8 +464,7 @@ function ExercisePicker({ onPick, close }) {
   const chosenCount = Object.keys(usage).length
   return <>
     <h3>{t('Add exercise')}</h3>
-    <div className="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-      <input className="input" placeholder={t('Search {0} exercises…', all.length)} value={q} onChange={e => { setQ(e.target.value); setShown(50) }} /></div>
+    <SearchField value={q} onChange={e => { setQ(e.target.value); setShown(50) }} onClear={() => { setQ(''); setShown(50) }} placeholder={t('Search {0} exercises…', all.length)} />
     <div className="chips" style={{ margin: eqOpts.length > 1 ? '10px 0 6px' : '10px 0' }}>
       {chosenCount > 0 && <button className={'chip' + (bp === '★' ? ' on' : '')} onClick={() => { setBp('★'); setEq(''); setShown(50) }}><Icon name="starFill" style={{ fontSize: 12, display: 'inline-block', marginRight: 4, verticalAlign: '-1px' }} />{t('Chosen')} ({chosenCount})</button>}
       <button className={'chip nocap' + (!bp ? ' on' : '')} onClick={() => { setBp(''); setEq(''); setShown(50) }}>{t('All')}</button>
@@ -454,6 +489,41 @@ function ExercisePicker({ onPick, close }) {
   </>
 }
 export const exercisePicker = onPick => ui().openSheet(close => <ExercisePicker onPick={onPick} close={close} />)
+
+/* ============================ exercise swap ============================ */
+function SwapPicker({ currentExId, onSwap, close }) {
+  const st = useStore(s => s.S)
+  const current = EXDB[currentExId] || allExercises(st).find(e => e.id === currentExId) || { n: currentExId, bp: '', eq: '' }
+  const all = allExercises(st).filter(e => e.id !== currentExId)
+  const similar = all
+    .map(e => ({ ...e, score: (e.bp && e.bp === current.bp ? 10 : 0) + (e.eq && e.eq === current.eq ? 5 : 0) }))
+    .filter(e => e.score > 0)
+    .sort((a, b) => b.score - a.score)
+  const showAll = () => { close(); exercisePicker(newEx => onSwap(newEx)) }
+  return <>
+    <h3>{t('Switch exercise')}</h3>
+    <div className="small muted" style={{ marginBottom: 10 }}>
+      {t('Replacing')}: <span className="capitalize" style={{ fontWeight: 500 }}>{current.n}</span>
+    </div>
+    {similar.length === 0 && <div className="empty" style={{ margin: '10px 0' }}>{t('No similar exercises found.')}</div>}
+    <div className="list">
+      {similar.slice(0, 20).map(e => (
+        <div key={e.id} className="item" onClick={() => { close(); onSwap(e) }}>
+          <Thumb ex={e} />
+          <div className="grow">
+            <div className="tt capitalize">{e.n}</div>
+            <div className="ss capitalize">{t(e.tg || e.bp)} · {t(e.eq)}</div>
+          </div>
+          <Icon name="chevronRight" className="chev" />
+        </div>
+      ))}
+    </div>
+    <div style={{ height: 10 }} />
+    <Button icon="list" onClick={showAll}>{t('Browse all exercises')}</Button>
+  </>
+}
+export const swapExerciseSheet = (currentExId, onSwap) =>
+  ui().openSheet(close => <SwapPicker currentExId={currentExId} onSwap={onSwap} close={close} />)
 
 /* ============================ exercise config ============================ */
 // Progression settings for one exercise (issue #17). Shown inside the config sheet because
@@ -482,7 +552,7 @@ function ProgressionFields({ ex, mode, c, setC, routine, unit }) {
   </>
 }
 
-function ExConfig({ ex, existing, onSave, onDelete, close, routine }) {
+function ExConfig({ ex, existing, onSave, onDelete, close, routine, inWorkout }) {
   const st = useStore(s => s.S)
   const cardio = isCardio(ex.id)
   const [c, setC] = useState(existing || defaultConfig(ex.id))
@@ -531,7 +601,7 @@ function ExConfig({ ex, existing, onSave, onDelete, close, routine }) {
       <span className="tag">{t(ex.tg || ex.bp)}</span><span className="tag">{t(ex.eq)}</span>
     </div>
     {ex.desc && <div className="exnote">{ex.desc}</div>}
-    {!cardio && <div style={{ marginBottom: 14 }}>
+    {!cardio && bw && <div style={{ marginBottom: 14 }}>
       <Segmented className="seg-range" value={mode} onChange={setMode}
         options={[{ value: 'reps', label: t('Reps') }, { value: 'time', label: t('Time') }]} />
     </div>}
@@ -556,11 +626,11 @@ function ExConfig({ ex, existing, onSave, onDelete, close, routine }) {
       {t('A timer runs while you hold the set. Leave the weight at 0 for bodyweight holds.')}
     </div>}
     {/* ---------- bodyweight + per side (issues #31/#32/#33) ---------- */}
-    {!cardio && <div className="sect-b" style={{ marginBottom: 8 }}>
-      <Row icon="figureStrength" iconTint="var(--acc)" title={t('Bodyweight')}
-        subtitle={bw ? t('No weight to enter — just log the reps.') : t('Ask for a weight on every set.')}>
+    {!cardio && (bw || mode === 'reps') && <div className="sect-b" style={{ marginBottom: 8 }}>
+      {bw && <Row icon="figureStrength" iconTint="var(--acc)" title={t('Bodyweight')}
+        subtitle={t('No weight to enter — just log the reps.')}>
         <Switch checked={bw} onChange={v => setC(x => ({ ...x, bodyweight: v, weight: v ? 0 : x.weight }))} />
-      </Row>
+      </Row>}
       {mode === 'reps' && <Row icon="shuffle" iconTint="var(--blue)" title={t('Reps per side')}
         subtitle={perSide ? t('You still log the total: {0} is {1} per side.', c.reps || 0, fmtNum(sideReps(c.reps))) : t('For lunges, single-arm rows and the like.')}>
         {/* Turning it on rounds the target up to an even number, since half of an odd
@@ -590,13 +660,16 @@ function ExConfig({ ex, existing, onSave, onDelete, close, routine }) {
         ? t('Reps climb to {0}, then a set is added and the reps start over. At {1} sets it asks you to add weight instead.', c.repsMax, MAX_BW_SETS)
         : t('Reps climb by one whenever every set was clean. Set a ceiling to add sets instead of reps forever.')}
     </div>}
-    <ProgressionFields ex={ex} mode={mode} c={c} setC={setC} routine={routine} unit={st.unit} />
+    {!st.simpleMode && !inWorkout && <ProgressionFields ex={ex} mode={mode} c={c} setC={setC} routine={routine} unit={st.unit} />}
+    {!st.simpleMode && inWorkout && <div className="small dim" style={{ marginBottom: 18, padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', lineHeight: 1.5 }}>
+      {t('Progression is configured per routine. Changes apply to the next session, not this one.')}
+    </div>}
     <Button variant="primary" onClick={save}>{existing ? t('Save') : t('Add to routine')}</Button>
     {ex.custom && <><div style={{ height: 8 }} /><Button icon="pencil" onClick={() => { close(); customExSheet(ex) }}>{t('Edit or delete this exercise')}</Button></>}
     {onDelete && <><div style={{ height: 8 }} /><Button variant="danger" onClick={() => { close(); onDelete() }}>{t('Remove from routine')}</Button></>}
   </>
 }
-export const exConfigSheet = (ex, existing, onSave, onDelete, routine) => ui().openSheet(close => <ExConfig ex={ex} existing={existing} onSave={onSave} onDelete={onDelete} routine={routine} close={close} />)
+export const exConfigSheet = (ex, existing, onSave, onDelete, routine, inWorkout) => ui().openSheet(close => <ExConfig ex={ex} existing={existing} onSave={onSave} onDelete={onDelete} routine={routine} close={close} inWorkout={inWorkout} />)
 
 /* ============================ glyph picker ============================ */
 // Grouped by what the glyph means for a training day, so picking one is a scan
@@ -629,6 +702,7 @@ function PlanTools({ close }) {
   const st = useStore(s => s.S)
   const user = useStore(s => s.user)
   const fileRef = useRef(null)
+  const csvRef  = useRef(null)
   const hasRoutines = (st.routines || []).some(r => r.ex && r.ex.length)
 
   const exportFile = async () => {
@@ -650,6 +724,13 @@ function PlanTools({ close }) {
     rd.readAsText(f)
   }
 
+  const pickCSV = ev => {
+    const f = ev.target.files[0]; ev.target.value = ''; if (!f) return
+    parseProgram(f)
+      .then(result => { close(); importProgramSheet(result) })
+      .catch(e => toast(t('Import failed: {0}', e.message)))
+  }
+
   return <>
     <h3>{t('Share your plan')}</h3>
     <div className="muted small" style={{ marginBottom: 16 }}>{t('Send your routines to a friend, or put your week on paper.')}</div>
@@ -664,10 +745,18 @@ function PlanTools({ close }) {
     <h4 className="sec">{t('Got a plan from a friend?')}</h4>
     <Button variant="ghost" icon="folder" onClick={() => fileRef.current?.click()}>{t('Import a plan file')}</Button>
     <input ref={fileRef} type="file" accept="application/json,.json" onChange={pickFile} hidden />
+    <h4 className="sec">{t('Import program from CSV / Excel')}</h4>
+    <Button variant="tinted" icon="download" onClick={downloadExcelTemplate}>{t('Download Excel template (.xlsx)')}</Button>
+    <div className="dim small" style={{ margin: '7px 2px 12px', lineHeight: 1.4 }}>
+      {t('Template with cascading dropdowns: select a muscle group and the exercise list filters automatically. Contains all 1324 exercises.')}
+    </div>
+    <Button variant="ghost" icon="folder" onClick={() => csvRef.current?.click()}>{t('Import Excel or CSV program file')}</Button>
+    <input ref={csvRef} type="file" accept=".xlsx,.xls,.xlsm,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={pickCSV} hidden />
   </>
 }
 
-export const planImportSheet = bundle => ui().openSheet(close => <PlanImport bundle={bundle} close={close} />)
+export const planImportSheet   = bundle => ui().openSheet(close => <PlanImport bundle={bundle} close={close} />)
+export const importProgramSheet = result => ui().openSheet(close => <ImportProgram result={result} close={close} />)
 
 function PlanImport({ bundle, close }) {
   const [schedule, setSchedule] = useState(false)
@@ -702,6 +791,60 @@ function PlanImport({ bundle, close }) {
   </>
 }
 
+/* ============================ import program from CSV ============================ */
+function ImportProgram({ result, close }) {
+  const { programName, routines, warnings } = result
+
+  const apply = () => {
+    if (routines.length === 0) { close(); return }
+    update(s => { routines.forEach(r => s.routines.push(r)) })
+    close()
+    toast(t('Added {0} routines from "{1}"', routines.length, programName))
+    nav('/plan')
+  }
+
+  return <>
+    <h3>{t('Import "{0}"', programName)}</h3>
+
+    {routines.length > 0 ? <>
+      <div className="muted small" style={{ marginBottom: 12 }}>
+        {t(routines.length === 1 ? '{0} routine will be added to your plan:' : '{0} routines will be added to your plan:', routines.length)}
+      </div>
+      <div className="sect-b" style={{ marginBottom: 14 }}>
+        {routines.map(r => (
+          <div key={r.id} className="lrow" style={{ padding: '10px 14px' }}>
+            <div className="grow">
+              <div className="tt">{r.name}</div>
+              <div className="ss">{exCount(r.ex.length)}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </> : (
+      <div className="muted small" style={{ marginBottom: 14 }}>{t('No exercises could be imported. Check your file and try again.')}</div>
+    )}
+
+    {warnings.length > 0 && (
+      <div style={{ marginBottom: 14 }}>
+        <div className="small" style={{ color: 'var(--yellow)', marginBottom: 6, fontWeight: 600 }}>
+          {t('{0} warning(s):', warnings.length)}
+        </div>
+        {warnings.map((w, i) => (
+          <div key={i} className="small dim" style={{ marginBottom: 4, lineHeight: 1.4 }}>• {w}</div>
+        ))}
+      </div>
+    )}
+
+    <div className="dim small" style={{ marginBottom: 16, lineHeight: 1.4 }}>
+      {t('These are added as new routines — nothing you already have is changed.')}
+    </div>
+
+    <Button variant="primary" onClick={apply} disabled={routines.length === 0}>{t('Add to my plan')}</Button>
+    <div style={{ height: 8 }} />
+    <Button variant="ghost" className="dim" onClick={close}>{t('Cancel')}</Button>
+  </>
+}
+
 /* ============================ day override / assign ============================ */
 function DayOverride({ iso, close }) {
   const st = useStore(s => s.S)
@@ -718,9 +861,9 @@ function DayOverride({ iso, close }) {
     <h3>{fmtDate(iso, true)}</h3>
     <div className="muted small" style={{ marginBottom: 12 }}>{t('Weekly plan:')} {weeklyR ? weeklyR.name : t('Rest')}{hasOvr && <span style={{ color: 'var(--orange)' }}> · {t('changed for this day')}</span>}<br />{t('Sick, missed a day or want a different session? Pick what to train instead.')}</div>
     <div className="list">
-      {st.routines.map(r => <div key={r.id} className="item" onClick={() => set(r.id)}>
+      {st.routines.filter(r => (r.ex?.length ?? 0) > 0 || (r.blocks?.length ?? 0) > 0).map(r => <div key={r.id} className="item" onClick={() => set(r.id)}>
         <span className="lrow-i"><Icon name={glyphOf(r.emoji)} /></span>
-        <div className="grow"><div className="tt">{r.name}</div><div className="ss">{exCount(r.ex.length)}</div></div>
+        <div className="grow"><div className="tt">{r.name}</div><div className="ss">{exCount(r.ex?.length ?? 0)}</div></div>
         {effId === r.id && <Icon name="check" className="accent" />}</div>)}
       <div className="item" onClick={() => set('rest')}><span className="lrow-i" style={{ background: 'var(--surface-3)' }}><Icon name="moon" /></span><div className="grow"><div className="tt">{t('Rest / skip this day')}</div></div>{effId === null && <Icon name="check" className="accent" />}</div>
       {hasOvr && <div className="item" onClick={() => set('')}><span className="lrow-i" style={{ background: 'var(--surface-3)' }}><Icon name="reset" /></span><div className="grow"><div className="tt">{t('Back to weekly plan')}</div></div></div>}
@@ -736,9 +879,9 @@ function DayAssign({ day, close }) {
     <h3>{t(DAYN[day])}</h3>
     <div className="list">
       <div className="item" onClick={() => set('')}><span className="lrow-i" style={{ background: 'var(--surface-3)' }}><Icon name="moon" /></span><div className="grow"><div className="tt">{t('Rest day')}</div></div>{!st.week[day] && <Icon name="check" className="accent" />}</div>
-      {st.routines.map(r => <div key={r.id} className="item" onClick={() => set(r.id)}>
+      {st.routines.filter(r => (r.ex?.length ?? 0) > 0 || (r.blocks?.length ?? 0) > 0).map(r => <div key={r.id} className="item" onClick={() => set(r.id)}>
         <span className="lrow-i"><Icon name={glyphOf(r.emoji)} /></span>
-        <div className="grow"><div className="tt">{r.name}</div><div className="ss">{exCount(r.ex.length)}</div></div>
+        <div className="grow"><div className="tt">{r.name}</div><div className="ss">{exCount(r.ex?.length ?? 0)}</div></div>
         {st.week[day] === r.id && <Icon name="check" className="accent" />}</div>)}
     </div>
   </>
@@ -748,17 +891,28 @@ export const dayAssignSheet = day => ui().openSheet(close => <DayAssign day={day
 /* ============================ workout detail ============================ */
 function WorkoutDetail({ w, close }) {
   const st = useStore(s => s.S)
+  const hasPRs = w.prs && w.prs.length > 0
   return <>
-    <h3>{w.name}</h3>
-    <div className="muted small" style={{ marginBottom: 12 }}>{[fmtDate(w.d, true), ...durPart(w.end - w.start), fmtVol(w.vol, st.unit), ...(w.bw ? [fmtNum(w.bw) + ' ' + st.unit] : [])].join(' · ')}</div>
+    <h3 style={{ marginBottom: 2 }}>{w.name}</h3>
+    <div className="muted small" style={{ marginBottom: 10 }}>{fmtDate(w.d, true)}{w.bw ? ' · ' + fmtNum(w.bw) + ' ' + st.unit : ''}</div>
+    <div className="tiles" style={{ marginBottom: 14 }}>
+      <div className="tile colored" style={{ '--card-color': 'var(--teal)' }}><div className="l">{t('Duration')}</div><div className="v">{fmtDur(w.end - w.start)}</div></div>
+      <div className="tile colored" style={{ '--card-color': 'var(--blue)' }}><div className="l">{t('Volume')}</div><div className="v">{fmtVol(w.vol, st.unit)}</div></div>
+      <div className="tile colored" style={{ '--card-color': 'var(--purple)' }}><div className="l">{t('Sets')}</div><div className="v">{setsDone(w)}</div></div>
+      <div className="tile colored" style={{ '--card-color': hasPRs ? 'var(--yellow)' : 'var(--label-3)' }}><div className="l">{t('PRs')}</div><div className="v">{hasPRs ? w.prs.length : '—'}</div></div>
+    </div>
     {w.entries.map((e, i) => {
       const ex = EXIDX[e.id]
-      return <div key={i} className="row" style={{ marginBottom: 12, alignItems: 'flex-start' }}>
+      const isPR = w.prs && w.prs.includes(e.id)
+      return <div key={i} className="row" style={{ marginBottom: 8, alignItems: 'flex-start', padding: '9px 10px', background: isPR ? 'color-mix(in srgb,var(--yellow) 7%,var(--surface))' : 'var(--surface-2)', borderRadius: 10, border: isPR ? '1px solid color-mix(in srgb,var(--yellow) 22%,transparent)' : '1px solid var(--sep)' }}>
         {ex && <Thumb ex={ex} />}
-        <div className="grow"><div className="tt capitalize" style={{ fontWeight: 600 }}>{ex ? ex.n : (e.n || e.id)} {w.prs && w.prs.includes(e.id) && <span className="pr"><Icon name="trophy" />PR</span>}</div>
-          <div className="ss">{e.sets.filter(s => s.done).map(s => setLabel(e.id, s, e.target)).join('  ·  ') || t('no sets')}</div></div>
+        <div className="grow" style={{ minWidth: 0 }}>
+          <div className="tt capitalize" style={{ fontWeight: 600, lineHeight: 1.3 }}>{ex ? ex.n : (e.n || e.id)}{isPR && <span className="pr" style={{ marginLeft: 6 }}><Icon name="trophy" />PR</span>}</div>
+          <div className="ss">{e.sets.filter(s => s.done).map(s => setLabel(e.id, s, e.target)).join(' · ') || t('no sets')}</div>
+        </div>
       </div>
     })}
+    <div style={{ height: 4 }} />
     <Button variant="danger" onClick={() => confirmSheet({ title: t('Delete workout?'), message: t('This removes it from your history for good.'), confirmText: t('Delete'), danger: true, onConfirm: () => { update(s => { s.workouts = s.workouts.filter(x => x.id !== w.id) }); close(); toast(t('Workout deleted')) } })}>{t('Delete workout')}</Button>
   </>
 }
@@ -790,9 +944,9 @@ function Calendar({ start, close }) {
   }
   return <>
     <div className="row between" style={{ marginBottom: 2 }}>
-      <button className="iconbtn" onClick={() => setCur(new Date(y, mo - 1, 1))} aria-label="Previous month"><Icon name="chevronLeft" /></button>
+      <button className="iconbtn" onClick={() => setCur(new Date(y, mo - 1, 1))} aria-label={t('Previous month')}><Icon name="chevronLeft" /></button>
       <h3 style={{ margin: 0 }}>{t(MONTHS_LONG[mo])} {y}</h3>
-      <button className="iconbtn" onClick={() => setCur(new Date(y, mo + 1, 1))} aria-label="Next month"><Icon name="chevronRight" /></button>
+      <button className="iconbtn" onClick={() => setCur(new Date(y, mo + 1, 1))} aria-label={t('Next month')}><Icon name="chevronRight" /></button>
     </div>
     <div className="small muted" style={{ textAlign: 'center' }}>{monthWs.length ? `${t(monthWs.length === 1 ? '{0} workout' : '{0} workouts', monthWs.length)} · ${fmtDur(monthMs)} · ${fmtVol(monthVol, st.unit)}` : t('No workouts this month')}</div>
     <div className="cal-grid">{['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(l => <div key={l} className="cal-h">{t(l)}</div>)}{cells}</div>
@@ -810,22 +964,49 @@ export const calendarSheet = start => ui().openSheet(close => <Calendar start={s
 export function WorkoutRow({ w, onClick }) {
   const st = useStore(s => s.S)
   const glyph = glyphOf((st.routines.find(r => r.id === w.routineId) || {}).emoji)
-  return <div className="item" onClick={onClick}>
-    <span className="lrow-i" style={{ width: 34, height: 34, borderRadius: 8, fontSize: 19 }}><Icon name={glyph} /></span>
+  const hasPR = w.prs && w.prs.length > 0
+  return <div className="item" onClick={onClick} style={hasPR ? { background: 'color-mix(in srgb,var(--yellow) 7%,var(--surface))' } : undefined}>
+    <span className="lrow-i" style={{ width: 34, height: 34, borderRadius: 8, fontSize: 19, background: hasPR ? 'color-mix(in srgb,var(--yellow) 22%,var(--surface-3))' : undefined }}><Icon name={glyph} /></span>
     <div className="grow"><div className="tt">{w.name}</div>
       <div className="ss">{[fmtDate(w.d, true), ...durPart(w.end - w.start), t('{0} sets', setsDone(w)), fmtVol(w.vol, st.unit)].join(' · ')}</div></div>
-    {w.prs && w.prs.length > 0 && <span className="pr"><Icon name="trophy" />{w.prs.length} PR</span>}
+    {hasPR && <span className="pr"><Icon name="trophy" />{w.prs.length} PR</span>}
     <Icon name="chevronRight" className="chev" />
   </div>
 }
 
 /* ============================ workout lifecycle ============================ */
-export function startFlow(routineId) {
-  bwSheet({ required: true, onDone: bw => beginWorkout(routineId, bw) })
+export function startFlow(routineId, progCtx = null) {
+  if (S().promptWeighBefore !== false) {
+    bwSheet({ required: true, onDone: bw => beginWorkout(routineId, bw, progCtx) })
+  } else {
+    beginWorkout(routineId, null, progCtx)
+  }
 }
-export function beginWorkout(routineId, bw) {
+export function startFlowForProgramme(programmeId, weekNum, sessionIdx) {
+  const prog = S().programmes.find(p => p.id === programmeId)
+  if (!prog) return
+  const routineId = prog.routineIds[sessionIdx]
+  startFlow(routineId, { programmeId, progWeek: weekNum, progSessionIdx: sessionIdx })
+}
+export function beginWorkout(routineId, bw, progCtx = null) {
   const st = S()
   const r = routineId ? st.routines.find(x => x.id === routineId) : null
+
+  if (r && isCardioSport(r.sport)) {
+    update(s => {
+      s.active = {
+        id: uid(), d: todayISO(), start: Date.now(),
+        routineId, name: r.name, sport: r.sport,
+        bw: bw || null, cur: 0, entries: [],
+        blocks: r.blocks || [],
+        ...(progCtx || {}),
+      }
+    })
+    useUI.getState().stopRest()
+    nav('/cardio')
+    return
+  }
+
   // The prescription is applied as the session is built, so you walk up to the bar with the
   // right weight already on the screen instead of being told about it afterwards. `plan` is
   // kept on the entry purely so the workout can explain the number it chose.
@@ -834,7 +1015,12 @@ export function beginWorkout(routineId, bw) {
     return { id: cfg.id, sg: cfg.sg, target: { ...cfg }, plan, sets: applyPrescription(buildSets(st, cfg), plan) }
   })
   update(s => {
-    s.active = { id: uid(), d: todayISO(), start: Date.now(), routineId, name: r ? r.name : t('Freestyle'), bw: bw || null, cur: 0, entries }
+    s.active = {
+      id: uid(), d: todayISO(), start: Date.now(),
+      routineId, name: r ? r.name : t('Freestyle'),
+      bw: bw || null, cur: 0, entries,
+      ...(progCtx || {}),
+    }
   })
   useUI.getState().stopRest()
   nav('/workout')
@@ -852,7 +1038,7 @@ function TopWeight({ entryIdx, close }) {
   const maxSet = entry ? Math.max(0, ...entry.sets.filter(s => s.done).map(s => s.w || 0)) : 0
   const prevBest = entry ? Math.max((st.exWeights[entry.id] || {}).w || 0, bestWeightFor(st, entry.id)) : 0
   const [v, setV] = useState(entry ? (Math.max(maxSet, prevBest) || entry.target.weight || 0) : 0)
-  useEffect(() => { if (!entry) close() }, [!entry])
+  useEffect(() => { if (!entry) close() }, [entry, close])
 
   const units = supersetUnits(A ? A.entries : [])
   const unit = entry ? unitOf(units, entryIdx) : []
@@ -892,7 +1078,7 @@ export const topWeightSheet = entryIdx => ui().openSheet(close => <TopWeight ent
 // Shown when the last exercise's last set is checked — finish, or keep going.
 function WorkoutComplete({ close }) {
   return <div style={{ textAlign: 'center', padding: '8px 0' }}>
-    <div style={{ fontSize: 44, display: 'flex', justifyContent: 'center', color: 'var(--acc)' }}><Icon name="checkCircle" /></div>
+    <div style={{ fontSize: 48, display: 'flex', justifyContent: 'center', color: 'var(--acc)', animation: 'badgePop 350ms var(--ease) both', filter: 'drop-shadow(0 0 14px color-mix(in srgb,var(--acc) 35%,transparent))' }}><Icon name="checkCircle" /></div>
     <h3 style={{ margin: '8px 0' }}>{t("That's the whole workout!")}</h3>
     <div className="muted small" style={{ marginBottom: 16 }}>{t('Every exercise done — great work. Finish up, or keep going and add another exercise.')}</div>
     <Button variant="primary" icon="flag" onClick={() => { close(); finishWorkout() }}>{t('Finish workout')}</Button>
@@ -905,22 +1091,31 @@ export const workoutCompleteSheet = () => ui().openSheet(close => <WorkoutComple
 function FinishSummary({ w, prs, e1prs = [], close }) {
   const st = useStore(s => s.S)
   return <div style={{ textAlign: 'center', padding: '8px 0' }}>
-    <div style={{ fontSize: 44, display: 'flex', justifyContent: 'center', color: 'var(--acc)' }}><Icon name="trophy" /></div>
-    <h3 style={{ margin: '8px 0' }}>{t('Workout complete!')}</h3>
+    <div className="finish-trophy"><Icon name="trophy" /></div>
+    <h3 style={{ margin: '6px 0 4px', fontSize: '1.3rem' }}>{t('Workout complete!')}</h3>
+    {w.name && <div className="muted small" style={{ marginBottom: 16 }}>{w.name}</div>}
     <div className="tiles" style={{ textAlign: 'left' }}>
-      <div className="tile"><div className="l">{t('Duration')}</div><div className="v" style={{ fontSize: '1.1rem' }}>{fmtDur(w.end - w.start)}</div></div>
-      <div className="tile"><div className="l">{t('Volume')}</div><div className="v" style={{ fontSize: '1.1rem' }}>{fmtVol(w.vol, st.unit)}</div></div>
-      <div className="tile"><div className="l">{t('Sets')}</div><div className="v" style={{ fontSize: '1.1rem' }}>{setsDone(w)}</div></div>
-      <div className="tile"><div className="l">{t('PRs')}</div><div className="v" style={{ fontSize: 20 }}>{prs.length || '—'}</div></div>
+      <div className="tile colored" style={{ '--card-color': 'var(--teal)' }}><div className="l">{t('Duration')}</div><div className="v">{fmtDur(w.end - w.start)}</div></div>
+      <div className="tile colored" style={{ '--card-color': 'var(--blue)' }}><div className="l">{t('Volume')}</div><div className="v">{fmtVol(w.vol, st.unit)}</div></div>
+      <div className="tile colored" style={{ '--card-color': 'var(--purple)' }}><div className="l">{t('Sets')}</div><div className="v">{setsDone(w)}</div></div>
+      <div className="tile colored" style={{ '--card-color': 'var(--yellow)' }}><div className="l">{t('PRs')}</div><div className="v">{prs.length || '—'}</div></div>
     </div>
     {(prs.length > 0 || e1prs.length > 0) && <div style={{ textAlign: 'left', marginBottom: 12 }}>
-      {prs.map(id => <div key={id} className="small accent capitalize row" style={{ gap: 5 }}><Icon name="trophy" style={{ fontSize: 13 }} />{t('New PR:')} {(EXIDX[id] || {}).n || id}</div>)}
-      {e1prs.map(p => <div key={p.id} className="small accent capitalize row" style={{ gap: 5 }}><Icon name="chartLine" style={{ fontSize: 13 }} />{t('Best estimated 1RM:')} {(EXIDX[p.id] || {}).n || p.id} · {fmtNum(p.est)} {st.unit}</div>)}
+      {prs.map((id, i) => <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'color-mix(in srgb,var(--yellow) 10%,var(--surface))', borderRadius: 10, padding: '8px 12px', marginBottom: 5, border: '1px solid color-mix(in srgb,var(--yellow) 22%,transparent)', animation: `badgePop ${300 + i * 60}ms var(--ease) both`, animationDelay: `${i * 60}ms` }}>
+        <Icon name="trophy" style={{ fontSize: 15, color: 'var(--yellow)', flexShrink: 0 }} />
+        <span className="capitalize" style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'var(--label)' }}>{(EXIDX[id] || {}).n || id}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--yellow)', letterSpacing: '.04em', textTransform: 'uppercase' }}>PR</span>
+      </div>)}
+      {e1prs.map((p, i) => <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'color-mix(in srgb,var(--acc) 10%,var(--surface))', borderRadius: 10, padding: '8px 12px', marginBottom: 5, border: '1px solid color-mix(in srgb,var(--acc) 22%,transparent)', animation: `badgePop ${300 + (prs.length + i) * 60}ms var(--ease) both`, animationDelay: `${(prs.length + i) * 60}ms` }}>
+        <Icon name="chartLine" style={{ fontSize: 15, color: 'var(--acc)', flexShrink: 0 }} />
+        <span className="capitalize" style={{ fontSize: 13, fontWeight: 500, flex: 1, color: 'var(--label)' }}>{(EXIDX[p.id] || {}).n || p.id}</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--acc)' }}>{fmtNum(p.est)} {st.unit}</span>
+      </div>)}
     </div>}
     <h4 className="sec" style={{ textAlign: 'left' }}>{t('What you just trained')}</h4>
     <BodyMap load={loadOfWorkouts([w])} body={st.body} />
     <div style={{ height: 14 }} />
-    <Button variant="primary" onClick={() => { close(); nav('/home') }}>{t('Nice!')}</Button>
+    <Button variant="primary" className="finish-cta" onClick={() => { close(); nav('/home') }}>{t('Nice!')}</Button>
   </div>
 }
 export function finishWorkout() {
@@ -962,8 +1157,153 @@ function doFinishWorkout() {
     })
     s.workouts.push(w)
     s.active = null
+    // Record programme session completion and auto-advance week when all sessions done.
+    if (A.programmeId != null && A.progWeek != null && A.progSessionIdx != null) {
+      if (!s.programmes) s.programmes = []
+      const prog = s.programmes.find(p => p.id === A.programmeId)
+      if (prog) {
+        if (!prog.weekProgress) prog.weekProgress = {}
+        const key = String(A.progWeek)
+        if (!prog.weekProgress[key]) prog.weekProgress[key] = new Array(prog.routineIds.length).fill(false)
+        prog.weekProgress[key][A.progSessionIdx] = true
+        if (prog.currentWeek === A.progWeek) {
+          const allDone = prog.weekProgress[key].every(Boolean)
+          if (allDone && prog.currentWeek < prog.totalWeeks) prog.currentWeek += 1
+        }
+      }
+    }
   })
   useUI.getState().stopRest()
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)
   ui().openSheet(close => <FinishSummary w={w} prs={prs} e1prs={e1prs} close={close} />, { kind: 'center', locked: true })
+}
+
+/* ============================ programme create / edit ============================ */
+function ProgrammeEditor({ initial, close }) {
+  const routines = useStore(s => s.S.routines)
+  const [name, setName] = useState(initial ? initial.name : '')
+  const [totalWeeks, setTotalWeeks] = useState(initial ? initial.totalWeeks : 8)
+  // sessions: ordered list of { routineId, key }
+  const [sessions, setSessions] = useState(
+    initial
+      ? initial.routineIds.map(rid => ({ routineId: rid, key: uid() }))
+      : []
+  )
+
+  const addSession = rid => setSessions(prev => [...prev, { routineId: rid, key: uid() }])
+  const removeSession = key => setSessions(prev => prev.filter(s => s.key !== key))
+  const moveUp = key => setSessions(prev => {
+    const i = prev.findIndex(s => s.key === key)
+    if (i <= 0) return prev
+    const next = [...prev]
+    ;[next[i - 1], next[i]] = [next[i], next[i - 1]]
+    return next
+  })
+
+  const save = () => {
+    const trimmed = name.trim()
+    if (!trimmed) { toast(t('Enter a programme name')); return }
+    if (!sessions.length) { toast(t('Add at least one session')); return }
+    if (!totalWeeks || totalWeeks < 1) { toast(t('Set programme duration')); return }
+    const routineIds = sessions.map(s => s.routineId)
+    update(st => {
+      if (!st.programmes) st.programmes = []
+      if (initial) {
+        const idx = st.programmes.findIndex(p => p.id === initial.id)
+        if (idx >= 0) {
+          st.programmes[idx] = {
+            ...st.programmes[idx], name: trimmed, routineIds, totalWeeks,
+          }
+        }
+      } else {
+        st.programmes.push({
+          id: uid(), name: trimmed, routineIds, totalWeeks,
+          currentWeek: 1, weekProgress: {},
+        })
+      }
+    })
+    close()
+  }
+
+  const routineLabel = rid => {
+    const r = routines.find(x => x.id === rid)
+    return r ? r.name : rid
+  }
+
+  return <>
+    <h3>{initial ? t('Edit programme') : t('New programme')}</h3>
+
+    <div className="small muted" style={{ marginBottom: 4 }}>{t('Programme name')}</div>
+    <input
+      className="input" placeholder={t('Programme name')}
+      value={name} onChange={e => setName(e.target.value)}
+      style={{ marginBottom: 16, width: '100%', boxSizing: 'border-box' }}
+    />
+
+    <div className="row between" style={{ marginBottom: 4 }}>
+      <div className="small muted">{t('Duration (weeks)')}</div>
+      <div className="small" style={{ fontWeight: 600 }}>{totalWeeks} {t('weeks')}</div>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+      <button className="iconbtn" onClick={() => setTotalWeeks(w => Math.max(1, w - 1))} style={{ width: 36, height: 36, borderRadius: 10 }}><Icon name="minus" /></button>
+      <div style={{ flex: 1, height: 4, background: 'var(--surface-3)', borderRadius: 2 }}>
+        <div style={{ height: '100%', background: 'var(--acc)', borderRadius: 2, width: Math.min(100, (totalWeeks / 26) * 100) + '%', transition: 'width .2s' }} />
+      </div>
+      <button className="iconbtn" onClick={() => setTotalWeeks(w => Math.min(52, w + 1))} style={{ width: 36, height: 36, borderRadius: 10 }}><Icon name="plus" /></button>
+    </div>
+
+    <div className="small muted" style={{ marginBottom: 8 }}>{t('Sessions per cycle (in order)')}</div>
+    {sessions.length === 0 && (
+      <div className="empty" style={{ padding: '12px 0', marginBottom: 8 }}>{t('No sessions added yet.')}</div>
+    )}
+    {sessions.map((s, i) => (
+      <div key={s.key} style={{
+        display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6,
+        background: 'var(--surface-2)', borderRadius: 10, padding: '8px 10px',
+      }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label-3)', minWidth: 18, textAlign: 'center' }}>{i + 1}</div>
+        <div style={{ flex: 1, fontWeight: 500, fontSize: 14 }}>{routineLabel(s.routineId)}</div>
+        {i > 0 && (
+          <button className="iconbtn" style={{ width: 28, height: 28 }} onClick={() => moveUp(s.key)} aria-label={t('Move up')}>
+            <Icon name="chevronUp" />
+          </button>
+        )}
+        <button className="iconbtn" style={{ width: 28, height: 28 }} onClick={() => removeSession(s.key)} aria-label={t('Remove')}>
+          <Icon name="xmark" />
+        </button>
+      </div>
+    ))}
+
+    <div className="small muted" style={{ marginTop: 16, marginBottom: 8 }}>{t('Add session')}</div>
+    <div className="list">
+      {routines.map(r => (
+        <div key={r.id} className="item" onClick={() => addSession(r.id)} style={{ cursor: 'pointer' }}>
+          <span className="lrow-i" style={isCardioSport(r.sport) ? { background: 'var(--teal)' } : undefined}>
+            <Icon name={isCardioSport(r.sport) ? (SPORTS[r.sport]?.icon || 'bolt') : glyphOf(r.emoji)} />
+          </span>
+          <div className="grow"><div className="tt">{r.name}</div></div>
+          <Icon name="plus" style={{ color: 'var(--acc)' }} />
+        </div>
+      ))}
+    </div>
+
+    <div style={{ height: 16 }} />
+    <Button variant="primary" style={{ width: '100%' }} onClick={save}>{t('Save')}</Button>
+  </>
+}
+
+export const programmeCreateSheet = () =>
+  ui().openSheet(close => <ProgrammeEditor close={close} />)
+
+export const programmeEditSheet = prog =>
+  ui().openSheet(close => <ProgrammeEditor initial={prog} close={close} />)
+
+export function deleteProgramme(id) {
+  confirmSheet({
+    title: t('Delete programme?'),
+    message: t('This removes the programme and its progress. Routines are kept.'),
+    danger: true,
+    confirmText: t('Delete'),
+    onConfirm: () => update(s => { s.programmes = (s.programmes || []).filter(p => p.id !== id) }),
+  })
 }

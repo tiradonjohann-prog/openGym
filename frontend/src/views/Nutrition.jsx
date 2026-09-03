@@ -7,11 +7,13 @@ import DayView     from './nutrition/DayView.jsx'
 import WeekView    from './nutrition/WeekView.jsx'
 import DayBalance  from './nutrition/DayBalance.jsx'
 import CardioSection from './nutrition/CardioEntry.jsx'
+import FoodsView  from './nutrition/FoodsView.jsx'
 
 const TABS = [
   { key: 'today',   label: 'Today' },
   { key: 'week',    label: 'Week' },
   { key: 'balance', label: 'Balance' },
+  { key: 'foods',   label: 'Foods' },
   { key: 'profile', label: 'Profile' },
 ]
 
@@ -43,15 +45,13 @@ export default function Nutrition() {
       </nav>
 
       {/* Tab content */}
-      {tab === 'today'   && (
-        <>
-          <DayView />
-          <CardioSection />
-        </>
-      )}
-      {tab === 'week'    && <WeekView />}
-      {tab === 'balance' && <DayBalance />}
-      {tab === 'profile' && <Profile />}
+      <div key={tab} style={{ animation: 'viewfade var(--med) var(--ease) both' }}>
+        {tab === 'today'   && <><DayView /><CardioSection /></>}
+        {tab === 'week'    && <WeekView />}
+        {tab === 'balance' && <DayBalance />}
+        {tab === 'foods'   && <FoodsView />}
+        {tab === 'profile' && <Profile />}
+      </div>
     </div>
   )
 }

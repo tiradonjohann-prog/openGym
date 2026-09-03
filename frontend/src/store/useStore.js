@@ -7,15 +7,17 @@ import { MOBILE, nativeLoad, nativeSave, syncReminder } from '../lib/mobile.js'
 
 const KEY = 'gym_state_v1'
 export const DEF = {
-  unit: 'kg', restSec: 90, sound: true, keepAwake: true, lang: 'en',
+  unit: 'kg', restSec: 90, sound: true, keepAwake: true, lang: 'fr',
+  displayName: null, goal: null, level: null, equipment: [], daysPerWeek: 3, sports: [], onboardingDone: false,
   theme: 'dark', accent: 'lime', body: 'male', targetW: null,
-  bodyweight: [], routines: [], week: {}, dayPlan: {},
+  bodyweight: [], routines: [], programmes: [], week: {}, dayPlan: {},
   exWeights: {}, workouts: [], active: null, customEx: [], gifSize: 'full',
   // effort: which per-set effort scale is logged — 'none' | 'rir' | 'rpe'. null, not 'none', so
   // that a profile which never chose (loaded state is overlaid on DEF, on every path: local,
   // server pull, backup import) still falls back to the `showRir` boolean this replaced and
   // keeps the column it had. See effortOf.
-  reminder: { on: false, time: '08:00', tz: null }, effort: null,
+  reminder: { on: false, time: '08:00', tz: null }, effort: null, simpleMode: false, promptWeighBefore: false,
+  nutritionFavorites: [],
   nutrition: {
     sex: null, age: null, heightCm: null, activityLevel: 'sedentary', workoutsPerWeek: null,
     bmr: null, tdee: null,
@@ -28,10 +30,28 @@ export const DEF = {
 }
 const clone = o => JSON.parse(JSON.stringify(o))
 
+function deepMerge(def, stored) {
+  const result = clone(def)
+  for (const k of Object.keys(stored)) {
+    const dv = result[k]
+    const sv = stored[k]
+    if (
+      dv !== null && sv !== null &&
+      typeof dv === 'object' && typeof sv === 'object' &&
+      !Array.isArray(dv) && !Array.isArray(sv)
+    ) {
+      result[k] = deepMerge(dv, sv)
+    } else {
+      result[k] = sv
+    }
+  }
+  return result
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return Object.assign(clone(DEF), JSON.parse(raw))
+    if (raw) return deepMerge(DEF, JSON.parse(raw))
   } catch (e) { /* ignore */ }
   return clone(DEF)
 }

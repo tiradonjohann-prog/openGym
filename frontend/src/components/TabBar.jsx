@@ -22,11 +22,16 @@ export default function TabBar({ onStart }) {
     }
     nav('/workout')
   }
-  const Tab = ({ k, icon, to, label }) => (
-    <button className={on(k) ? 'on' : ''} onClick={() => nav(to)}>
-      <Icon name={icon} /><span>{label}</span>
-    </button>
-  )
+  const Tab = ({ k, icon, to, label }) => {
+    const active = on(k)
+    return (
+      <button className={active ? 'on' : ''} onClick={() => nav(to)}>
+        {active
+          ? <span className="tab-pill"><Icon name={icon} /><span>{label}</span></span>
+          : <><Icon name={icon} /><span>{label}</span></>}
+      </button>
+    )
+  }
 
   return (
     <nav id="tabbar">
@@ -38,7 +43,7 @@ export default function TabBar({ onStart }) {
       </button>
       <Tab k="stats" icon="chart" to="/stats" label={t('Stats')} />
       <Tab k="library" icon="list" to="/library" label={t('Exercises')} />
-      <Tab k="nutrition" icon="flame" to="/nutrition" label={t('Nutrition')} />
+      <Tab k="nutrition" icon="utensils" to="/nutrition" label={t('Nutrition')} />
     </nav>
   )
 }

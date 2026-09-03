@@ -29,6 +29,7 @@ const P = {
   figureStrength: <><circle cx="12" cy="5.2" r="2" /><path d="M12 8.4v5.6M12 14 9.2 20.5M12 14l2.8 6.5M8 10.6h8M5.4 9.1v3M18.6 9.1v3" /></>,
   scale: <><rect x="3.4" y="4.4" width="17.2" height="16.2" rx="3.4" /><path d="M8.3 9.2a3.9 3.9 0 0 1 7.4 0" /><path d="M12 9.2v2.5M8.9 16.2h6.2" /></>,
   flame: <path d="M12 20.4c3.2 0 5.4-2.1 5.4-5.1 0-3.9-3.4-5.6-2.6-9.8-2.5.8-4 2.9-4 5.1 0 1-.5 1.6-1.2 1.6-.8 0-1.2-.7-1.2-1.8-1.1 1.2-1.8 2.9-1.8 4.9 0 3 2.2 5.1 5.4 5.1Z" />,
+  utensils: <><path d="M7 4v5q1.5 2 1.5 2V20M10 4v5q-1.5 2-1.5 2M8.5 4V10" /><path d="M15.5 4v16M15.5 4q3 3 0 8" /></>,
   timer: <><circle cx="12" cy="13.4" r="7.2" /><path d="M12 9.6v3.8h2.8M9.6 3.4h4.8" /></>,
   clock: <><circle cx="12" cy="12" r="8.2" /><path d="M12 7.4V12l3.1 1.9" /></>,
 
@@ -86,6 +87,7 @@ const P = {
   chevronUp: <path d="m5.6 14.6 6.4-6.2 6.4 6.2" />,
   arrowUp: <path d="M12 19.6V4.4M6.2 10.6 12 4.4l5.8 6.2" />,
   arrowDown: <path d="M12 4.4v15.2M6.2 13.4 12 19.6l5.8-6.2" />,
+  arrowRight: <path d="M4.4 12h15.2M13.4 6.2 19.6 12l-6.2 5.8" />,
   expand: <path d="M14.4 4.4h5.2v5.2M9.6 19.6H4.4v-5.2M19.6 4.4 13.8 10.2M4.4 19.6l5.8-5.8" />,
   minimize: <path d="M19.6 9.6h-5.2V4.4M4.4 14.4h5.2v5.2M14.4 9.6l5.2-5.2M9.6 14.4l-5.2 5.2" />,
 
@@ -119,6 +121,7 @@ P.search = P.magnifier
 P.settings = P.gear
 P.exercises = P.magnifier
 P.weight = P.scale
+P.scalemass = P.scale
 P.streak = P.flame
 P.done = P.check
 

@@ -28,6 +28,26 @@ export const GOAL_DEFAULT_DELTA = {
 export const DELTA_MIN = -500
 export const DELTA_MAX = 600
 
+// Preset deficit/surplus levels for cut and bulk goals.
+// Descriptions include approximate %TDEE for a 2000 kcal TDEE baseline.
+export const CUT_PRESETS = [
+  { id: 'gentle',    label: 'Gentle',    delta: -200, desc: '~−10 % TDEE · fat loss with minimal muscle impact' },
+  { id: 'moderate',  label: 'Moderate',  delta: -350, desc: '~−18 % TDEE · steady fat loss, ANSES-recommended range' },
+  { id: 'intensive', label: 'Intensive', delta: -500, desc: '~−25 % TDEE · fast fat loss, maximum safe limit' },
+]
+
+export const BULK_PRESETS = [
+  { id: 'lean',       label: 'Lean',       delta: 150, desc: '~+8 % TDEE · slow lean mass gain, minimal fat' },
+  { id: 'moderate',   label: 'Moderate',   delta: 300, desc: '~+15 % TDEE · classic bulk, muscle + some fat' },
+  { id: 'aggressive', label: 'Aggressive', delta: 500, desc: '~+25 % TDEE · max anabolic stimulus, higher fat gain' },
+]
+
+export function presetsFor(goal) {
+  if (goal === 'cut')  return CUT_PRESETS
+  if (goal === 'bulk') return BULK_PRESETS
+  return null
+}
+
 export function calcTargetKcal(tdee, delta) {
   if (tdee == null) return null
   return Math.round(tdee + (delta || 0))

@@ -9,10 +9,12 @@ const W = 340   // viewBox width; the svg stretches to its container, height com
 //        more of it). Used for effort on the weight curve, where the two belong on one line:
 //        the same weight with less left in the tank is not the same session.
 //   note extra text for that point's tooltip.
-// opts: { h, unit, color, axes, goal, invert }
-//   invert flips the y axis, for a scale that counts down as it gets harder (RIR). Without it
-//   a curve of reps-in-reserve reads upside down, with the hardest sets at the floor.
-export default function LineChart({ points, h = 150, unit = '', color = 'var(--acc)', axes = true, goal = null, invert = false }) {
+// opts: { h, unit, color, axes, goal, invert, extraLines }
+//   invert      flips the y axis, for a scale that counts down as it gets harder (RIR).
+//   extraLines  [{ pts:[{t,y}], color, dashed?, thin?, projection? }]
+//               projection:true extends the X range past the last data point but is excluded
+//               from the Y range calculation so it doesn't distort the axis scale.
+export default function LineChart({ points, h = 150, unit = '', color = 'var(--acc)', axes = true, goal = null, invert = false, extraLines = [] }) {
   const svgRef = useRef(null)
   const wrapRef = useRef(null)
   const tipRef = useRef(null)
@@ -43,11 +45,16 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
   const single = points.length === 1
   const pts = single ? [points[0], points[0]] : points
   const ys = pts.map(p => p.y)
-  let ymin = Math.min(...ys), ymax = Math.max(...ys)
+  // Include non-projection extraLines in Y range, but not projection lines
+  const extraYs = extraLines.filter(l => !l.projection).flatMap(l => (l.pts || []).map(p => p.y))
+  let ymin = Math.min(...ys, ...extraYs), ymax = Math.max(...ys, ...extraYs)
   if (goal != null && isFinite(goal)) { ymin = Math.min(ymin, goal); ymax = Math.max(ymax, goal) }
   if (ymin === ymax) { ymin -= 1; ymax += 1 }
   const pad = (ymax - ymin) * 0.12; ymin -= pad; ymax += pad
-  const t0 = pts[0].t, t1 = pts[pts.length - 1].t || t0 + 1
+  // Extend t1 to include extraLines (including projections) so they don't get clipped
+  const allExtraTs = extraLines.flatMap(l => (l.pts || []).map(p => p.t))
+  const t0 = pts[0].t
+  const t1 = Math.max(pts[pts.length - 1].t || pts[0].t + 1, ...allExtraTs, pts[0].t + 1)
   const X = t => (t1 === t0 ? (P.l + W - P.r) / 2 : P.l + (t - t0) / (t1 - t0) * (W - P.l - P.r))
   const Y = y => {
     const f = (y - ymin) / (ymax - ymin)
@@ -122,6 +129,15 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
         </>}
         <polygon points={`${P.l},${H - P.b} ${poly} ${X(last.t).toFixed(1)},${H - P.b}`} fill={`url(#${gid})`} />
         <polyline points={poly} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        {extraLines.map((line, li) => {
+          if (!line.pts || line.pts.length < 2) return null
+          const ePoly = line.pts.map(p => X(p.t).toFixed(1) + ',' + Y(p.y).toFixed(1)).join(' ')
+          return <polyline key={'el' + li} points={ePoly} fill="none"
+            stroke={line.color || 'var(--label-2)'}
+            strokeWidth={line.thin ? 1.5 : 2}
+            strokeDasharray={line.dashed ? '6 4' : undefined}
+            strokeLinejoin="round" strokeLinecap="round" opacity={line.thin ? 0.7 : 1} />
+        })}
         {marked && pts.map((p, i) => (p.m == null ? null :
           <circle key={'m' + i} cx={X(p.t)} cy={Y(p.y)} r={2.4 + p.m * 3} fill={color} opacity={0.3 + p.m * 0.7} />))}
         <circle cx={X(last.t)} cy={Y(last.y)} r="4" fill={color} />

@@ -64,7 +64,7 @@ export default function Login() {
         {t('This demo runs entirely in your browser on example data — nothing is sent anywhere. Passkey sign-in and sync across your devices come with the openGym server, which you get by self-hosting it.')}
       </div>
       <div className="dim small" style={{ marginTop: 22, lineHeight: 1.6 }}>
-        <a href={REPO} target="_blank" rel="noopener">{t('Self-host it in a minute →')}</a>
+        <a href={REPO} target="_blank" rel="noopener noreferrer">{t('Self-host it in a minute →')}</a>
       </div>
     </div>
   )

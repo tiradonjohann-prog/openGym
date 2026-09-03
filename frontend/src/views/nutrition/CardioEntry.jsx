@@ -8,15 +8,14 @@ import { CARDIO_TYPES, calcCardioKcal, calcPace, dayCardioKcal } from '../../lib
 import Icon from '../../components/Icon.jsx'
 import { NumberField, Stepper, Switch, Button, Section, Row } from '../../components/ui.jsx'
 
-function CardioForm({ weightKg, onSave, onCancel }) {
+export function CardioForm({ weightKg, onSave, onCancel }) {
   const types = Object.entries(CARDIO_TYPES)
   const [type,     setType]     = useState('run')
   const [duration, setDuration] = useState(null)
   const [distance, setDistance] = useState(null)
   const [elevation,setElev]     = useState(null)
   const [intensity,setIntensity]= useState(null)
-  const [manualKcal, setManualKcal] = useState(false)
-  const [kcalOverride, setKcalOverride] = useState(null)
+  const [kcalInput, setKcalInput] = useState(null) // null = use auto-calculated
   const [date, setDate]         = useState(todayISO())
 
   const spec    = CARDIO_TYPES[type]
@@ -25,9 +24,14 @@ function CardioForm({ weightKg, onSave, onCancel }) {
 
   const autoKcal = calcCardioKcal(type, weightKg, duration, hasDistance ? distance : null)
   const pace     = hasDistance ? calcPace(duration, distance) : null
-  const kcal     = manualKcal ? (kcalOverride || 0) : (autoKcal || 0)
+  // Display: user value if set, else auto-calculated. Save: same logic, default to 0.
+  const displayKcal = kcalInput !== null ? kcalInput : autoKcal
+  const isManual    = kcalInput !== null
+  const kcal        = kcalInput !== null ? (kcalInput || 0) : (autoKcal || 0)
 
   const canSave  = duration && duration > 0
+
+  const handleTypeChange = k => { setType(k); setDistance(null); setElev(null) }
 
   const save = () => {
     if (!canSave) return
@@ -36,7 +40,7 @@ function CardioForm({ weightKg, onSave, onCancel }) {
       type, label: t(spec.label),
       duration, distance: hasDistance ? distance : null,
       elevation: hasElevation ? elevation : null,
-      kcal, manualKcal,
+      kcal, manualKcal: isManual,
       intensity, pace,
       date,
     })
@@ -44,13 +48,13 @@ function CardioForm({ weightKg, onSave, onCancel }) {
 
   return (
     <div style={{ paddingBottom: 16 }}>
-      {/* Type picker */}
-      <div className="cardio-chips" style={{ padding: '0 16px 12px' }}>
+      {/* Type chips */}
+      <div className="cardio-chips" style={{ padding: '0 16px 14px' }}>
         {types.map(([k, v]) => (
           <button
             key={k}
             className={'chip' + (type === k ? ' on' : '')}
-            onClick={() => { setType(k); setDistance(null); setElev(null) }}
+            onClick={() => handleTypeChange(k)}
             aria-pressed={type === k}
           >
             <Icon name={v.icon} size={16} />
@@ -59,33 +63,83 @@ function CardioForm({ weightKg, onSave, onCancel }) {
         ))}
       </div>
 
-      <Section>
-        <Row icon="timer" iconTint="var(--acc)" title={t('Duration')} subtitle={t('minutes')}>
-          <NumberField value={duration} decimal={false} nullable onChange={setDuration} style={{ width: 68, textAlign: 'right' }} placeholder="—" />
-        </Row>
+      {/* Main metric inputs — prominent card */}
+      <div style={{ display: 'grid', gridTemplateColumns: hasDistance ? '1fr 1fr' : '1fr', gap: 10, padding: '0 16px 14px' }}>
+        <div className="input-metric-card">
+          <div className="imc-label">{t('Duration')}</div>
+          <div className="imc-row">
+            <NumberField
+              value={duration}
+              decimal={false}
+              nullable
+              onChange={setDuration}
+              className="imc-input"
+              placeholder="0"
+              aria-label={t('Duration')}
+            />
+            <span className="imc-unit">min</span>
+          </div>
+        </div>
         {hasDistance && (
-          <Row icon="target" iconTint="var(--blue)" title={t('Distance')} subtitle="km">
-            <NumberField value={distance} nullable onChange={setDistance} style={{ width: 68, textAlign: 'right' }} placeholder="—" />
-          </Row>
+          <div className="input-metric-card">
+            <div className="imc-label">{t('Distance')}</div>
+            <div className="imc-row">
+              <NumberField
+                value={distance}
+                nullable
+                onChange={setDistance}
+                className="imc-input"
+                placeholder="0"
+                aria-label={t('Distance')}
+              />
+              <span className="imc-unit">km</span>
+            </div>
+          </div>
         )}
         {hasElevation && (
-          <Row icon="arrowUp" iconTint="var(--teal)" title={t('Elevation gain')} subtitle="m">
-            <NumberField value={elevation} decimal={false} nullable onChange={setElev} style={{ width: 68, textAlign: 'right' }} placeholder="—" />
-          </Row>
+          <div className="input-metric-card">
+            <div className="imc-label">{t('Elevation gain')}</div>
+            <div className="imc-row">
+              <NumberField
+                value={elevation}
+                decimal={false}
+                nullable
+                onChange={setElev}
+                className="imc-input"
+                placeholder="0"
+                aria-label={t('Elevation gain')}
+              />
+              <span className="imc-unit">m</span>
+            </div>
+          </div>
         )}
-        {pace != null && (
-          <Row icon="bolt" iconTint="var(--yellow)" title={t('Average speed')} value={pace + ' km/h'} />
-        )}
+      </div>
+
+      {/* Derived stat: pace */}
+      {pace != null && (
+        <div style={{ padding: '0 16px 10px' }}>
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px' }}>
+            <Icon name="bolt" style={{ color: 'var(--yellow)', fontSize: 16, flexShrink: 0 }} />
+            <span className="small" style={{ color: 'var(--label-2)', flex: 1 }}>{t('Average speed')}</span>
+            <span style={{ fontWeight: 600, fontSize: 16 }}>{pace} km/h</span>
+          </div>
+        </div>
+      )}
+
+      {/* Secondary settings */}
+      <Section>
         <Row icon="flame" iconTint="var(--orange)" title={t('Calories burned')}
-          subtitle={manualKcal ? t('Manual entry') : t('Calculated — Ainsworth 2011')}
+          subtitle={isManual ? t('Manual entry') : weightKg ? t('Estimated — Ainsworth 2011') : t('No weight logged — enter here')}
         >
-          {manualKcal
-            ? <NumberField value={kcalOverride} decimal={false} nullable onChange={setKcalOverride} style={{ width: 68, textAlign: 'right' }} placeholder="—" />
-            : <span className="lrow-v">{autoKcal != null ? autoKcal + ' kcal' : '—'}</span>
-          }
-        </Row>
-        <Row icon="pencil" iconTint="var(--label-3)" title={t('Override calories')}>
-          <Switch checked={manualKcal} onChange={v => { setManualKcal(v); if (!v) setKcalOverride(null) }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <NumberField value={displayKcal} decimal={false} nullable onChange={setKcalInput} style={{ width: 72, textAlign: 'right' }} placeholder="—" />
+            {isManual && (
+              <button className="iconbtn" style={{ fontSize: 12, width: 24, height: 24, opacity: .5 }}
+                onClick={() => setKcalInput(null)} aria-label={t('Reset to auto')}>
+                <Icon name="xmark" style={{ fontSize: 11 }} />
+              </button>
+            )}
+          </div>
         </Row>
         <Row icon="heart" iconTint="var(--red)" title={t('Perceived effort')} subtitle={t('1 = easy · 5 = maximal')}>
           <Stepper value={intensity ?? 0} step={1} decimal={false} onChange={v => setIntensity(Math.max(0, Math.min(5, v)) || null)} />

@@ -1,12 +1,28 @@
 import { useState } from 'react'
+import { useStore } from '../store/useStore.js'
 import { scaleItem } from '../lib/foodSearch.js'
 import { t } from '../lib/i18n.js'
+import { uid } from '../lib/format.js'
 import { NumberField, Button } from './ui.jsx'
+import Icon from './Icon.jsx'
+
+function useFavoriteSave() {
+  const update = useStore(s => s.update)
+  const favorites = useStore(s => s.S.nutritionFavorites || [])
+  return (item) => {
+    const base = { id: uid(), name: item.name, qty: item.qty || 100, unit: item.unit || 'g', kcal: item.kcal, prot: item.prot, carbs: item.carbs, fat: item.fat, fiber: item.fiber, source: item.source || 'manual', complete: item.complete ?? true, savedAt: Date.now() }
+    if (favorites.some(f => f.name === item.name)) return false
+    update(s => { if (!s.nutritionFavorites) s.nutritionFavorites = []; s.nutritionFavorites.unshift(base) })
+    return true
+  }
+}
 
 // Lets the user adjust the gram quantity of a food item (from OFF or manual)
 // before adding it to the meal slot.
 export function FoodQty({ item, onAdd, onCancel }) {
   const [qty, setQty] = useState(item.qty || 100)
+  const [saved, setSaved] = useState(false)
+  const saveToFavorites = useFavoriteSave()
 
   const scaled = scaleItem(item, qty)
   const macroLine = [
@@ -15,9 +31,24 @@ export function FoodQty({ item, onAdd, onCancel }) {
     scaled.fat   != null ? scaled.fat   + 'g F' : null,
   ].filter(Boolean).join(' · ')
 
+  const handleFavorite = () => {
+    const ok = saveToFavorites(item)
+    if (ok) setSaved(true)
+  }
+
   return (
     <div style={{ padding: '0 16px 16px' }}>
-      <p style={{ fontSize: 17, fontWeight: 600, marginBottom: 12 }}>{item.name}</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <p style={{ fontSize: 17, fontWeight: 600, margin: 0, flex: 1 }}>{item.name}</p>
+        <button
+          onClick={handleFavorite}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: saved ? 'var(--yellow)' : 'var(--label-3)', flexShrink: 0 }}
+          title={t('Save to favorites')}
+          aria-label={t('Save to favorites')}
+        >
+          <Icon name={saved ? 'starFill' : 'star'} style={{ fontSize: 20 }} />
+        </button>
+      </div>
       <div className="lrow" style={{ background: 'var(--surface)', borderRadius: 'var(--r)', padding: '12px 14px', marginBottom: 12 }}>
         <span className="lrow-m">
           <span className="lrow-t">{t('Quantity')}</span>
@@ -52,16 +83,17 @@ export function ManualEntry({ onAdd, onCancel }) {
   const [carbs, setCarbs] = useState(null)
   const [fat,   setFat]   = useState(null)
   const [fiber, setFiber] = useState(null)
+  const [favSaved, setFavSaved] = useState(false)
+  const saveToFavorites = useFavoriteSave()
 
   const canAdd = name.trim() && kcal != null && kcal > 0
 
-  const add = () => {
+  const add = (alsoSaveFav = false) => {
     if (!canAdd) return
     const complete = prot != null && carbs != null && fat != null
-    onAdd({
-      id: null, name: name.trim(), qty: 100, unit: 'g',
-      kcal, prot, carbs, fat, fiber, source: 'manual', complete,
-    })
+    const item = { id: null, name: name.trim(), qty: 100, unit: 'g', kcal, prot, carbs, fat, fiber, source: 'manual', complete }
+    if (alsoSaveFav) { saveToFavorites(item); setFavSaved(true) }
+    onAdd(item)
   }
 
   const Field = ({ label, value, onChange, unit }) => (
@@ -92,8 +124,12 @@ export function ManualEntry({ onAdd, onCancel }) {
       <p className="sect-f" style={{ marginBottom: 16 }}>
         {t('Values per 100 g. Only calories are required.')}
       </p>
-      <Button variant="primary" style={{ width: '100%', marginBottom: 8 }} onClick={add} disabled={!canAdd}>
+      <Button variant="primary" style={{ width: '100%', marginBottom: 8 }} onClick={() => add()} disabled={!canAdd}>
         {t('Add to meal')}
+      </Button>
+      <Button variant="tinted" style={{ width: '100%', marginBottom: 8 }} onClick={() => add(true)} disabled={!canAdd || favSaved}>
+        <Icon name={favSaved ? 'starFill' : 'star'} style={{ fontSize: 15, marginRight: 6 }} />
+        {favSaved ? t('Saved to favorites') : t('Add to meal & save to favorites')}
       </Button>
       <Button variant="plain" style={{ width: '100%' }} onClick={onCancel}>
         {t('Cancel')}

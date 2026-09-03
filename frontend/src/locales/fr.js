@@ -1,4 +1,4 @@
-// French UI strings. Keys are the English source strings (see lib/i18n.js).
+﻿﻿﻿﻿﻿// French UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
   'Confirm': 'Confirmer',
   'Cancel': 'Annuler',
@@ -37,7 +37,7 @@ export default {
   'Sunday': 'Dimanche', 'Monday': 'Lundi', 'Tuesday': 'Mardi', 'Wednesday': 'Mercredi',
   'Thursday': 'Jeudi', 'Friday': 'Vendredi', 'Saturday': 'Samedi',
   'Su': 'Di', 'Mo': 'Lu', 'Tu': 'Ma', 'We': 'Me', 'Th': 'Je', 'Fr': 'Ve', 'Sa': 'Sa',
-  'Mon': 'Lun', 'Wed': 'Mer', 'Fri': 'Ven',
+  'Mon': 'Lun', 'Tue': 'Mar', 'Wed': 'Mer', 'Thu': 'Jeu', 'Fri': 'Ven', 'Sat': 'Sam', 'Sun': 'Dim',
   'Jan': 'Jan', 'Feb': 'Fév', 'Mar': 'Mar', 'Apr': 'Avr', 'May': 'Mai', 'Jun': 'Juin',
   'Jul': 'Juil', 'Aug': 'Août', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov', 'Dec': 'Déc',
   'January': 'Janvier', 'February': 'Février', 'March': 'Mars', 'April': 'Avril',
@@ -156,6 +156,7 @@ export default {
   'Remove set': 'Retirer une série',
   'Add set': 'Ajouter une série',
   'Cardio logged': 'Cardio noté',
+  'New PR — {0} {1}!': 'Nouveau record — {0} {1} !',
   'Discard workout?': 'Abandonner la séance ?',
   'The sets you logged in this session will be lost.': 'Les séries notées dans cette session seront perdues.',
   'Superset {0} / {1}': 'Superset {0} / {1}',
@@ -553,5 +554,545 @@ export default {
   '{0} reps in every set — add a set and go back to {1}.': '{0} répétitions sur toutes les séries — une série en plus, retour à {1}.',
   '{0} sets of {1} — time to add weight or move to a harder variation.': '{0} séries de {1} — il est temps d’ajouter du poids ou de passer à une variante plus dure.',
   '{0} per side': '{0} par côté',
-  'You still log the total: {0} is {1} per side.': 'Tu notes toujours le total : {0}, c’est {1} par côté.',
+  'You still log the total: {0} is {1} per side.': "Tu notes toujours le total : {0}, c’est {1} par côté.",
+
+  // --- exercise swap ---
+  'Switch exercise': "Changer d’exercice",
+  'Replacing': 'Remplacer',
+  'No similar exercises found.': 'Aucun exercice similaire trouvé.',
+  'Browse all exercises': 'Parcourir tous les exercices',
+
+  // --- onboarding ---
+  'Welcome to openGym!': 'Bienvenue sur openGym !',
+  'Nice to meet you, {0}!': 'Ravi de te rencontrer, {0} !',
+  'What should we call you?': "Comment t’appelles-tu ?",
+  'Your first name': 'Ton prénom',
+  'Used for your personalized greeting.': 'Utilisé pour te saluer personnellement.',
+  'What is your main goal?': "Quel est ton objectif principal ?",
+  'Lose weight': 'Perdre du poids',
+  'Burn fat, feel lighter': 'Brûler des graisses, se sentir plus léger',
+  'Build muscle': 'Prendre du muscle',
+  'Get stronger, bigger': 'Devenir plus fort, plus musclé',
+  'Stay in shape': 'Rester en forme',
+  'Maintain current form': 'Maintenir sa condition actuelle',
+  'Improve endurance': "Améliorer son endurance",
+  'Cardio & stamina': 'Cardio & souffle',
+  'General health': 'Santé générale',
+  'Feel good every day': 'Se sentir bien chaque jour',
+  'Used to set your nutrition target.': 'Utilisé pour définir ton objectif nutrition.',
+  "Beginners get a simplified view — you can change it anytime in Settings.": "Les débutants ont une vue simplifiée — tu peux la changer à tout moment dans les Réglages.",
+  "What is your experience level?": "Quel est ton niveau d’expérience ?",
+  'Beginner': 'Débutant',
+  'Less than 1 year of training': "Moins d’un an d’entraînement",
+  'Intermediate': 'Intermédiaire',
+  '1 to 3 years of training': "1 à 3 ans d'entraînement",
+  'Advanced': 'Avancé',
+  'More than 3 years of training': "Plus de 3 ans d’entraînement",
+  'What equipment do you have?': "Quel équipement as-tu ?",
+  'Select everything available to you.': 'Sélectionne tout ce dont tu disposes.',
+  'Bodyweight only': 'Poids du corps uniquement',
+  'Dumbbells': 'Haltères',
+  'Barbell & plates': 'Barre et disques',
+  'Gym machines': 'Machines de salle',
+  'Resistance bands': 'Élastiques de résistance',
+  'Cardio equipment': 'Équipement cardio',
+  'How many days per week?': 'Combien de jours par semaine ?',
+  'How often do you want to train?': "À quelle fréquence veux-tu t’entraîner ?",
+  'days / week': 'jours / semaine',
+  'What activities interest you?': "Quelles activités t’intéressent ?",
+  'Select all that apply.': 'Sélectionne tout ce qui correspond.',
+  'Cardio — timer-based': 'Cardio — basé sur le chrono',
+  'Strength — sets & reps': 'Musculation — séries & répétitions',
+  'Your physical profile': 'Ton profil physique',
+  'Used to estimate your calorie needs.': "Utilisé pour estimer tes besoins caloriques.",
+  'Age': 'Âge',
+  'Height': 'Taille',
+  'years': 'ans',
+  'Current weight': 'Poids actuel',
+  "Let’s go! Load starter plan": "C’est parti ! Charger le programme de démarrage",
+  "Skip — I’ll build my plan manually": "Ignorer — je construirai mon plan moi-même",
+
+  // --- programme ---
+  'My programmes': "Mes programmes",
+  'W{0}/{1}': "S{0}/{1}",
+  'Week {0}': "Semaine {0}",
+  'Complete': "Terminé",
+  'Programme complete — all {0} weeks done!': "Programme terminé — {0} semaines accomplies !",
+  'Skip to week {0}': "Passer à la semaine {0}",
+  'Active: W{0}': "Active : S{0}",
+  'New programme': "Nouveau programme",
+  'Edit programme': "Modifier le programme",
+  'Delete programme?': "Supprimer le programme ?",
+  'This removes the programme and its progress. Routines are kept.': "Cela supprime le programme et sa progression. Les séances sont conservées.",
+  'Programme name': "Nom du programme",
+  'Enter a programme name': "Entre un nom pour le programme",
+  'Duration (weeks)': "Durée (semaines)",
+  'Sessions per cycle (in order)': "Séances par cycle (dans l'ordre)",
+  'No sessions added yet.': "Aucune séance ajoutée.",
+  'Add at least one session': "Ajoute au moins une séance",
+  'Set programme duration': "Définis la durée du programme",
+  'Add session': "Ajouter une séance",
+  'No programmes yet.': "Aucun programme pour l'instant.",
+  'Current programme': 'Programme actif',
+  'Programme complete': 'Programme terminé',
+  '{0} weeks — finished!': '{0} semaines — terminé !',
+  'Week {0} · {1} weeks total': 'Semaine {0} · {1} semaines au total',
+  'Active': 'Actif',
+  'From start ({0} {1}):': 'Depuis le départ ({0} {1}) :',
+  '"{0}" will be removed. Your workout history is preserved.': '"{0}" sera supprimée. Ton historique d\'entraînements est conservé.',
+  'Superset — back-to-back, rest after all': 'Superset — enchaîner, repos après les deux',
+  'then': 'puis',
+  'New — Training programmes': "Nouveau — Programmes d'entraînement",
+  'Group your routines into a multi-week plan in Plan → Programmes.': "Regroupe tes séances en un plan multi-semaines via Plan → Programmes.",
+  'Group your routines into a multi-week training plan.': "Regroupe tes séances en un plan d'entraînement multi-semaines.",
+  'Programmes': 'Programmes',
+  '{0} sessions': '{0} séances',
+  'Move up': "Monter",
+  'Not logged yet': "Pas encore enregistré",
+  'Save': 'Enregistrer',
+
+  // --- nutrition UI labels ---
+  'Nutrition': 'Nutrition',
+  'Nutrition sections': 'Sections nutrition',
+  'Balance': 'Bilan',
+  'Profile': 'Profil',
+  'Search': 'Recherche',
+  'Manual': 'Manuel',
+  'Suggestions': 'Suggestions',
+  'Favorites': 'Favoris',
+  'Add food': 'Ajouter un aliment',
+  'Quantity': 'Quantité',
+  'Add to meal': 'Ajouter au repas',
+  'Add to today': "Ajouter à aujourd'hui",
+  'No target set': "Pas d'objectif défini",
+  'Kcal unknown': 'Kcal inconnu',
+  'No suggestions match your current filters.': 'Aucune suggestion ne correspond à tes filtres.',
+  'Values per 100 g. Only calories are required.': 'Valeurs pour 100 g. Seules les calories sont requises.',
+  'Name': 'Nom',
+  'e.g. Salad': 'ex. Salade',
+  'Calories': 'Calories',
+  'Protein': 'Protéines',
+  'Carbohydrates': 'Glucides',
+  'Fat': 'Lipides',
+  'Fiber': 'Fibres',
+  'Remove {0}': 'Retirer {0}',
+  'No favorites yet.': 'Aucun favori pour l\'instant.',
+  'Star a food item when selecting it to save it here.': 'Étoile un aliment lors de sa sélection pour l\'enregistrer ici.',
+  'Save to favorites': 'Enregistrer en favoris',
+  'Add to meal & save to favorites': 'Ajouter au repas & enregistrer en favoris',
+  'Saved to favorites': 'Enregistré en favoris',
+  'Remove from favorites': 'Retirer des favoris',
+
+  // --- meal slot names ---
+  'Meal': 'Repas',
+  'Breakfast': 'Petit-déjeuner',
+  'Lunch': 'Déjeuner',
+  'Dinner': 'Dîner',
+  'Snack': 'Collation',
+  'Snack 2': 'Collation 2',
+  'Snack 3': 'Collation 3',
+  'Snack 4': 'Collation 4',
+  'Morning snack': 'Collation matin',
+  'Afternoon snack': 'Collation après-midi',
+  'Evening snack': 'Collation soirée',
+  'Evening meal': 'Repas du soir',
+  'Brunch': 'Brunch',
+  'Supper': 'Souper',
+
+  // --- nutrition profile ---
+  'Your profile': 'Ton profil',
+  'Weight from your last weigh-in: {0} {1}.': 'Poids de ta dernière pesée : {0} {1}.',
+  'Log a body weight in the main app — it is required for the BMR calculation.': 'Note ton poids dans l\'app principale — il est requis pour le calcul du BMR.',
+  'Sex': 'Sexe',
+  'Activity': 'Activité',
+  'Choose the level that matches your daily life outside gym sessions. Workouts are added separately.': 'Choisis le niveau qui correspond à ta vie quotidienne hors séances. Les séances sont comptées séparément.',
+  'Activity level': 'Niveau d\'activité',
+  'Workouts per week': 'Séances par semaine',
+  'Estimated needs': 'Besoins estimés',
+  'Basal metabolic rate': 'Métabolisme de base',
+  'Calories at complete rest': 'Calories au repos complet',
+  'Daily energy expenditure': 'Dépense énergétique journalière',
+  'TDEE — total daily calories': 'TDEE — calories totales par jour',
+  'Complete the profile above to see your calorie needs.': 'Complète le profil ci-dessus pour voir tes besoins caloriques.',
+  'Objective': 'Objectif',
+  'Intensity': 'Intensité',
+  'Calorie adjustment': 'Ajustement calorique',
+  'Fine-tune offset from TDEE (kcal/day)': 'Ajuste l\'écart depuis le TDEE (kcal/jour)',
+  'Daily calorie target': 'Objectif calorique journalier',
+  'Dietary preferences': 'Préférences alimentaires',
+  'Diet type': 'Type de régime',
+  'Meals per day': 'Repas par jour',
+  'Snacks per day': 'Collations par jour',
+  'Allergens to exclude': 'Allergènes à exclure',
+  'EU standard 14 major allergens.': '14 allergènes majeurs selon la norme UE.',
+  'Macro targets': 'Objectifs en macros',
+  'Based on {0}. Individual needs may vary — consult a dietitian for personalised advice.': 'Basé sur {0}. Les besoins varient — consulte un diététicien pour des conseils personnalisés.',
+  'TDEE history': 'Historique TDEE',
+  'g / day': 'g / jour',
+
+  // --- caloric balance tab ---
+  '{0} kcal deficit': '{0} kcal de déficit',
+  '{0} kcal surplus': '{0} kcal d\'excédent',
+  'Perfect balance': 'Équilibre parfait',
+  'Sport calories add to your expenditure — they widen your deficit rather than adjusting your food target.': 'Les calories sport s\'ajoutent à ta dépense — elles élargissent ton déficit plutôt que d\'ajuster ton objectif alimentaire.',
+  'Complete your profile to see your caloric balance.': 'Complète ton profil pour voir ton bilan calorique.',
+  'Base expenditure (TDEE)': 'Dépense de base (TDEE)',
+  'Sport expenditure': 'Dépense sport',
+  'Food intake': 'Apport alimentaire',
+  'Base expenditure': 'Dépense de base',
+  'Sport': 'Sport',
+  'Total expenditure': 'Dépense totale',
+  '7-day balance': 'Bilan 7 jours',
+  'Blue = deficit · Orange = surplus': 'Bleu = déficit · Orange = excédent',
+
+  // --- ask weight before workout ---
+  'Ask weight before workout': 'Demander le poids avant la séance',
+  'Log your body weight before every training session.': 'Note ton poids corporel avant chaque séance.',
+  'Exercise A': 'Exercice A',
+  'Exercise B': 'Exercice B',
+
+  // --- workout: progression read-only notice ---
+  'Progression is configured per routine. Changes apply to the next session, not this one.': 'La progression est définie dans la routine. Les modifications s\'appliqueront à la prochaine séance.',
+
+  // --- stats page new keys ---
+  'wk': 'sem.',
+  'Tap to see calendar': 'Appuie pour voir le calendrier',
+  '{0} this month': '{0} ce mois-ci',
+  '{0} this week': '{0} cette semaine',
+  '30d': '30 j',
+  'Last': 'Dernier',
+
+  // --- bodyweight view ---
+  'vs prev': 'vs préc.',
+  'Trend / week': 'Tendance / sem.',
+  '7-day avg': 'Moy. 7 j',
+  '{0}-day average': 'Moyenne {0} j',
+  'Avg/week': 'Moy/sem.',
+  '{0}-week projection': 'Projection {0} sem.',
+  'Trend': 'Tendance',
+  'Log at least 2 entries to see the chart.': 'Note au moins 2 pesées pour voir le graphique.',
+  'No entries yet.': "Aucune entrée pour l'instant.",
+
+  // --- cardio workout ---
+  'Workout done!': 'Séance terminée !',
+  'Distance (km)': 'Distance (km)',
+  'Calories burned': 'Calories brûlées',
+  'Notes (optional)': 'Notes (facultatif)',
+  'How did it feel?': 'Comment était-ce ?',
+  'Save workout': 'Enregistrer la séance',
+  'elapsed': 'écoulé',
+  'Pause': 'Pause',
+  'Stop': 'Stop',
+  'blocks': 'blocs',
+
+  // --- home ---
+  'Resume workout': 'Reprendre la séance',
+  'Pick a workout': 'Choisir une séance',
+
+  // --- login / demo ---
+  'Live demo — everything stays in this browser.': 'Démo live — tout reste dans ce navigateur.',
+  'Start the demo': 'Démarrer la démo',
+  'This demo runs entirely in your browser on example data — no account needed.': 'Cette démo tourne entièrement dans ton navigateur sur des données exemples — sans compte.',
+
+  // --- nutrition: macro donut ---
+  'over target': "au-dessus de l'objectif",
+  'remaining': 'restant',
+  'over': 'en excès',
+
+  // --- food search ---
+  'Search unavailable — check your connection.': 'Recherche indisponible — vérifie ta connexion.',
+  'Search food…': 'Rechercher un aliment…',
+  'Searching…': 'Recherche en cours…',
+  'No results. Try a different search or add manually.': 'Aucun résultat. Essaie un autre terme ou ajoute manuellement.',
+  'Incomplete data': 'Données incomplètes',
+  'Macros incomplete': 'Macros incomplètes',
+
+  // --- nutri tip ---
+  'Dismiss': 'Fermer',
+
+  // --- programme card ---
+  'Unknown session': 'Séance inconnue',
+  'Previous week': 'Semaine précédente',
+  'Next week': 'Semaine suivante',
+
+  // --- admin ---
+  'Code revoked': 'Code révoqué',
+
+  // --- sheets: programme import ---
+  'Import program from CSV / Excel': 'Importer un programme CSV / Excel',
+  'Download Excel template (.xlsx)': 'Télécharger le modèle Excel (.xlsx)',
+  'Import Excel or CSV program file': 'Importer un fichier programme Excel ou CSV',
+  'No exercises could be imported. Check your file and try again.': 'Aucun exercice importé. Vérifie ton fichier et réessaie.',
+
+  // --- settings page ---
+  'Beginner mode': 'Mode débutant',
+  'Experience': 'Niveau',
+  'Demo': 'Démo',
+  "You're in the demo": 'Tu es dans la démo',
+  'Self-host openGym': 'Héberger openGym',
+  'Reset demo data': 'Réinitialiser la démo',
+  'Reset demo data?': 'Réinitialiser la démo ?',
+  'Demo data reset': 'Démo réinitialisée',
+  'Load 3-month demo data': 'Charger 3 mois de données démo',
+  'PPL programme · cut goal · fictitious data for demo purposes': 'Programme PPL · objectif déficit · données fictives',
+  'Load demo data?': 'Charger les données démo ?',
+  'Replaces all current data with 3 months of fictitious workouts, nutrition and cardio. Export a backup first if you want to keep your data.': 'Remplace toutes les données actuelles par 3 mois de séances, nutrition et cardio fictifs. Exporte une sauvegarde d\'abord si tu veux garder tes données.',
+  'Load demo': 'Charger la démo',
+  'Demo data loaded': 'Données démo chargées',
+  'Hides advanced options — progression policy, effort per set.': 'Masque les options avancées — politique de progression, effort par série.',
+  'Turn on beginner mode to simplify the interface and focus on the essentials.': "Active le mode débutant pour simplifier l’interface et te concentrer sur l’essentiel.",
+  'Beginner mode on — progression settings and effort tracking are hidden. Toggle off to access all features.': 'Mode débutant activé — progression et effort masqués. Désactive pour tout voir.',
+  'Passkey sign-in, sync across your devices, your own data.': 'Connexion passkey, sync sur tes appareils, tes données.',
+  'Example data, stored only in this browser — change anything you like.': 'Données exemple, stockées dans ce navigateur — modifie ce que tu veux.',
+  "Puts the example plan, workouts and weigh-ins back the way they started.": "Remet le plan, séances et pesées exemple tels qu’ils étaient.",
+
+  // --- plan view ---
+  'Type of routine': 'Type de routine',
+  'Cardio — timer-based blocks': 'Cardio — blocs chronométrés',
+
+  // --- routine edit ---
+  'Add block': 'Ajouter un bloc',
+  'Distance (optional)': 'Distance (optionnel)',
+  'No blocks yet — add your first one.': 'Pas encore de bloc — ajoute le premier.',
+  'Repeats': 'Répétitions',
+  'Rest duration (seconds)': 'Durée repos (secondes)',
+  'Rest intensity': 'Intensité repos',
+  'Save block': 'Enregistrer le bloc',
+  'Work duration (seconds)': 'Durée travail (secondes)',
+  'Work intensity': 'Intensité travail',
+
+  // --- cardio entry ---
+  'Activities': 'Activités',
+  'Average speed': 'Vitesse moyenne',
+  'Date': 'Date',
+  'Elevation gain': 'Dénivelé',
+  'Log a body weight to get automatic calorie estimates.': 'Note ton poids pour obtenir des estimations caloriques automatiques.',
+  'Log activity': "Enregistrer l’activité",
+  'Manual entry': 'Entrée manuelle',
+  'Override calories': 'Remplacer les calories',
+  'Perceived effort': 'Effort ressenti',
+  'Save activity': "Enregistrer l’activité",
+  '1 = easy — 5 = maximal': '1 = facile — 5 = maximal',
+  'Calculated — Ainsworth 2011': 'Calculé — Ainsworth 2011',
+  'minutes': 'minutes',
+
+  // --- week view (nutrition) ---
+  'Average daily calories': 'Calories journalières moyennes',
+  'Days logged': 'Jours tracés',
+  'Day streak': 'Jours consécutifs',
+  'On target': 'Dans les objectifs',
+  'Calories / day — last 7 days': 'Calories / jour — 7 derniers jours',
+  'Daily breakdown': 'Détail journalier',
+  'Log meals for at least one day to see weekly averages.': 'Note tes repas sur au moins un jour pour voir les moyennes hebdomadaires.',
+  'Weekly averages smooth out day-to-day variation — a more realistic way to track progress than a single daily target.': 'Les moyennes hebdomadaires lissent les variations quotidiennes — plus réaliste qu’une cible journalière unique.',
+
+  // --- day view (nutrition) ---
+  'Open the': 'Ouvre l’onglet',
+  'tab to set your calorie target — your macro breakdown will appear here.': 'pour définir ton objectif calorique — les macros apparaîtront ici.',
+
+  // --- misc missing ---
+  'Exercise': 'Exercice',
+
+
+  'Remove': 'Retirer',
+
+  'weeks': 'semaines',
+
+  'Template with cascading dropdowns: select a muscle group and the exercise list filters automatically. Contains all 1324 exercises.': "Modèle avec listes déroulantes en cascade : sélectionne un groupe musculaire et la liste d'exercices se filtre automatiquement. Contient les 1324 exercices.",
+
+  "That file's columns aren't recognised — see the docs for supported apps.": 'Les colonnes de ce fichier ne sont pas reconnues — consulte la doc pour les applications compatibles.',
+
+
+
+  // --- newly added ---
+
+  'Fri': 'Ven',
+
+  'Wed': 'Mer',
+
+  'Add': 'Ajouter',
+
+  "No exercises yet.": "Aucun exercice pour l'instant.",
+
+  'Back': 'Retour',
+
+  'Current': 'Actuel',
+
+  'Rep': 'Rép',
+
+  'Work': 'Travail',
+
+  'estimated': 'estimé',
+
+  'Self-host it in a minute →': 'Auto-héberge-le en quelques minutes →',
+
+  'This demo runs entirely in your browser on example data — nothing is sent anywhere. Passkey sign-in and sync across your devices come with the openGym server, which you get by self-hosting it.': "Cette démo s'exécute entièrement dans ton navigateur sur des données d'exemple — rien n'est envoyé nulle part. La connexion par clé d'accès et la sync entre tes appareils sont disponibles avec le serveur openGym, que tu obtiens en l'auto-hébergeant.",
+
+  "Let's go! Load starter plan": "C'est parti ! Charger le plan de départ",
+
+  "Skip — I'll build my plan manually": "Passer — je construirai mon plan moi-même",
+
+  "Tap the link button on an exercise to superset it with the one above — you'll do them back-to-back.": "Appuie sur le bouton lien pour supersetter cet exercice avec celui du dessus — tu les enchaîneras sans repos.",
+
+  'total': 'total',
+
+  "Ends this profile's sessions on all your devices.": 'Termine les sessions de ce profil sur tous tes appareils.',
+
+  'Reset': 'Réinitialiser',
+
+  "The screen stays on while a workout is running, so you don't have to unlock your phone between sets.": "L'écran reste allumé pendant la séance, tu n'as pas besoin de déverrouiller ton téléphone entre les séries.",
+
+  '1 = easy · 5 = maximal': '1 = facile · 5 = maximal',
+
+  'Distance': 'Distance',
+
+  '⚠️ Deficit exceeds 20% of TDEE. ANSES recommends a maximum of 500 kcal/day deficit to preserve muscle.': '⚠️ Le déficit dépasse 20% de la DDEE. L\'ANSES recommande un déficit maximal de 500 kcal/jour pour préserver le muscle.',
+
+  'target': 'objectif',
+
+  'Move up': 'Monter',
+
+  'Move down': 'Descendre',
+
+  'Previous month': 'Mois précédent',
+
+  'Next month': 'Mois suivant',
+
+
+  // --- nutrition tips ---
+  'Complete your profile (age, height, weight) to unlock calorie and macro targets.': 'Complète ton profil (âge, taille, poids) pour débloquer tes objectifs caloriques et en macros.',
+  'Log a body weight in the main app to enable BMR and macro calculations.': "Note ton poids dans l'app pour activer les calculs de BMR et de macros.",
+  'No meals logged today. Regular tracking gives more accurate weekly averages.': "Aucun repas enregistré aujourd'hui. Un suivi régulier améliore la précision des moyennes hebdomadaires.",
+  'Under 60% of your protein target. Eggs, dairy, legumes or meat at dinner can help.': "Moins de 60 % de ton objectif en protéines. Œufs, laitages, légumineuses ou viande au dîner peuvent aider.",
+  'Very low fiber today. Vegetables, legumes and whole grains support gut health.': "Très peu de fibres aujourd'hui. Légumes, légumineuses et céréales complètes soutiennent la santé intestinale.",
+  'Deficit > 20% of TDEE. ANSES recommends ≤ 500 kcal/day to preserve muscle.': "Déficit > 20 % de la DDEE. L'ANSES recommande ≤ 500 kcal/jour pour préserver le muscle.",
+  'A surplus without resistance training tends to produce fat, not muscle.': 'Un surplus sans musculation produit surtout de la graisse, pas du muscle.',
+  'Recomposition takes months. High protein and progressive training are the key levers.': 'La recomposition prend des mois. Protéines élevées et progression régulière sont les leviers clés.',
+  'Calorie intake is right on target today.': "Apport calorique dans l'objectif aujourd'hui.",
+  "You've logged meals 6+ days this week — consistent tracking drives results.": 'Tu as noté tes repas 6 j+ cette semaine — la régularité fait la différence.',
+  "You've only logged a couple of days this week. Weekly averages are more reliable with daily logs.": "Tu n'as noté que quelques jours cette semaine. Les moyennes sont plus fiables avec un suivi quotidien.",
+
+  // --- bodyweight: days-to-goal ---
+  'To goal': 'Objectif',
+  'Reached!': 'Atteint !',
+  'd': 'j',
+  'to lose': 'à perdre',
+  'to gain': 'à gagner',
+  'At {0} {1}/week → {2} kg goal in ~{3} days': 'À {0} {1}/sem. → objectif {2} kg dans ~{3} jours',
+  '{0} kcal/day × 7 700 kcal/kg → ~{1} days to goal': "{0} kcal/j × 7 700 kcal/kg → ~{1} jours avant l'objectif",
+  '{0} kcal deficit/day · {1} training + {2} rest days/week → ~{3} days to goal': "{0} kcal déficit/j · {1} séances + {2} repos/sem. → ~{3} jours avant l'objectif",
+
+  // --- banner home ---
+  'New — Training programmes': 'Nouveau — Programmes',
+  'Structure your training into multi-week plans.': 'Structure ton entraînement en plans multi-semaines.',
+  'Go to Plan': 'Voir Plan',
+
+  'Training programmes': "Programmes d'entraînement",
+
+  // --- home: quick actions + cardio ---
+  'Running, cycling, swimming…': 'Course, vélo, natation…',
+  'Log activity': 'Enregistrer une activité',
+
+  // --- nutrition plan (NutriPlan.jsx) ---
+  'Nutrition plan': 'Plan nutritionnel',
+  'Macro distribution': 'Répartition des macros',
+  'Training day': 'Jour de séance',
+  '{0} training days + {1} rest days/week · average {2} kcal/day': '{0} jours de séance + {1} jours de repos/sem. · moyenne {2} kcal/j',
+  'Key recommendations': 'Recommandations clés',
+
+  // cut tips
+  'Prioritise protein at every meal to preserve muscle': 'Priorise les protéines à chaque repas pour préserver le muscle',
+  'Fill half your plate with vegetables and high-fibre foods': 'Remplis la moitié de ton assiette de légumes et aliments riches en fibres',
+  'Favour whole grains and legumes over refined carbs': 'Privilégie les céréales complètes et légumineuses aux glucides raffinés',
+
+  // bulk tips
+  'Time carbs and protein around your workouts': 'Planifie glucides et protéines autour de tes séances',
+  'Hit your calorie target every day — consistency builds mass': 'Atteins ton objectif calorique chaque jour — la régularité construit la masse',
+  'Include slow-digesting protein (cottage cheese) before bed': 'Inclus une protéine à digestion lente (fromage blanc) avant de dormir',
+
+  // recomp tips
+  'Protein is top priority — aim for 2 g per kg of body weight': 'Les protéines sont la priorité — vise 2 g par kg de poids de corps',
+  'Cycle calories: more on training days, fewer on rest days': 'Cycle tes calories : plus les jours de séance, moins les jours de repos',
+  'Whole foods first — minimise ultra-processed products': 'Aliments entiers en priorité — minimise les produits ultra-transformés',
+
+  // maintain tips
+  'Balanced plate: quality protein, slow carbs and healthy fats': 'Assiette équilibrée : protéines de qualité, glucides lents et bonnes graisses',
+  'Monitor your weight weekly and adjust portions if it drifts': 'Surveille ton poids hebdomadairement et ajuste les portions si besoin',
+  'Consistency over perfection — small habits compound over time': 'La régularité prime sur la perfection — les petites habitudes s\'accumulent',
+
+  // --- DayView: training/rest day + macros ---
+  'Training day — {0} kcal': 'Jour de séance — {0} kcal',
+  'Rest day — {0} kcal': 'Jour de repos — {0} kcal',
+  'Macros today': 'Macros du jour',
+  'Reset to auto': 'Remettre auto',
+  'No weight logged — enter here': 'Poids non renseigné — saisir ici',
+  'Estimated — Ainsworth 2011': 'Estimé — Ainsworth 2011',
+  'Save activity': 'Enregistrer l\'activité',
+
+  // --- NutriPlan macro gauges + TDEE breakdown ---
+  'Macro ratios': 'Ratios des macros',
+  'Adjust ratios': 'Ajuster les ratios',
+  'Total calories unchanged': 'Total calorique inchangé',
+  'Below recommended minimum': 'En dessous du minimum recommandé',
+  'Minimum {0}g recommended': 'Minimum {0}g recommandé',
+  'How calories are calculated': 'Comment les calories sont calculées',
+  'Basal Metabolic Rate (BMR)': 'Métabolisme de base (MB)',
+  'Calories burned at complete rest (Mifflin–St Jeor)': 'Calories brûlées au repos complet (Mifflin–St Jeor)',
+  'Activity multiplier for your daily life outside workouts': 'Multiplicateur d\'activité pour ta vie quotidienne hors séances',
+  'Total Daily Energy (TDEE)': 'Dépense totale journalière (TDEE)',
+  'Caloric goal': 'Objectif calorique',
+  'Deficit': 'Déficit',
+  'Surplus': 'Surplus',
+  'Calorie reduction to lose body fat': 'Réduction calorique pour perdre de la masse grasse',
+  'Calorie increase to gain muscle': 'Apport calorique supplémentaire pour prendre du muscle',
+  'Daily calorie target': 'Objectif calorique quotidien',
+  'Cardio does not increase your food target': 'Le cardio n\'augmente pas ton objectif alimentaire',
+  'it deepens your caloric deficit in the Balance tab.': 'il approfondit ton déficit calorique dans l\'onglet Bilan.',
+  // --- Stats heatmap ---
+  'Training calendar': 'Calendrier d\'entraînement',
+  'Calorie intake': 'Apports caloriques',
+  '12-week average / day': 'Moyenne sur 12 semaines / jour',
+  'On target': 'Dans la cible',
+  'Over target': 'Au-dessus',
+  'Under target': 'En dessous',
+  'base {0}': 'base {0}',
+  'Not logged': 'Non suivi',
+  'cible': 'cible',
+  'Previous day': 'Jour précédent',
+  'Next day': 'Jour suivant',
+  'Back to today': 'Retour à aujourd\'hui',
+  'Tap to return to today': 'Toucher pour revenir à aujourd\'hui',
+  'Previous week': 'Semaine précédente',
+  'Next week': 'Semaine suivante',
+  'This week': 'Cette semaine',
+  'Calories / day': 'Calories / jour',
+  'Each square = 1 day. Darker = longer session. Tap a day to see details.': 'Chaque carré = 1 jour. Plus foncé = séance plus longue. Appuie sur un jour pour les détails.',
+
+  // --- nutrition tabs ---
+  'Foods': 'Aliments',
+
+  // --- FoodsView ---
+  'New food': 'Nouvel aliment',
+  'New dish': 'Nouveau plat',
+  'Save food': 'Enregistrer',
+  'Save dish': 'Enregistrer le plat',
+  'Dishes': 'Plats',
+  'No saved foods yet': 'Aucun aliment enregistré',
+  'Create a food or dish above, or star an item when adding it to a meal.': 'Crée un aliment ou un plat ci-dessus, ou ajoute une étoile à un aliment lors de l\'ajout à un repas.',
+  'Search foods…': 'Rechercher des aliments…',
+  'No results for "{0}"': 'Aucun résultat pour « {0} »',
+  'Dish name': 'Nom du plat',
+  'Number of servings': 'Nombre de portions',
+  'Recipe makes how many portions?': 'La recette fait combien de portions ?',
+  'Ingredients': 'Ingrédients',
+  'Add ingredient': 'Ajouter un ingrédient',
+  'Use ingredient': 'Utiliser cet ingrédient',
+  'Ingredient': 'Ingrédient',
+  'Per serving': 'Par portion',
+  'total ÷ {0}': 'total ÷ {0}',
+  'total': 'total',
+  'e.g. Chicken breast': 'ex. Blanc de poulet',
+  'e.g. Evening bowl': 'ex. Bowl du soir',
+  'ingredients': 'ingrédients',
+  '/ portion': '/ portion',
 }

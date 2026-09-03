@@ -18,12 +18,12 @@
 
 /* ---------------------------------------------------------------- tokens -- */
 :root {
-  /* surfaces — dark is the default */
-  --bg:        #000000;
-  --bg-el:     #0e0e10;   /* elevated backdrop (sheets, bars) */
-  --surface:   #1c1c1e;   /* card / grouped-list fill */
-  --surface-2: #2c2c2e;   /* pressed + nested fill */
-  --surface-3: #3a3a3c;   /* controls (segmented track, switch off) */
+  /* surfaces — Ganbaru warm dark (not pure OLED black) */
+  --bg:        #252526;
+  --bg-el:     #2e2e2f;   /* elevated backdrop (sheets, bars) */
+  --surface:   #333334;   /* card / grouped-list fill */
+  --surface-2: #3c3c3d;   /* pressed + nested fill */
+  --surface-3: #474748;   /* controls (segmented track, switch off) */
 
   /* text */
   --label:     #ffffff;
@@ -32,21 +32,21 @@
   --label-4:   rgba(235,235,245,.18);
 
   /* lines */
-  --sep:       rgba(84,84,88,.60);
-  --sep-op:    rgba(84,84,88,.34);   /* for edges sitting over blur */
+  --sep:       rgba(255,255,255,.10);
+  --sep-op:    rgba(255,255,255,.07);
   --hair:      .5px;
 
-  /* system palette (iOS dark values) */
-  --blue:#0a84ff; --green:#30d158; --red:#ff453a; --orange:#ff9f0a;
+  /* system palette — --green is Ganbaru mint (used by the default lime accent) */
+  --blue:#0a84ff; --green:#5cbfa4; --red:#ff453a; --orange:#ff9f0a;
   --yellow:#ffd60a; --teal:#40c8e0; --indigo:#5e5ce6; --pink:#ff375f;
-  --purple:#bf5af2; --mint:#63e6e2; --brown:#ac8e68; --grey:#8e8e93;
+  --purple:#bf5af2; --mint:#5cbfa4; --brown:#ac8e68; --grey:#8e8e93;
 
   /* accent (per-account, synced) */
   --acc:  var(--green);
-  --acc-2:#248a3d;
+  --acc-2:#3d9e88;
   --on-acc:#000000;
-  --acc-soft: color-mix(in srgb, var(--acc) 16%, transparent);
-  --acc-line: color-mix(in srgb, var(--acc) 38%, transparent);
+  --acc-soft: color-mix(in srgb, var(--acc) 18%, transparent);
+  --acc-line: color-mix(in srgb, var(--acc) 40%, transparent);
 
   /* geometry */
   --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:22px; --r-card:14px;
@@ -62,29 +62,32 @@
 }
 
 :root[data-theme="light"] {
-  --bg:        #f2f2f7;
-  --bg-el:     #f7f7fa;
-  --surface:   #ffffff;
-  --surface-2: #ececef;
-  --surface-3: #e3e3e8;
+  /* warm oat — not the default iOS cold grey */
+  --bg:        #F5F0EA;
+  --bg-el:     #FAF6F1;
+  --surface:   #FFFFFF;
+  --surface-2: #ECE7DF;
+  --surface-3: #E3DDD6;
 
-  --label:     #000000;
-  --label-2:   rgba(60,60,67,.60);
-  --label-3:   rgba(60,60,67,.30);
-  --label-4:   rgba(60,60,67,.16);
+  /* warm near-black + warm brown mid-tones */
+  --label:     #1C1812;
+  --label-2:   rgba(58,46,28,.62);
+  --label-3:   rgba(58,46,28,.32);
+  --label-4:   rgba(58,46,28,.15);
 
-  --sep:       rgba(60,60,67,.29);
-  --sep-op:    rgba(60,60,67,.20);
+  --sep:       rgba(58,46,28,.13);
+  --sep-op:    rgba(58,46,28,.08);
 
-  --blue:#007aff; --green:#34c759; --red:#ff3b30; --orange:#ff9500;
-  --yellow:#ffcc00; --teal:#30b0c7; --indigo:#5856d6; --pink:#ff2d55;
-  --purple:#af52de; --mint:#00c7be; --brown:#a2845e; --grey:#8e8e93;
-  --acc-2:#248a3d;
-  --on-acc:#ffffff;
+  /* slightly warmer palette for light mode — same hue family as dark, just brighter */
+  --blue:#0071E3; --green:#30A88E; --red:#FF3B30; --orange:#F07800;
+  --yellow:#E6A800; --teal:#28B0C7; --indigo:#5856D6; --pink:#FF2D55;
+  --purple:#AF52DE; --mint:#30A88E; --brown:#A2845E; --grey:#8E8E93;
+  --acc-2:#2D8A75;
+  --on-acc:#000000;
 }
 
-/* accents — Apple's system colours, so a recolour never looks off-system */
-:root[data-accent="lime"]  { --acc:var(--green);  --acc-2:#248a3d; --on-acc:#000 }
+/* accents */
+:root[data-accent="lime"]  { --acc:var(--green);  --acc-2:#3d9e88; --on-acc:#000 }
 :root[data-accent="sky"]   { --acc:var(--blue);   --acc-2:#0060df; --on-acc:#fff }
 :root[data-accent="orange"]{ --acc:var(--orange); --acc-2:#c76b00; --on-acc:#000 }
 :root[data-accent="violet"]{ --acc:var(--purple); --acc-2:#8944ab; --on-acc:#fff }
@@ -92,18 +95,10 @@
 :root[data-accent="red"]   { --acc:var(--red);    --acc-2:#d70015; --on-acc:#fff }
 :root[data-accent="teal"]  { --acc:var(--teal);   --acc-2:#0071a4; --on-acc:#000 }
 :root[data-accent="gold"]  { --acc:var(--yellow); --acc-2:#b25000; --on-acc:#000 }
-/* Label colour on a filled accent button is picked per accent by measured contrast,
-   not by taste. Button text is 17px/600, so the AA bar is 3:1 (large text). White on
-   the light-theme green is 2.22:1 and on teal 2.57:1 — both fail, and green is the
-   DEFAULT accent, so every primary button in light mode was failing. Black scores
-   9.46 / 8.16 there. Blue, purple, pink and red keep white (3.5–4.1:1), which both
-   passes and matches the platform convention. */
-:root[data-theme="light"][data-accent="lime"],
-:root[data-theme="light"][data-accent="teal"]  { --on-acc:#000 }
 :root[data-theme="light"][data-accent="sky"],
 :root[data-theme="light"][data-accent="violet"],
 :root[data-theme="light"][data-accent="pink"],
-:root[data-theme="light"][data-accent="red"]   { --on-acc:#fff }
+:root[data-theme="light"][data-accent="red"] { --on-acc:#fff }
 
 /* ---------------------------------------------------------------- reset -- */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -125,7 +120,7 @@ input,select,textarea{font:inherit;color:var(--label);letter-spacing:inherit}
 img{max-width:100%}
 a{color:var(--acc);text-decoration:none}
 :focus{outline:none}
-:focus-visible{outline:2.5px solid var(--acc);outline-offset:2px;border-radius:6px}
+:focus-visible{outline:2.5px solid var(--acc);outline-offset:2px;border-radius:inherit}
 button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp button,.sld
 {-webkit-user-select:none;user-select:none}
 
@@ -170,6 +165,8 @@ button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp butto
 body.resting #app{padding-bottom:calc(250px + var(--sab))}
 @keyframes viewfade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 #app.vfade{animation:viewfade var(--med) var(--ease)}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes badgePop{0%{transform:scale(.7);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 
 /* large title, the way a nav bar does it */
 .hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:8px 0 18px}
@@ -184,6 +181,8 @@ body.resting #app{padding-bottom:calc(250px + var(--sab))}
 }
 .iconbtn:active{background:var(--surface-2);transform:scale(.92)}
 .iconbtn.on-ss{background:var(--acc-soft);color:var(--acc)}
+@media(hover:hover){.iconbtn:hover{background:var(--surface-2)}
+.lrow.tap:hover{background:var(--surface-2)}}
 
 h4.sec{
   font-size:13px;font-weight:400;letter-spacing:-.004em;color:var(--label-2);
@@ -202,8 +201,17 @@ h4.sec{
 .card{
   background:var(--surface);border-radius:var(--r-card);
   padding:16px;margin-bottom:12px;
+  border:1px solid rgba(255,255,255,.07);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+:root[data-theme="light"] .card{
+  border-color:rgba(0,0,0,.09);
+  box-shadow:0 1px 3px rgba(0,0,0,.06), 0 1px 1px rgba(0,0,0,.04);
 }
 .card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1}
+.card.tap,.card.tappable{cursor:pointer;transition:background var(--fast),transform var(--fast),box-shadow var(--fast)}
+.card.tap:active,.card.tappable:active{background:var(--surface-2);transform:scale(.993)}
+@media(hover:hover){.card.tap:hover,.card.tappable:hover{background:var(--surface-2);box-shadow:0 6px 20px -8px rgba(0,0,0,.22)}}
 
 /* ------------------------------------------------------ inset group list -- */
 .sect{margin-bottom:22px}
@@ -225,10 +233,11 @@ h4.sec{
 }
 .lrow:has(.lrow-i)+.lrow:has(.lrow-i)::before{left:55px}
 .lrow.tap:active{background:var(--surface-2)}
+@media(hover:hover){.lrow.tap:hover{background:var(--surface-2)}}
 .lrow-i{
-  width:29px;height:29px;border-radius:7px;flex:none;font-size:18px;
+  width:32px;height:32px;border-radius:10px;flex:none;font-size:18px;
   display:flex;align-items:center;justify-content:center;
-  background:var(--tint,var(--acc));color:#fff;
+  background:var(--tint,var(--acc));color:var(--on-acc);
 }
 .lrow-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .lrow-t{font-size:17px;letter-spacing:-.012em;line-height:1.25}
@@ -260,7 +269,15 @@ h4.sec{
 }
 .btn .icn{font-size:19px}
 .btn:active{transform:scale(.975)}
-.btn.primary{background:var(--acc);color:var(--on-acc)}
+@media(hover:hover){
+  .btn:hover{background:var(--surface-3)}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .btn.tinted:hover{background:color-mix(in srgb,var(--acc) 24%,transparent)}
+  .btn.ghost:hover,.btn.plain:hover{background:var(--surface-2)}
+}
+/* Primary: full-width pill — Ganbaru style */
+.btn.primary{background:var(--acc);color:var(--on-acc);border-radius:99px}
+.btn.finish-cta{animation:badgePop 320ms var(--ease) 350ms both}
 .btn.primary:active{background:var(--acc-2)}
 .btn.tinted{background:var(--acc-soft);color:var(--acc)}
 .btn.danger{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
@@ -274,27 +291,34 @@ h4.sec{
 /* ----------------------------------------------------------- tab bar ----- */
 #tabbar{
   position:fixed;left:0;right:0;bottom:0;z-index:50;
-  display:flex;justify-content:space-around;align-items:flex-end;
-  padding:7px 6px calc(6px + var(--sab));
-  background:color-mix(in srgb,var(--bg-el) 72%,transparent);
-  backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);
+  display:flex;justify-content:space-around;align-items:center;
+  padding:8px 4px calc(8px + var(--sab));
+  background:color-mix(in srgb,var(--bg-el) 88%,transparent);
+  backdrop-filter:saturate(160%) blur(20px);-webkit-backdrop-filter:saturate(160%) blur(20px);
   border-top:var(--hair) solid var(--sep-op);
 }
-:root[data-theme="light"] #tabbar{background:rgba(249,249,251,.78)}
+:root[data-theme="light"] #tabbar{background:rgba(245,240,234,.90)}
 #tabbar button{
   flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-  color:var(--label-3);font-size:10px;font-weight:500;letter-spacing:.005em;padding-top:3px;
-  transition:color var(--fast);
+  color:var(--label-3);font-size:10px;font-weight:500;letter-spacing:.005em;
+  padding:6px 6px 4px;border-radius:14px;
+  transition:color var(--fast),background var(--fast);
 }
-/* The inactive tint is semi-transparent, so wherever two strokes cross inside an
-   icon (the calendar's hangers over its frame, the divider's caps on its sides)
-   the alpha doubled up and the icon read as a stack of loose layers. Carrying the
-   fade on the <svg> instead of in the stroke colour flattens the icon first and
-   fades it as one shape — and it does that for every icon, not just this one. */
-#tabbar button .icn{font-size:25px;--icon-stroke:1.65;color:var(--label)}
-#tabbar button.on{color:var(--acc)}
-#tabbar button.on .icn{--icon-stroke:2;color:inherit;opacity:1}
-#tabbar button.start{margin-top:-24px}
+#tabbar button .icn{font-size:22px;--icon-stroke:1.65;color:var(--label-3);transition:color var(--fast)}
+#tabbar button.on{
+  color:var(--acc);
+  flex-direction:column;gap:2px;flex:1;
+  padding:4px 2px;font-size:12px;font-weight:600;
+}
+#tabbar .tab-pill{
+  display:flex;flex-direction:row;align-items:center;gap:6px;
+  padding:7px 14px;
+  background:var(--acc-soft);border-radius:14px;
+  white-space:nowrap;
+}
+@keyframes tabIconPop{0%{transform:scale(.72)}55%{transform:scale(1.2)}100%{transform:scale(1)}}
+#tabbar button.on .icn{--icon-stroke:2.1;color:var(--acc);font-size:18px;animation:tabIconPop 240ms var(--ease) both}
+#tabbar button.start{margin-top:-20px;flex:none;padding:0}
 #tabbar button.start .cir{
   width:52px;height:52px;border-radius:50%;background:var(--acc);color:var(--on-acc);
   display:flex;align-items:center;justify-content:center;position:relative;
@@ -328,12 +352,13 @@ h4.sec{
 .wday .dot{width:5px;height:5px;border-radius:50%;background:transparent;margin:0 auto}
 .wday .dot.plan{background:var(--label-3)}
 .wday .dot.ovr{background:var(--orange)}
-.wday .dot.done{background:var(--acc)}
+.wday .dot.done{background:var(--acc);animation:badgePop .3s var(--ease) both}
 .wday:active{background:var(--surface-2)}
 .wday.today .num{
   background:var(--acc);color:var(--on-acc);font-weight:600;
   width:31px;height:31px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;margin:2px auto;
+  box-shadow:0 3px 10px -2px color-mix(in srgb,var(--acc) 60%,transparent);
 }
 
 /* ----------------------------------------------------------------- list -- */
@@ -341,10 +366,26 @@ h4.sec{
 .item{
   display:flex;align-items:center;gap:12px;background:var(--surface);
   border-radius:var(--r-card);padding:10px 12px;min-height:60px;
+  border:1px solid rgba(255,255,255,.07);
   transition:background var(--fast);text-align:left;width:100%;
 }
+:root[data-theme="light"] .item{border-color:rgba(0,0,0,.09);box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .item:active{background:var(--surface-2)}
-.thumb{width:50px;height:50px;border-radius:9px;object-fit:cover;background:#fff;flex:none}
+@media(hover:hover){.item:hover{background:var(--surface-2)}.wday:not(.today):hover{background:var(--surface-2)}}
+.list>.item{animation:cardIn var(--med) var(--ease) both}
+.list>.item:nth-child(2){animation-delay:30ms}
+.list>.item:nth-child(3){animation-delay:55ms}
+.list>.item:nth-child(4){animation-delay:75ms}
+.list>.item:nth-child(5){animation-delay:90ms}
+.list>.item:nth-child(n+6){animation-delay:105ms}
+.list>.lrow{animation:cardIn var(--med) var(--ease) both}
+.list>.lrow:nth-child(2){animation-delay:30ms}
+.list>.lrow:nth-child(3){animation-delay:55ms}
+.list>.lrow:nth-child(4){animation-delay:75ms}
+.list>.lrow:nth-child(5){animation-delay:90ms}
+.list>.lrow:nth-child(n+6){animation-delay:105ms}
+.thumb{width:50px;height:50px;border-radius:9px;object-fit:cover;background:var(--surface-2);flex:none}
+:root[data-theme="light"] .thumb{background:#fff}
 .thumb-x{
   display:flex;align-items:center;justify-content:center;font-size:21px;
   background:var(--surface-2);color:var(--label-2);
@@ -357,8 +398,12 @@ h4.sec{
   display:inline-flex;align-items:center;gap:3px;background:var(--surface-2);
   color:var(--label-2);border-radius:6px;padding:3px 7px;font-size:12px;
   font-weight:500;text-transform:capitalize;
+  transition:background var(--fast),color var(--fast);
 }
+button.tag:active{opacity:.65}
+@media(hover:hover){button.tag:not(.acc):hover{background:var(--surface-3);color:var(--label)}}
 .tag.acc{background:var(--acc-soft);color:var(--acc)}
+.tag.pr-ref{background:color-mix(in srgb,var(--yellow) 14%,transparent);color:var(--yellow)}
 
 /* ---------------------------------------------------------------- chips -- */
 .chips{
@@ -369,10 +414,11 @@ h4.sec{
 .chip{
   flex:none;padding:6px 13px;border-radius:99px;background:var(--surface);
   font-size:14px;font-weight:400;color:var(--label);text-transform:capitalize;
-  letter-spacing:-.006em;transition:background var(--fast),color var(--fast);
+  letter-spacing:-.006em;transition:background var(--fast),color var(--fast),box-shadow var(--fast),transform var(--fast);
 }
-.chip:active{background:var(--surface-2)}
-.chip.on{background:var(--acc);color:var(--on-acc);font-weight:500}
+.chip:active{background:var(--surface-2);transform:scale(.94)}
+.chip.on{background:var(--acc);color:var(--on-acc);font-weight:500;box-shadow:0 3px 10px -3px color-mix(in srgb,var(--acc) 45%,transparent)}
+@media(hover:hover){.chip:not(.on):hover{background:var(--surface-2)}}
 
 /* =========================== CONTROLS ==================================== */
 
@@ -397,16 +443,19 @@ h4.sec{
   pointer-events:none;--icon-stroke:2.1;z-index:1;
 }
 .searchf .field{padding-left:35px;padding-right:36px;background:var(--surface-2);border-radius:10px}
-:root[data-theme="light"] .searchf .field{background:rgba(118,118,128,.12)}
+:root[data-theme="light"] .searchf .field{background:rgba(58,46,28,.08)}
 .searchf .clear{
   position:absolute;right:8px;width:22px;height:22px;border-radius:50%;
   background:var(--label-3);color:var(--bg);display:flex;align-items:center;
   justify-content:center;font-size:11px;--icon-stroke:3;
+  transition:background var(--fast),transform var(--fast);
 }
+.searchf .clear:active{transform:scale(.88)}
+@media(hover:hover){.searchf .clear:hover{background:var(--label-2)}}
 /* legacy .search wrapper */
 .search{position:relative}
 .search .input{padding-left:35px;background:var(--surface-2);border-radius:10px}
-:root[data-theme="light"] .search .input{background:rgba(118,118,128,.12)}
+:root[data-theme="light"] .search .input{background:rgba(58,46,28,.08)}
 .search>svg{
   position:absolute;left:11px;top:50%;transform:translateY(-50%);z-index:1;
   width:16px;height:16px;stroke:var(--label-3);fill:none;stroke-width:2.1;stroke-linecap:round;
@@ -439,7 +488,7 @@ h4.sec{
   background:var(--surface-3);border-radius:9px;padding:2px;isolation:isolate;
 }
 .seg>button{flex:1 1 0;min-width:0}
-:root[data-theme="light"] .seg{background:rgba(118,118,128,.12)}
+:root[data-theme="light"] .seg{background:rgba(58,46,28,.10)}
 .seg-sel{
   position:absolute;z-index:0;top:2px;bottom:2px;left:2px;
   width:calc((100% - 4px)/var(--n));
@@ -457,6 +506,7 @@ h4.sec{
 .seg button .icn{font-size:16px}
 .seg button:not(.on){color:var(--label-2);font-weight:400}
 .seg button:active{opacity:.5}
+@media(hover:hover){.seg button:not(.on):hover{opacity:.7}}
 /* sitting in a list row: shrink to content instead of filling the row */
 .seg-inline{flex:none;min-width:132px}
 .seg-range{margin-bottom:10px}
@@ -484,16 +534,17 @@ h4.sec{
   transition:background var(--fast);--icon-stroke:2.2;
 }
 .stp button:active{background:var(--surface-3)}
+@media(hover:hover){.stp button:hover{background:var(--surface-3)}}
 .stp .val{
   flex:1;min-width:0;display:flex;align-items:baseline;justify-content:center;gap:3px;padding:0 2px;
 }
 .stp .val i{font-style:normal;font-size:12px;color:var(--label-2);flex:none}
+input.num{background:none;border:none;outline:none;color:var(--label);-moz-appearance:textfield;appearance:textfield;}
+input.num::-webkit-inner-spin-button{display:none}
 .stp .num{
-  width:100%;min-width:0;text-align:center;background:none;border:none;outline:none;
+  width:100%;min-width:0;text-align:center;
   font-size:17px;font-weight:500;letter-spacing:-.012em;padding:0;
-  -moz-appearance:textfield;appearance:textfield;
 }
-.stp .num::-webkit-inner-spin-button{display:none}
 
 /* --- slider --- */
 .sld{position:relative;height:32px;display:flex;align-items:center;cursor:pointer;touch-action:none}
@@ -524,13 +575,21 @@ h4.sec{
   width:16px;height:16px;stroke:transparent;fill:none;stroke-width:2.6;
   stroke-linecap:round;stroke-linejoin:round;transition:stroke var(--fast);
 }
-.ck.on{background:var(--acc);box-shadow:none}
+.ck.on{background:var(--acc);box-shadow:none;animation:badgePop 220ms var(--ease) both}
 .ck.on svg{stroke:var(--on-acc)}
 
 /* ------------------------------------------------------------- workout --- */
-.wprog{height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-bottom:16px}
-.wprog i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width var(--med) var(--ease)}
-.exmedia{position:relative;border-radius:var(--r-lg);overflow:hidden;background:#fff;margin-bottom:12px}
+.wprog{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-bottom:16px}
+.wprog i{display:block;height:100%;background:linear-gradient(90deg,var(--acc-2),var(--acc));border-radius:99px;transition:width var(--med) var(--ease);box-shadow:2px 0 10px -1px color-mix(in srgb,var(--acc) 55%,transparent)}
+.ex-dots{display:flex;gap:4px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.ex-dot{width:5px;height:5px;border-radius:50%;flex:none;background:var(--surface-3);transition:width var(--med) var(--ease),background var(--fast),border-radius var(--med) var(--ease)}
+.ex-dot.cur{width:16px;border-radius:3px;background:var(--acc)}
+.ex-dot.done{background:color-mix(in srgb,var(--acc) 55%,transparent)}
+/* superset dot group: two dots side by side with tiny gap */
+.ex-dot-ss-wrap{display:flex;gap:2px;align-items:center}
+.ex-dot-ss-wrap .ex-dot.cur{width:10px}
+.exmedia{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--surface-2);margin-bottom:12px}
+:root[data-theme="light"] .exmedia{background:#fff}
 .exmedia img{width:100%;height:320px;object-fit:contain;display:block}
 .exmedia .gifhint,.exmedia .giftoggle{
   position:absolute;bottom:9px;display:inline-flex;align-items:center;gap:4px;
@@ -555,7 +614,11 @@ h4.sec{
 .sethead .r-sp{flex:1;text-align:center}
 .sethead .eff-sp{text-align:center}
 .sethead .ck-sp{width:30px;flex:none}
-.setrow{display:flex;align-items:center;gap:8px;padding:7px 0;position:relative}
+.setrow{display:flex;align-items:center;gap:8px;padding:7px 0;position:relative;animation:cardIn var(--med) var(--ease) both}
+.setrow:nth-child(2){animation-delay:25ms}
+.setrow:nth-child(3){animation-delay:48ms}
+.setrow:nth-child(4){animation-delay:65ms}
+.setrow:nth-child(n+5){animation-delay:78ms}
 .setrow+.setrow::before{
   content:'';position:absolute;left:32px;right:0;top:0;height:var(--hair);background:var(--sep);
 }
@@ -580,8 +643,15 @@ h4.sec{
 .setrow.eff3 .stp button{width:23px}
 .setrow.eff3 .stp.eff button{width:20px}
 .setrow.eff3 .stp .num{font-size:14px}
-.setrow.done .n{background:var(--acc);color:var(--on-acc)}
-.setrow.done{opacity:.45}
+.setrow.done .n{background:var(--acc);color:var(--on-acc);font-size:0;animation:badgePop 250ms var(--ease) both}
+.setrow.done .n::after{content:'✓';font-size:13px;font-weight:700;line-height:1}
+@keyframes rowDone{
+  0%{opacity:1;background:color-mix(in srgb,var(--acc) 18%,transparent);border-radius:8px}
+  50%{opacity:.8}
+  100%{opacity:.4;background:transparent}
+}
+.setrow.done{opacity:.4;animation:rowDone 380ms var(--ease) both}
+@media(prefers-reduced-motion:reduce){.setrow.done{animation:none;opacity:.4}}
 /* why the next target is what it is (issue #17) */
 .progline{
   display:flex;align-items:flex-start;gap:7px;margin:6px 0 2px;
@@ -599,6 +669,7 @@ h4.sec{
 }
 .setrow .setgo:disabled{opacity:.3;cursor:default}
 .setrow .setgo:not(:disabled):active{background:var(--surface-3)}
+@media(hover:hover){.setrow .setgo:not(:disabled):hover{background:color-mix(in srgb,var(--acc) 16%,var(--surface-2))}}
 /* exercise-config sheet: three steppers side by side on narrow phones */
 .cfgrow{gap:8px}
 .cfgrow>div{flex:1;min-width:0}
@@ -620,7 +691,11 @@ h4.sec{
 @keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
 #timer .t{font-size:26px;font-weight:600;letter-spacing:-.026em;font-variant-numeric:tabular-nums;min-width:66px}
 #timer .bar{flex:1;height:4px;background:var(--surface-3);border-radius:99px;overflow:hidden}
-#timer .bar i{display:block;height:100%;background:var(--acc);transition:width 1s linear}
+#timer .bar i{display:block;height:100%;background:var(--acc);transition:width 1s linear,background var(--fast)}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.45}}
+#timer .t.urgent{color:var(--red);animation:timerPulse .9s ease-in-out infinite}
+@keyframes nextGlow{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 0%,transparent)}60%{box-shadow:0 0 0 6px color-mix(in srgb,var(--acc) 28%,transparent)}}
+.btn-next-ready{animation:nextGlow 1.8s ease-in-out infinite}
 /* rest variant: −15/+15/Skip and the clock won't share one line on a phone, so the clock and
    bar take the top row and the controls take their own. The work timer keeps a single row —
    it only ever has two buttons. */
@@ -643,8 +718,8 @@ h4.sec{
 #modal-root{position:fixed;inset:0;z-index:100;display:none}
 #modal-root.open{display:block}
 .mback{
-  position:absolute;inset:0;background:rgba(0,0,0,.4);
-  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+  position:absolute;inset:0;background:rgba(0,0,0,.55);
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
   touch-action:none;overscroll-behavior:none;
 }
 .sheet{
@@ -752,8 +827,9 @@ h4.sec{
 .hm-c.l2{background:color-mix(in srgb,var(--acc) 55%,var(--surface-2))}
 .hm-c.l3{background:color-mix(in srgb,var(--acc) 78%,var(--surface-2))}
 .hm-c.l4{background:var(--acc)}
-.hm-c.today{box-shadow:0 0 0 1.5px var(--acc)}
+.hm-c.today{box-shadow:0 0 0 1.5px var(--acc),0 0 6px color-mix(in srgb,var(--acc) 40%,transparent)}
 .hm-c.future{opacity:.3}
+@media(hover:hover){.hm-c:not(.future):is(.l1,.l2,.l3,.l4):hover{opacity:.75;transform:scale(1.25);cursor:pointer}}
 .hm-legend{
   display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:9px;
   font-size:11px;color:var(--label-3);
@@ -786,7 +862,8 @@ h4.sec{
 .mrow{display:flex;align-items:center;gap:9px;padding:5px 0}
 .mrow .nm{flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mrow .bar{width:74px;height:5px;border-radius:3px;background:var(--surface-2);flex:none;overflow:hidden}
-.mrow .bar i{display:block;height:100%;background:var(--acc);border-radius:3px}
+.mrow .bar i{display:block;height:100%;background:var(--acc);border-radius:3px;transition:width .55s var(--ease)}
+@starting-style{.mrow .bar i{width:0}}
 .mrow .v{font-size:12px;color:var(--label-2);min-width:52px;text-align:right;flex:none}
 /* A headline number inside a card — tile weight without a tile around it, for the pair of
    readings at the top of the effort card. */
@@ -797,14 +874,35 @@ h4.sec{
 
 /* --- stat tiles --- */
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.tile{background:var(--surface);border-radius:var(--r-card);padding:14px}
+.tile{background:var(--surface);border-radius:var(--r-card);padding:14px;animation:cardIn var(--med) var(--ease) both}
+.tiles>:nth-child(2){animation-delay:50ms}
+.tiles>:nth-child(3){animation-delay:100ms}
+.tiles>:nth-child(4){animation-delay:150ms}
 .tile .l{
   color:var(--label-2);font-size:13px;font-weight:400;letter-spacing:-.004em;
   text-transform:none;display:flex;align-items:center;gap:5px;
 }
 .tile .l .icn{font-size:14px;color:var(--label)}
 .tile .v{font-size:26px;font-weight:600;letter-spacing:-.026em;margin-top:5px;line-height:1.1}
-.tile.tappable:active{background:var(--surface-2)}
+.tile.tappable{cursor:pointer;transition:background var(--fast),transform var(--fast)}
+.tile.tappable:active{transform:scale(.97)}
+@media(hover:hover){.tile.tappable:hover{filter:brightness(1.06)}}
+.tile.colored{background:linear-gradient(135deg,color-mix(in srgb,var(--card-color) 17%,var(--surface)),color-mix(in srgb,var(--card-color) 6%,var(--surface)));border:1px solid color-mix(in srgb,var(--card-color) 22%,transparent)}
+.tile.colored .l{color:color-mix(in srgb,var(--card-color) 60%,var(--label-2))}
+.tile.colored .v{color:var(--card-color)}
+.finish-trophy{font-size:60px;display:flex;justify-content:center;color:var(--acc);margin-bottom:6px;animation:badgePop 350ms var(--ease) both;filter:drop-shadow(0 0 18px color-mix(in srgb,var(--acc) 30%,transparent))}
+
+/* --- history month header --- */
+.month-hd{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--label-3);padding:14px 0 6px;display:flex;align-items:center;gap:8px;
+}
+.month-hd::after{content:'';flex:1;height:.5px;background:var(--sep)}
+.month-hd-count{
+  background:var(--surface-3);color:var(--label-2);
+  border-radius:99px;padding:1px 7px;font-size:10px;font-weight:600;letter-spacing:0;
+  text-transform:none;
+}
 
 /* --- PR badge --- */
 .pr{
@@ -826,6 +924,7 @@ h4.sec{
   max-width:88vw;text-align:center;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.pr{background:color-mix(in srgb,var(--yellow) 90%,var(--surface));color:#000;font-weight:700;box-shadow:0 10px 30px -6px rgba(0,0,0,.45),0 0 0 2px oklch(85% .18 88)}
 
 /* ---------------------------------------------------------------- misc --- */
 .empty{text-align:center;color:var(--label-2);padding:44px 20px;font-size:15px;line-height:1.45}
@@ -845,6 +944,7 @@ h4.sec{
   font-weight:400;font-size:15px;color:var(--label);transition:background var(--fast);
 }
 .cal-d:active{background:var(--surface-2)}
+@media(hover:hover){.cal-d:not(.has):hover{background:var(--surface-2)}.cal-d.has:hover{background:color-mix(in srgb,var(--acc) 22%,transparent)}}
 .cal-d.has{background:var(--acc-soft);color:var(--acc)}
 .cal-d.today{box-shadow:inset 0 0 0 1.8px var(--acc)}
 .cal-d i{width:5px;height:5px;border-radius:50%;background:transparent}
@@ -858,6 +958,7 @@ h4.sec{
 .swatches{display:flex;gap:12px;flex-wrap:wrap}
 .swatch{width:32px;height:32px;border-radius:50%;flex:none;position:relative;transition:transform var(--fast)}
 .swatch:active{transform:scale(.9)}
+@media(hover:hover){.swatch:not(.on):hover{transform:scale(1.12)}}
 .swatch.on::after{content:'';position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 0 2px var(--label)}
 
 /* --- supersets --- */
@@ -868,15 +969,52 @@ h4.sec{
 .ss-label .icn{font-size:13px}
 .item.in-ss{box-shadow:inset 3px 0 0 var(--acc)}
 .ss-card{
-  border-radius:var(--r-lg);padding:14px;
-  background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--acc-line);
+  border-radius:var(--r-lg);overflow:hidden;padding:0;margin-bottom:12px;
+  background:var(--surface);border:2.5px solid var(--acc);
+  animation:cardIn var(--med) var(--ease);
 }
 .ss-hd{
-  font-size:12px;font-weight:600;color:var(--acc);margin-bottom:12px;
-  text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:11px;font-weight:800;color:var(--on-acc);letter-spacing:.07em;text-transform:uppercase;
+  padding:9px 14px;text-align:center;
+  background:var(--acc);
+  display:flex;align-items:center;justify-content:center;gap:6px;
 }
+/* overview row: both exercise names side-by-side at the same level */
+.ss-overview{
+  display:grid;grid-template-columns:1fr 1fr;
+  border-bottom:1px solid color-mix(in srgb,var(--acc) 25%,transparent);
+  background:color-mix(in srgb,var(--acc) 8%,var(--surface));
+}
+.ss-ov-item{
+  display:flex;align-items:center;gap:7px;padding:9px 12px;
+  font-size:13px;font-weight:600;color:var(--acc);
+  overflow:hidden;
+}
+.ss-ov-item+.ss-ov-item{border-left:1px solid color-mix(in srgb,var(--acc) 25%,transparent)}
+.ss-ov-item.done{color:var(--label-2)}
+.ss-ov-item.done .ss-badge{background:var(--acc-soft);color:var(--acc)}
+.ss-ov-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:capitalize;flex:1}
+.ss-badge{
+  width:20px;height:20px;border-radius:50%;flex-shrink:0;
+  background:var(--acc);color:var(--on-acc);
+  font-size:11px;font-weight:800;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.ss-body{padding:14px}
 .ss-ex{position:relative}
-.ss-amp{text-align:center;font-size:15px;font-weight:600;color:var(--acc);margin:14px 0 8px}
+.ss-ex+.ss-ex{border-top:2px solid color-mix(in srgb,var(--acc) 18%,transparent);margin-top:16px;padding-top:16px}
+/* "puis" connector between stacked superset exercises */
+.ss-amp{
+  display:flex;align-items:center;gap:8px;
+  margin:-4px 0 12px;
+}
+.ss-amp-line{flex:1;height:1px;background:color-mix(in srgb,var(--acc) 30%,transparent)}
+.ss-amp-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:99px;
+  background:var(--acc-soft);color:var(--acc);
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;flex:none;
+}
 
 /* --- home: today's session row --- */
 .today-row{
@@ -885,6 +1023,7 @@ h4.sec{
   transition:background var(--fast);width:100%;text-align:left;
 }
 .today-row:active{background:var(--surface-3)}
+@media(hover:hover){.today-row:hover{background:var(--surface-3)}}
 .today-row .lbl2{font-size:11px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:var(--label-3)}
 .today-row .ttl{
   font-weight:500;font-size:17px;line-height:1.25;text-transform:capitalize;
@@ -949,6 +1088,7 @@ h4.sec{
   transition:color var(--fast),border-color var(--fast);
 }
 .nut-nav button.on{color:var(--acc);border-color:var(--acc)}
+@media(hover:hover){.nut-nav button:not(.on):hover{color:var(--label);border-color:var(--label-3)}}
 
 /* Food log list */
 .meal-slot{margin-bottom:4px}
@@ -967,6 +1107,7 @@ h4.sec{
 .meal-item-row .mi-kcal{font-size:13px;color:var(--label-2);white-space:nowrap}
 .meal-item-row .mi-del{opacity:.4;padding:4px}
 .meal-item-row .mi-del:hover{opacity:.9;color:var(--red)}
+@media(hover:hover){.meal-item-row:hover{background:var(--surface-2)}}
 
 /* Cardio type chips */
 .cardio-chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 4px}
@@ -978,7 +1119,29 @@ h4.sec{
   transition:background var(--fast),color var(--fast);
 }
 .cardio-chips .chip.on{background:var(--acc-soft);color:var(--acc)}
+@media(hover:hover){.cardio-chips .chip:not(.on):hover{background:var(--surface-3);color:var(--label)}}
 .cardio-chips .chip svg{width:16px;height:16px}
+
+/* Cardio metric card — prominent framed input for duration/distance */
+.input-metric-card{
+  background:var(--surface-2);
+  border:1.5px solid var(--sep);
+  border-radius:16px;
+  padding:14px 16px 12px;
+  display:flex;flex-direction:column;gap:6px;
+  transition:border-color var(--fast);
+}
+.input-metric-card:focus-within{border-color:var(--acc)}
+.imc-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--label-3)}
+.imc-row{display:flex;align-items:baseline;gap:4px}
+input.num.imc-input{
+  font-size:32px;font-weight:700;letter-spacing:-.03em;
+  width:100%;min-width:0;
+  background:none;border:none;outline:none;
+  color:var(--label);
+  -moz-appearance:textfield;appearance:textfield;
+}
+.imc-unit{font-size:15px;color:var(--label-3);font-weight:500;flex-shrink:0}
 
 /* Balance dashboard gauges */
 .balance-row{
@@ -987,10 +1150,13 @@ h4.sec{
 }
 .balance-total{
   text-align:center;padding:20px 16px 4px;
+  animation:cardIn var(--med) var(--ease) both;
 }
 .balance-total .bt-delta{
   font-size:42px;font-weight:700;letter-spacing:-.03em;line-height:1;
   font-variant-numeric:tabular-nums;
+  animation:badgePop 360ms var(--ease) both;
+  animation-delay:80ms;
 }
 .balance-total .bt-label{font-size:14px;color:var(--label-2);margin-top:4px}
 .bt-deficit{color:var(--blue)}
@@ -1005,6 +1171,145 @@ h4.sec{
 
 /* Search field wrapper for food search */
 .food-search-wrap{padding:0 16px 8px}
+
+/* ─── stat grid (Stats page 2×2 metric tiles) ────────────────────────── */
+.stat-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  padding:0 var(--pad) 2px;
+}
+.stat-card{
+  display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  padding:14px 14px 12px;border-radius:var(--r-lg);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--card-color,var(--acc)) 17%,var(--surface)),color-mix(in srgb,var(--card-color,var(--acc)) 6%,var(--surface)));
+  border:1px solid color-mix(in srgb,var(--card-color,var(--acc)) 22%,transparent);
+  transition:transform var(--fast),opacity var(--fast);
+  cursor:default;
+  animation:cardIn var(--med) var(--ease) both;
+}
+.stat-grid>:nth-child(2){animation-delay:55ms}
+.stat-grid>:nth-child(3){animation-delay:110ms}
+.stat-grid>:nth-child(4){animation-delay:165ms}
+.stat-card.tappable{cursor:pointer;transition:transform var(--fast),box-shadow var(--fast),opacity var(--fast)}
+.stat-card.tappable:active{transform:scale(.97);opacity:.85}
+@media(hover:hover){.stat-card.tappable:hover{transform:scale(1.02);box-shadow:0 8px 20px -6px color-mix(in srgb,var(--card-color,var(--acc)) 35%,transparent)}}
+.stat-card__icon{
+  font-size:18px;color:var(--card-color,var(--acc));
+  display:flex;align-items:center;
+}
+.stat-card__val{
+  font-size:28px;font-weight:700;letter-spacing:-.04em;line-height:1;
+  color:var(--card-color,var(--acc));font-variant-numeric:tabular-nums;
+}
+.stat-card__label{
+  font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;
+  color:var(--label-2);
+}
+.stat-card__sub{
+  font-size:11px;color:var(--label-3);margin-top:1px;
+}
+
+/* ─── streak badge (ring + text row) ─────────────────────────────────── */
+.streak-badge{
+  display:flex;align-items:center;gap:14px;
+  cursor:pointer;
+  transition:opacity var(--fast);
+}
+.streak-badge:active{opacity:.75}
+@media(hover:hover){.streak-badge:hover{opacity:.85}}
+.streak-badge__ring{
+  position:relative;flex-shrink:0;
+  width:80px;height:80px;
+}
+.streak-badge__ring svg{display:block}
+.streak-badge__center{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.streak-badge__num{
+  font-size:24px;font-weight:800;letter-spacing:-.05em;
+  color:var(--orange);line-height:1;
+}
+.streak-badge__lbl{
+  font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--label-3);margin-top:1px;
+}
+.streak-badge__info{flex:1;min-width:0}
+.streak-badge__title{
+  display:flex;align-items:center;gap:5px;
+  font-size:15px;font-weight:600;color:var(--label);
+}
+
+/* ─── onboarding cards ────────────────────────────────────────────────── */
+.ob-card{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 14px;border-radius:var(--r);margin-bottom:8px;
+  background:var(--surface);border:1.5px solid var(--sep);
+  cursor:pointer;transition:background var(--fast),border-color var(--fast),transform var(--fast);
+  -webkit-tap-highlight-color:transparent;
+}
+.ob-card--on{
+  background:color-mix(in srgb,var(--acc) 10%,var(--surface));
+  border-color:var(--acc);
+  box-shadow:0 3px 12px -4px color-mix(in srgb,var(--acc) 30%,transparent);
+}
+.ob-card:active{transform:scale(.98)}
+@media(hover:hover){.ob-card:not(.ob-card--on):hover{background:var(--surface-2)}}
+@media(hover:hover){.ob-card--on:hover{background:color-mix(in srgb,var(--acc) 14%,var(--surface))}}
+.ob-icon{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:var(--surface-2);color:var(--label-3);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  transition:background var(--fast),color var(--fast);
+}
+.ob-icon--on{background:var(--acc-soft);color:var(--acc)}
+.ob-check{
+  width:22px;height:22px;flex-shrink:0;
+  border:1.5px solid var(--sep);
+  display:flex;align-items:center;justify-content:center;
+  transition:background var(--fast),border-color var(--fast);
+}
+.ob-check--on{background:var(--acc);border-color:var(--acc);animation:badgePop 220ms var(--ease) both}
+
+/* ─── generic tinted-card hover (accent-soft background cards) ─────────── */
+.card-accent{transition:filter var(--fast)}
+.card-accent:active{filter:brightness(.95)}
+@media(hover:hover){.card-accent:hover{filter:brightness(1.04)}}
+/* dashed "add" button (new programme, etc.) */
+.add-dashed{cursor:pointer;transition:background var(--fast),border-color var(--fast),color var(--fast)}
+.add-dashed:active{background:var(--surface-3)!important}
+@media(hover:hover){.add-dashed:hover{background:var(--surface-3)!important;color:var(--label-2)!important;border-color:var(--label-3)!important}}
+
+/* ─── tag variants ─────────────────────────────────────────────────────── */
+.tag.pop{animation:badgePop 380ms var(--ease) 140ms both}
+.tag.resume{color:var(--orange);background:color-mix(in srgb,var(--orange) 16%,transparent)}
+
+/* ─── programme card expand reveal ─────────────────────────────────────── */
+@keyframes progReveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.prog-body{animation:progReveal var(--med) var(--ease) both}
+
+/* ─── programme card interactions ──────────────────────────────────────── */
+.prog-hd{cursor:pointer;transition:background var(--fast)}
+.prog-hd:active{background:var(--surface-2)}
+@media(hover:hover){.prog-hd:hover{background:var(--surface-2)}}
+.prog-start{transition:filter var(--fast),transform var(--fast)}
+.prog-start:active{transform:scale(.93)}
+@media(hover:hover){.prog-start:hover{filter:brightness(1.15)}}
+.prog-action{transition:opacity var(--fast)}
+.prog-action:active{opacity:.55}
+@media(hover:hover){.prog-action:hover{opacity:.78}}
+/* programme progress bar fill (ProgrammeCard + Plan view) */
+.prog-fill{transition:width .55s var(--ease)}
+@starting-style{.prog-fill{width:0!important}}
+/* active programme card in Plan view */
+.plan-prog-active{transition:transform var(--fast),box-shadow var(--fast)}
+.plan-prog-active:active{transform:scale(.99)}
+@media(hover:hover){.plan-prog-active:hover{transform:scale(1.01);box-shadow:0 8px 24px -6px color-mix(in srgb,var(--acc) 28%,transparent)}}
+
+/* ─── card entrance animation in main views ────────────────────────────── */
+.narrow > .card{animation:cardIn var(--med) var(--ease) 40ms both}
+#app > .card{animation:cardIn var(--med) var(--ease) 50ms both}
+@media(prefers-reduced-motion:reduce){.narrow>.card,#app>.card{animation:none!important}}
 
 /* --------------------------------------------------- desktop (≥1000px) --- */
 .cols{display:block}
