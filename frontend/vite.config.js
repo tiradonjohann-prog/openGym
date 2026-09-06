@@ -13,7 +13,7 @@ export default defineConfig({
       '/api': { target: backend, changeOrigin: true },
       '/img': { target: media, changeOrigin: true },
       '/gif': { target: media, changeOrigin: true },
-      '/sw-video': { target: swVideos, changeOrigin: true }
+      '/sw-video': { target: swVideos, changeOrigin: true, rewrite: path => path.replace(/^\/sw-video/, '') }
     }
   },
   build: { chunkSizeWarningLimit: 1500 }
