@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
-import { EXDB, EXIDX, BODYPARTS, isCardio, isBodyweightEq, allExercises, equipmentOf } from './lib/exercises.js'
+import { EXDB, EXIDX, BODYPARTS, isCardio, isBodyweightEq, allExercises, equipmentOf, swDataFor } from './lib/exercises.js'
 import { fmtDate, fmtNum, fmtVol, fmtDur, durPart, todayISO, uid, exCount, DAYN, MONTHS_LONG, ACCENTS } from './lib/format.js'
 import { lastEntryFor, bestWeightFor, buildSets, effectiveRoutineId, workoutVolume, setsDone, setsDoneActive, lastBW, supersetUnits, unitOf, setLabel, defaultConfig, cleanupSg, modeOf, effortOf, isBw, isPerSide, sideReps } from './lib/history.js'
 import { beep, vibrate } from './lib/sound.js'
@@ -144,6 +144,7 @@ export function bwSheet(opts = {}) {
 
 /* ============================ body measurements ============================ */
 import { MEASURE_FIELDS, latestMeasurements } from './lib/measurements.js'
+import BodyMeasureMap from './components/BodyMeasureMap.jsx'
 
 function MeasurementsSheet({ close }) {
   const st = useStore(s => s.S)
@@ -153,13 +154,18 @@ function MeasurementsSheet({ close }) {
     MEASURE_FIELDS.forEach(f => { init[f.key] = latest[f.key]?.v ?? '' })
     return init
   })
+
   const set = (k, raw) => {
     const v = raw === '' ? '' : Math.max(0, Math.round(parseFloat(raw) * 10) / 10) || ''
     setVals(prev => ({ ...prev, [k]: v }))
   }
+
   const save = () => {
     const values = {}
-    MEASURE_FIELDS.forEach(f => { if (vals[f.key] > 0) values[f.key] = vals[f.key] })
+    MEASURE_FIELDS.forEach(f => {
+      const n = parseFloat(vals[f.key])
+      if (n > 0) values[f.key] = n
+    })
     if (!Object.keys(values).length) { toast(t('Enter at least one measurement')); return }
     update(s => {
       if (!s.measurements) s.measurements = []
@@ -169,50 +175,54 @@ function MeasurementsSheet({ close }) {
       else s.measurements.push({ d, values })
       s.measurements.sort((a, b) => a.d < b.d ? -1 : 1)
     })
-    close(); toast(t('Measurements saved'))
+    close()
+    toast(t('Measurements saved'))
   }
+
   const recent = [...(st.measurements || [])].reverse().slice(0, 3)
-  const FIELD_LABELS = Object.fromEntries(MEASURE_FIELDS.map(f => [f.key, t(f.label)]))
-  return <>
-    <h3>{t('Body measurements')}</h3>
-    <div className="muted small" style={{ marginBottom: 14 }}>{t('Log in cm — only fill the ones you measured.')}</div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
-      {MEASURE_FIELDS.map(f => (
-        <div key={f.key}>
-          <div className="small muted" style={{ marginBottom: 4 }}>{t(f.label)}</div>
-          <div className="row" style={{ gap: 4 }}>
-            <input
-              type="number" inputMode="decimal" className="input" min="0" step="0.1"
-              placeholder={latest[f.key] ? String(latest[f.key].v) : '—'}
-              value={vals[f.key]}
-              onChange={e => set(f.key, e.target.value)}
-              style={{ flex: 1, padding: '9px 10px', textAlign: 'right', fontSize: 15 }}
-            />
-            <span className="small muted" style={{ alignSelf: 'center', width: 24, flexShrink: 0 }}>cm</span>
-          </div>
-        </div>
-      ))}
-    </div>
-    <Button variant="primary" onClick={save}>{t('Save')}</Button>
-    {recent.length > 0 && <>
-      <h4 className="sec">{t('Recent entries')}</h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {recent.map(entry => (
-          <div key={entry.d} className="card" style={{ padding: '10px 12px' }}>
-            <div className="small muted" style={{ marginBottom: 6 }}>{fmtDate(entry.d, true)}</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
-              {MEASURE_FIELDS.filter(f => entry.values[f.key] > 0).map(f => (
-                <span key={f.key} className="small">
-                  <span className="muted">{FIELD_LABELS[f.key]}: </span>
-                  <b>{entry.values[f.key]} cm</b>
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
+
+  return (
+    <>
+      <h3 style={{ marginBottom: 4 }}>{t('Body measurements')}</h3>
+      <div className="muted small" style={{ marginBottom: 16 }}>
+        {fmtDate(todayISO(), true)} · {t('Tap a field to enter your measurements')}
       </div>
-    </>}
-  </>
+
+      {/* SVG body diagram with overlaid inputs */}
+      <BodyMeasureMap values={vals} onChange={set} />
+
+      <div style={{ height: 20 }} />
+      <Button variant="primary" onClick={save}>{t('Save measurements')}</Button>
+
+      {/* Recent entries */}
+      {recent.length > 0 && (
+        <>
+          <h4 className="sec">{t('Recent entries')}</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {recent.map(entry => (
+              <div key={entry.d} style={{
+                background: 'var(--surface-2)', borderRadius: 10,
+                padding: '10px 12px',
+              }}>
+                <div style={{ fontSize: 11, color: 'var(--label-3)', marginBottom: 6 }}>
+                  {fmtDate(entry.d, true)}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px' }}>
+                  {MEASURE_FIELDS.filter(f => (entry.values || {})[f.key] > 0).map(f => (
+                    <span key={f.key} style={{ fontSize: 13 }}>
+                      <span style={{ color: 'var(--label-3)', fontSize: 11 }}>{f.name} </span>
+                      <b>{entry.values[f.key]}</b>
+                      <span style={{ color: 'var(--label-3)', fontSize: 11 }}> cm</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </>
+  )
 }
 export const measurementsSheet = () => ui().openSheet(close => <MeasurementsSheet close={close} />)
 
@@ -390,10 +400,56 @@ function OneRM({ ex }) {
   </>
 }
 
+const SW_MUSCLE_LABELS = {
+  ABS_LOWER: 'Abdominaux inférieurs', ABS_OBLIQUES: 'Obliques', ABS_UPPER: 'Abdominaux supérieurs',
+  ADDUCTOR_LONGUS: 'Adducteur long', ADDUCTOR_MAGNUS: 'Grand adducteur',
+  BACK_INFRASPINATUS: 'Infra-épineux', BACK_LATS: 'Grand dorsal',
+  BACK_TERES_MAJOR: 'Grand rond', BACK_TERES_MINOR: 'Petit rond',
+  BACK_TRAPEZIUS_LOWER: 'Trapèze inférieur', BACK_TRAPEZIUS_MIDDLE: 'Trapèze moyen', BACK_TRAPEZIUS_UPPER: 'Trapèze supérieur',
+  BICEPS_FEMORIS: 'Biceps fémoral', BICEPS_LONG_HEAD: 'Biceps — longue portion', BICEPS_SHORT_HEAD: 'Biceps — courte portion',
+  BRACHIORADIALIS: 'Brachio-radial', CHEST_BIG_SWING_MUSCLE: 'Grand pectoral',
+  CHEST_LOWER: 'Pectoral inférieur', CHEST_MIDDLE: 'Pectoral moyen', CHEST_UPPER: 'Pectoral supérieur',
+  CLAVES_GASTROCNEMIUS: 'Gastrocnémien', CLAVES_SOLEUS_MUSCLE: 'Soléaire', CLAVES_TRIBIALIS: 'Tibial antérieur',
+  ERECTOR_SPINAE: 'Érecteurs du rachis',
+  FOREARM_EXTENSORS: 'Extenseurs avant-bras', FOREARM_FLEXORS: 'Fléchisseurs avant-bras',
+  GLUTEUS_MAXIMUS: 'Grand fessier', GLUTEUS_MEDIUS: 'Moyen fessier',
+  GRACILIS: 'Gracile', ILIOPSOAS: 'Ilio-psoas', PECTINEUS: 'Pectiné',
+  QUADRICEPS_RECTUS_FEMORIS: 'Droit fémoral', QUADRICEPS_VASTUS_INTERMEDIUS: 'Vaste intermédiaire',
+  QUADRICEPS_VASTUS_LATERALIS: 'Vaste latéral', QUADRICEPS_VASTUS_MEDIALIS: 'Vaste médial',
+  SARTORIUS: 'Sartorius', SEMIMEMBRANOSUS: 'Semi-membraneux', SEMITENDINOSUS: 'Semi-tendineux',
+  SHOULDERS_FRONT_PART: 'Deltoïde antérieur', SHOULDERS_MIDDLE_PART: 'Deltoïde latéral', SHOULDERS_REAR_PART: 'Deltoïde postérieur',
+  TRICEPS_LATERAL_HEAD: 'Triceps — faisceau latéral', TRICEPS_LONG_HEAD: 'Triceps — longue portion', TRICEPS_MEDIAL_HEAD: 'Triceps — faisceau médial',
+}
+
+function MuscleActivation({ muscles }) {
+  const entries = Object.entries(muscles).sort(([, a], [, b]) => b - a)
+  if (!entries.length) return null
+  return (
+    <div style={{ marginTop: 14 }}>
+      <h4 className="sec" style={{ marginBottom: 8 }}>Muscles activés</h4>
+      {entries.map(([key, pct]) => {
+        const color = pct >= 70 ? 'var(--acc)' : pct >= 40 ? 'var(--orange)' : 'var(--yellow)'
+        return (
+          <div key={key} style={{ marginBottom: 7 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3 }}>
+              <span style={{ color: 'var(--label-2)' }}>{SW_MUSCLE_LABELS[key] || key}</span>
+              <span style={{ fontWeight: 700, color }}>{pct}%</span>
+            </div>
+            <div style={{ height: 4, background: 'var(--surface-3)', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2 }} />
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function ExerciseDetail({ ex, close }) {
   const st = useStore(s => s.S)
   const last = lastEntryFor(st, ex.id)
   const best = bestWeightFor(st, ex.id)
+  const sw = swDataFor(ex.id)
   return <>
     <h3 className="capitalize">{ex.n}</h3>
     <Media ex={ex} />
@@ -404,6 +460,7 @@ function ExerciseDetail({ ex, close }) {
       {(ex.sm || []).slice(0, 3).map((s, i) => <span key={i} className="tag">{t(s)}</span>)}
     </div>
     {ex.desc && <div className="exnote">{ex.desc}</div>}
+    {sw?.muscles && Object.keys(sw.muscles).length > 0 && <MuscleActivation muscles={sw.muscles} />}
     {best > 0 && <div className="small row" style={{ marginBottom: 6, gap: 5 }}><Icon name="trophy" style={{ fontSize: 14, color: 'var(--yellow)' }} />{t('Best:')} <b className="accent">{fmtNum(best)} {st.unit}</b>{last ? ` · ${t('last')} ${fmtDate(last.d)}: ${last.sets.map(s => setLabel(ex.id, s, last.target)).join(', ')}` : ''}</div>}
     <Button variant="primary" icon="plus" style={{ margin: '10px 0 4px' }} onClick={() => addToRoutineSheet(ex)}>{t('Add to my plan')}</Button>
     {ex.custom && <div className="row" style={{ gap: 8, marginTop: 8 }}>
@@ -1039,13 +1096,27 @@ export function WorkoutRow({ w, onClick }) {
   const st = useStore(s => s.S)
   const glyph = glyphOf((st.routines.find(r => r.id === w.routineId) || {}).emoji)
   const hasPR = w.prs && w.prs.length > 0
-  return <div className="item" onClick={onClick} style={hasPR ? { background: 'color-mix(in srgb,var(--yellow) 7%,var(--surface))' } : undefined}>
-    <span className="lrow-i" style={{ width: 34, height: 34, borderRadius: 8, fontSize: 19, background: hasPR ? 'color-mix(in srgb,var(--yellow) 22%,var(--surface-3))' : undefined }}><Icon name={glyph} /></span>
-    <div className="grow"><div className="tt">{w.name}</div>
-      <div className="ss">{[fmtDate(w.d, true), ...durPart(w.end - w.start), t('{0} sets', setsDone(w)), fmtVol(w.vol, st.unit)].join(' · ')}</div></div>
-    {hasPR && <span className="pr"><Icon name="trophy" />{w.prs.length} PR</span>}
-    <Icon name="chevronRight" className="chev" />
-  </div>
+  const borderColor = hasPR ? 'var(--yellow)' : 'var(--acc)'
+  return (
+    <div className="item" onClick={onClick} style={{
+      background: hasPR ? 'color-mix(in srgb,var(--yellow) 7%,var(--surface))' : undefined,
+      borderLeft: `3px solid color-mix(in srgb,${borderColor} 55%,transparent)`,
+    }}>
+      <span className="lrow-i" style={{
+        width: 34, height: 34, borderRadius: 8, fontSize: 19,
+        background: hasPR ? 'color-mix(in srgb,var(--yellow) 22%,var(--surface-3))' : 'color-mix(in srgb,var(--acc) 18%,var(--surface-3))',
+        color: hasPR ? 'var(--yellow)' : 'var(--acc)',
+      }}>
+        <Icon name={glyph} />
+      </span>
+      <div className="grow">
+        <div className="tt">{w.name}</div>
+        <div className="ss">{[fmtDate(w.d, true), ...durPart(w.end - w.start), t('{0} sets', setsDone(w)), fmtVol(w.vol, st.unit)].join(' · ')}</div>
+      </div>
+      {hasPR && <span className="pr"><Icon name="trophy" />{w.prs.length} PR</span>}
+      <Icon name="chevronRight" className="chev" />
+    </div>
+  )
 }
 
 /* ============================ workout lifecycle ============================ */
@@ -1165,9 +1236,21 @@ export const workoutCompleteSheet = () => ui().openSheet(close => <WorkoutComple
 function FinishSummary({ w, prDetails = [], close }) {
   const st = useStore(s => s.S)
   return <div style={{ textAlign: 'center', padding: '8px 0' }}>
-    <div className="finish-trophy"><Icon name="trophy" /></div>
-    <h3 style={{ margin: '6px 0 4px', fontSize: '1.3rem' }}>{t('Workout complete!')}</h3>
-    {w.name && <div className="muted small" style={{ marginBottom: 16 }}>{w.name}</div>}
+    {/* Trophy hero — golden glow radial behind icon */}
+    <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+        width: 130, height: 130, borderRadius: '50%',
+        background: 'radial-gradient(circle, color-mix(in srgb,var(--yellow) 38%,transparent) 0%, transparent 70%)',
+        animation: 'badgePop 480ms var(--ease) both',
+        pointerEvents: 'none',
+      }} />
+      <div className="finish-trophy" style={{ color: 'var(--yellow)', position: 'relative', filter: 'drop-shadow(0 0 22px color-mix(in srgb,var(--yellow) 55%,transparent))' }}>
+        <Icon name="trophy" />
+      </div>
+    </div>
+    <h3 style={{ margin: '4px 0 3px', fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-.028em', lineHeight: 1.15 }}>{t('Workout complete!')}</h3>
+    {w.name && <div className="muted small" style={{ marginBottom: 14, fontSize: 14 }}>{w.name}</div>}
     <div className="tiles" style={{ textAlign: 'left' }}>
       <div className="tile colored" style={{ '--card-color': 'var(--teal)' }}><div className="l">{t('Duration')}</div><div className="v">{fmtDur(w.end - w.start)}</div></div>
       <div className="tile colored" style={{ '--card-color': 'var(--blue)' }}><div className="l">{t('Volume')}</div><div className="v">{fmtVol(w.vol, st.unit)}</div></div>
@@ -1202,7 +1285,7 @@ function FinishSummary({ w, prDetails = [], close }) {
     <h4 className="sec" style={{ textAlign: 'left' }}>{t('What you just trained')}</h4>
     <BodyMap load={loadOfWorkouts([w])} body={st.body} />
     <div style={{ height: 14 }} />
-    <Button variant="primary" className="finish-cta" onClick={() => { close(); nav('/home') }}>{t('Nice!')}</Button>
+    <Button variant="primary" className="finish-cta" style={{ boxShadow: '0 6px 20px color-mix(in srgb,var(--acc) 45%,transparent)' }} onClick={() => { close(); nav('/home') }}>{t('Nice!')}</Button>
   </div>
 }
 export function finishWorkout() {
