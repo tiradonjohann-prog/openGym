@@ -15,6 +15,9 @@ import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
 import { TutorialButton } from '../components/TutorialOverlay.jsx'
 import { SETTINGS_STEPS } from '../lib/tutorials.js'
+import { EQUIPMENT_OPTIONS } from './Onboarding.jsx'
+
+const ALL_EQ = EQUIPMENT_OPTIONS.map(e => e.key)
 
 export default function Settings() {
   const nav = useNavigate()
@@ -160,6 +163,9 @@ export default function Settings() {
         <Switch checked={!!S.simpleMode} onChange={v => update(s => { s.simpleMode = v })} />
       </Row>
     </Section>
+
+    {/* ---------- equipment ---------- */}
+    <EquipmentSection S={S} update={update} />
 
     {/* ---------- appearance ---------- */}
     <Section title={t("Appearance")} footer={DEMO || MOBILE ? undefined : t("synced with your profile")}>
@@ -422,6 +428,58 @@ function PushCard({ S, update, toast }) {
     </Section>
     {on && <div style={{ marginTop: -12, marginBottom: 22 }}><Button size="sm" icon="bell" onClick={test}>{t("Send test notification")}</Button></div>}
   </>
+}
+
+/* ── Equipment section ────────────────────────────────────────────── */
+function EquipmentSection({ S, update }) {
+  const equipment = S.equipment || []
+  const allSelected = ALL_EQ.every(k => equipment.includes(k))
+
+  const toggle = key => {
+    update(s => {
+      const curr = s.equipment || []
+      s.equipment = curr.includes(key) ? curr.filter(k => k !== key) : [...curr, key]
+    })
+  }
+
+  const toggleAll = () => {
+    update(s => { s.equipment = allSelected ? [] : [...ALL_EQ] })
+  }
+
+  return (
+    <Section title={t('Équipement disponible')} footer={t('Sera utilisé pour personnaliser les suggestions de programme.')}>
+      <div style={{ padding: '4px 16px 12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+          <button
+            className="chip on"
+            style={{
+              fontSize: 12, padding: '5px 12px', borderRadius: 8,
+              background: allSelected ? 'var(--sep)' : 'var(--acc)',
+              color: allSelected ? 'var(--label-2)' : '#fff', border: 'none',
+            }}
+            onClick={toggleAll}
+          >
+            {allSelected ? t('Tout décocher') : t('Tout cocher')}
+          </button>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {EQUIPMENT_OPTIONS.map(eq => {
+            const on = equipment.includes(eq.key)
+            return (
+              <button
+                key={eq.key}
+                onClick={() => toggle(eq.key)}
+                className={'chip' + (on ? ' on' : '')}
+                style={{ fontSize: 13, padding: '7px 14px', borderRadius: 10 }}
+              >
+                {t(eq.label)}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </Section>
+  )
 }
 
 // The same registration as the sign-in screen's, reached from Settings instead. It asks for
