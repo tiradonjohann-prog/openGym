@@ -81,7 +81,7 @@ export default function WeekView() {
           }}
           onClick={() => { if (!isCurrentWeek) setAnchor(today) }}
         >
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--label-1)', lineHeight: 1.2 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--label)', lineHeight: 1.2 }}>
             {isCurrentWeek ? t('This week') : fmtDate(weekStart) + ' – ' + fmtDate(weekEnd)}
           </div>
           {!isCurrentWeek && (
@@ -103,24 +103,31 @@ export default function WeekView() {
       </div>
 
       {/* ── Compliance stats row ── */}
-      {trackedDays > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, padding: '8px 16px 4px' }}>
-          <div className="card" style={{ padding: '10px 12px', textAlign: 'center' }}>
-            <div style={{ fontWeight: 700, fontSize: 20, color: 'var(--nut-kcal)' }}>{trackedDays}<span style={{ fontSize: 13, fontWeight: 400, color: 'var(--label-3)' }}>/7</span></div>
-            <div className="small" style={{ color: 'var(--label-3)', marginTop: 2 }}>{t('Days logged')}</div>
+      {trackedDays > 0 && (() => {
+        const logColor = 'var(--nut-carbs)'
+        const streakColor = streak > 0 ? 'var(--orange)' : 'var(--label-3)'
+        const compColor = compliancePct === null ? 'var(--label-3)'
+          : compliancePct >= 80 ? 'var(--green)'
+          : compliancePct >= 50 ? 'var(--yellow)'
+          : 'var(--label-2)'
+        const statCard = (color, value, label) => (
+          <div style={{
+            flex: 1, padding: '12px 10px 10px', borderRadius: 14, textAlign: 'center',
+            background: `linear-gradient(135deg,color-mix(in srgb,${color} 15%,var(--surface)),color-mix(in srgb,${color} 5%,var(--surface)))`,
+            border: `1px solid color-mix(in srgb,${color} 22%,transparent)`,
+          }}>
+            <div style={{ fontWeight: 700, fontSize: 22, lineHeight: 1, color, letterSpacing: '-.02em', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+            <div style={{ fontSize: 11, color: 'var(--label-3)', marginTop: 4, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em' }}>{label}</div>
           </div>
-          <div className="card" style={{ padding: '10px 12px', textAlign: 'center' }}>
-            <div style={{ fontWeight: 700, fontSize: 20, color: streak > 0 ? 'var(--orange)' : 'var(--label-3)' }}>{streak}</div>
-            <div className="small" style={{ color: 'var(--label-3)', marginTop: 2 }}>{t('Day streak')}</div>
+        )
+        return (
+          <div style={{ display: 'flex', gap: 8, padding: '8px 16px 4px' }}>
+            {statCard(logColor, <>{trackedDays}<span style={{ fontSize: 14, fontWeight: 400, color: 'var(--label-3)' }}>/7</span></>, t('Days logged'))}
+            {statCard(streakColor, streak, t('Streak'))}
+            {statCard(compColor, compliancePct === null ? '—' : compliancePct + '%', t('On target'))}
           </div>
-          <div className="card" style={{ padding: '10px 12px', textAlign: 'center' }}>
-            <div style={{ fontWeight: 700, fontSize: 20, color: compliancePct === null ? 'var(--label-3)' : compliancePct >= 80 ? 'var(--green)' : compliancePct >= 50 ? 'var(--yellow)' : 'var(--label-2)' }}>
-              {compliancePct === null ? '—' : compliancePct + '%'}
-            </div>
-            <div className="small" style={{ color: 'var(--label-3)', marginTop: 2 }}>{t('On target')}</div>
-          </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ── Calorie rows ── */}
       <div className="card" style={{ margin: '12px 16px', overflow: 'hidden' }}>
@@ -147,7 +154,7 @@ export default function WeekView() {
           const dayName = dt.toLocaleDateString(undefined, { weekday: 'short' })
           const dayNum  = dt.getDate()
           return (
-            <div key={d} style={{ padding: '7px 14px', borderTop: '1px solid var(--separator)', display: 'flex', alignItems: 'center', gap: 10, background: isToday ? 'color-mix(in srgb, var(--acc) 5%, transparent)' : undefined }}>
+            <div key={d} style={{ padding: '7px 14px', borderTop: '1px solid var(--sep)', display: 'flex', alignItems: 'center', gap: 10, background: isToday ? 'color-mix(in srgb, var(--acc) 5%, transparent)' : undefined }}>
               {/* Day label */}
               <div style={{ width: 48, flexShrink: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 500, color: isToday ? 'var(--acc)' : 'var(--label-2)', lineHeight: 1.1 }}>

@@ -1,17 +1,25 @@
 // Body measurement helpers — pure reads/writes over S.measurements.
-// Each entry: { d: ISO, values: { chest?, waist?, hip?, arm?, thigh?, calf?, shoulder?, neck? } }
-// All values in cm.
+// Each entry: { d: ISO, values: { chest?, waist?, hips?, arm?, thigh?, calf? } }
+// All values in cm. 6 tracked zones.
 
 export const MEASURE_FIELDS = [
-  { key: 'chest',    icon: 'heart',     label: 'Chest' },
-  { key: 'waist',    icon: 'circle',    label: 'Waist' },
-  { key: 'hip',      icon: 'oval',      label: 'Hips' },
-  { key: 'arm',      icon: 'dumbbell',  label: 'Arm' },
-  { key: 'thigh',    icon: 'figure',    label: 'Thigh' },
-  { key: 'calf',     icon: 'figure',    label: 'Calf' },
-  { key: 'shoulder', icon: 'person',    label: 'Shoulder' },
-  { key: 'neck',     icon: 'person',    label: 'Neck' },
+  { key: 'chest', label: 'Chest', name: 'Poitrine' },
+  { key: 'waist', label: 'Waist', name: 'Tour de taille' },
+  { key: 'hips',  label: 'Hips',  name: 'Hanches' },
+  { key: 'arm',   label: 'Arm',   name: 'Bras' },
+  { key: 'thigh', label: 'Thigh', name: 'Cuisse' },
+  { key: 'calf',  label: 'Calf',  name: 'Mollet' },
 ]
+
+// Color per zone (matches BodyMeasureMap)
+export const MEASURE_COLORS = {
+  chest: 'var(--acc)',
+  waist: 'var(--blue)',
+  hips:  'var(--green)',
+  arm:   'var(--orange)',
+  thigh: 'var(--purple)',
+  calf:  'var(--teal)',
+}
 
 // Most recent entry for each measurement field.
 export function latestMeasurements(S) {
@@ -32,9 +40,9 @@ export function measureSeries(S, key) {
     .sort((a, b) => a.t - b.t)
 }
 
-// Delta from first to last entry for a field. Returns null if < 2 entries.
+// Delta from previous to last entry. Returns null if < 2 entries.
 export function measureDelta(S, key) {
   const series = measureSeries(S, key)
   if (series.length < 2) return null
-  return Math.round((series[series.length - 1].y - series[0].y) * 10) / 10
+  return Math.round((series[series.length - 1].y - series[series.length - 2].y) * 10) / 10
 }

@@ -37,22 +37,51 @@ export async function nativeSave(state) {
 export async function syncReminder(S, interactive = false) {
   try {
     const { LocalNotifications } = await import('@capacitor/local-notifications')
-    await LocalNotifications.cancel({ notifications: [0, 1, 2, 3, 4, 5, 6].map(d => ({ id: 100 + d })) }).catch(() => {})
-    const r = S.reminder
-    if (!r?.on) return true
+    // Cancel workout notifications (100-106) + BW notification (200)
+    await LocalNotifications.cancel({
+      notifications: [
+        ...[0, 1, 2, 3, 4, 5, 6].map(d => ({ id: 100 + d })),
+        { id: 200 },
+      ]
+    }).catch(() => {})
+
+    const r    = S.reminder
+    const bwr  = S.reminderBW
+    const anyOn = r?.on || bwr?.on
+    if (!anyOn) return true
+
     let perm = await LocalNotifications.checkPermissions()
     if (perm.display !== 'granted' && interactive) perm = await LocalNotifications.requestPermissions()
     if (perm.display !== 'granted') return false
-    const [hour, minute] = (r.time || '08:00').split(':').map(Number)
-    const notifications = Object.entries(S.week || {})
-      .filter(([, rid]) => rid && (S.routines || []).some(x => x.id === rid))
-      .map(([day, rid]) => ({
-        id: 100 + Number(day),
-        title: t('Workout day'),
-        body: t('{0} is on the plan today — let’s go!', S.routines.find(x => x.id === rid).name),
-        // Capacitor weekdays are 1 (Sunday) … 7 (Saturday); S.week uses getDay() 0…6.
-        schedule: { on: { weekday: Number(day) + 1, hour, minute }, allowWhileIdle: true },
-      }))
+
+    const notifications = []
+
+    // Workout-day reminders (one per planned weekday)
+    if (r?.on) {
+      const [hour, minute] = (r.time || '08:00').split(':').map(Number)
+      Object.entries(S.week || {})
+        .filter(([, rid]) => rid && (S.routines || []).some(x => x.id === rid))
+        .forEach(([day, rid]) => {
+          notifications.push({
+            id: 100 + Number(day),
+            title: t('Workout day'),
+            body: t('{0} is on the plan today — let\'s go!', S.routines.find(x => x.id === rid).name),
+            // Capacitor weekdays are 1 (Sunday) … 7 (Saturday); S.week uses getDay() 0…6.
+            schedule: { on: { weekday: Number(day) + 1, hour, minute }, allowWhileIdle: true },
+          })
+        })
+    }
+
+    // Body weight daily reminder (native, daily repeating)
+    if (bwr?.on) {
+      notifications.push({
+        id: 200,
+        title: t('Body weight'),
+        body: t('Weigh fasted, after using the toilet — for consistent readings.'),
+        schedule: { every: 'day', on: { hour: bwr.hour ?? 7, minute: bwr.minute ?? 0 }, allowWhileIdle: true },
+      })
+    }
+
     if (notifications.length) await LocalNotifications.schedule({ notifications })
     return true
   } catch (e) { return false }

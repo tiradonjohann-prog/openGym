@@ -5,7 +5,8 @@ import { EXIDX } from '../lib/exercises.js'
 import { lastBW, streakWeeks, setLabel, modeOf, effortOf } from '../lib/history.js'
 import { fmtNum, fmtDate, todayISO, weekKey, isoOf } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { bwSheet, goalSheet, calendarSheet, workoutDetailSheet, WorkoutRow, bwDeltaColor } from '../sheets.jsx'
+import { bwSheet, goalSheet, calendarSheet, workoutDetailSheet, WorkoutRow, bwDeltaColor, measurementsSheet } from '../sheets.jsx'
+import { MEASURE_FIELDS, measureSeries, MEASURE_COLORS, latestMeasurements } from '../lib/measurements.js'
 import LineChart from '../components/LineChart.jsx'
 import Heatmap from '../components/Heatmap.jsx'
 import Icon from '../components/Icon.jsx'
@@ -20,6 +21,31 @@ import {
 import { dayCardioKcal } from '../lib/cardio.js'
 import { dayTotals } from '../lib/foodSearch.js'
 import { Button, Segmented, SelectRow } from '../components/ui.jsx'
+import { TutorialButton } from '../components/TutorialOverlay.jsx'
+import { STATS_STEPS } from '../lib/tutorials.js'
+
+/* ── body-weight linear regression helpers (mirrored from BodyWeight.jsx) ── */
+const _DAY_MS = 86_400_000
+const _PROJ_WEEKS = 8
+
+function _bwLinReg(pts) {
+  const n = pts.length
+  if (n < 2) return null
+  const t0 = pts[0].t
+  const xs = pts.map(p => (p.t - t0) / _DAY_MS)
+  const ys = pts.map(p => p.y)
+  const mx = xs.reduce((s, x) => s + x, 0) / n
+  const my = ys.reduce((s, y) => s + y, 0) / n
+  const num = xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0)
+  const den = xs.reduce((s, x) => s + (x - mx) ** 2, 0)
+  if (den === 0) return null
+  const slope = num / den
+  return { slope, intercept: my - slope * mx, t0 }
+}
+
+function _evalReg(reg, t) {
+  return reg.intercept + reg.slope * ((t - reg.t0) / _DAY_MS)
+}
 
 /* ── colorful metric card ─────────────────────────────────────────── */
 function MetricCard({ icon, label, value, sub, color, onClick }) {
@@ -378,13 +404,27 @@ function PRBoard({ S }) {
           {prs.length}
         </span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {visible.map(({ exId, weight, weightDate, e1rm, e1rmDate }) => {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {visible.map(({ exId, weight, weightDate, e1rm, e1rmDate }, rank) => {
           const ex = EXIDX[exId]
           if (!ex) return null
           const latestDate = [weightDate, e1rmDate].filter(Boolean).sort().pop()
+          const medalColor = rank === 0 ? 'var(--yellow)' : rank === 1 ? '#B0B8C8' : rank === 2 ? 'var(--orange)' : null
           return (
-            <div key={exId} className="row between" style={{ padding: '9px 0', borderBottom: 'var(--hair) solid var(--sep)', gap: 8, alignItems: 'center' }}>
+            <div key={exId} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '9px 10px',
+              borderRadius: 10,
+              background: medalColor ? `color-mix(in srgb,${medalColor} 5%,var(--surface-2))` : 'transparent',
+              borderLeft: medalColor ? `3px solid color-mix(in srgb,${medalColor} 65%,transparent)` : '3px solid transparent',
+            }}>
+              {medalColor ? (
+                <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, background: `color-mix(in srgb,${medalColor} 22%,transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: medalColor }}>{rank + 1}</span>
+                </div>
+              ) : (
+                <span style={{ fontSize: 11, color: 'var(--label-4)', width: 22, textAlign: 'center', flexShrink: 0 }}>{rank + 1}</span>
+              )}
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontWeight: 500, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ex.n}</div>
                 {latestDate && <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{fmtDate(latestDate, true)}</div>}
@@ -392,7 +432,7 @@ function PRBoard({ S }) {
               <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignItems: 'center' }}>
                 {e1rm > 0 && (
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--yellow)', lineHeight: 1.1 }}>{fmtNum(e1rm)}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: rank < 3 ? (medalColor || 'var(--yellow)') : 'var(--yellow)', lineHeight: 1.1 }}>{fmtNum(e1rm)}</div>
                     <div style={{ fontSize: 10, color: 'var(--label-4)' }}>{t('Est. 1RM')}</div>
                   </div>
                 )}
@@ -416,6 +456,69 @@ function PRBoard({ S }) {
   )
 }
 
+/* ── measurements card ────────────────────────────────────────────── */
+function MeasurementsCard({ S, range, onRange }) {
+  const now = Date.now()
+  const latest = latestMeasurements(S)
+  const lastDate = Object.values(latest).map(e => e.d).sort().pop() || ''
+
+  return (
+    <div className="card">
+      <div className="row between" style={{ marginBottom: 8 }}>
+        <h2 style={{ margin: 0 }}>{t('Measurements')}</h2>
+        <Button size="sm" icon="plus" onClick={() => measurementsSheet()}>{t('Log')}</Button>
+      </div>
+      <Segmented className="seg-range" value={range} onChange={onRange}
+        options={[{ value: 90, label: '3M' }, { value: 365, label: '1A' }, { value: 0, label: t('All') }]} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(128px, 1fr))', gap: 10, marginTop: 14 }}>
+        {MEASURE_FIELDS.map(({ key, name }) => {
+          const pts = measureSeries(S, key)
+            .filter(p => range === 0 || p.t > now - range * 86400000)
+          if (!pts.length) return null
+          const last = pts[pts.length - 1]
+          const prev = pts.length >= 2 ? pts[pts.length - 2] : null
+          const delta = prev !== null ? Math.round((last.y - prev.y) * 10) / 10 : null
+          const color = MEASURE_COLORS[key]
+          const arrow = delta === null ? '' : delta > 0.05 ? ' ↑' : delta < -0.05 ? ' ↓' : ' →'
+          const deltaColor = delta === null ? 'var(--label-3)'
+            : delta > 0.05 ? 'var(--orange)' : delta < -0.05 ? 'var(--teal)' : 'var(--label-3)'
+          return (
+            <div key={key} style={{
+              background: `linear-gradient(135deg,color-mix(in srgb,${color} 13%,var(--surface-2)),color-mix(in srgb,${color} 5%,var(--surface-2)))`,
+              border: `1px solid color-mix(in srgb,${color} 20%,transparent)`,
+              borderRadius: 12, padding: '10px 12px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0, opacity: 0.9 }} />
+                <div className="small" style={{ color: 'var(--label-2)', fontWeight: 600, letterSpacing: '.01em' }}>{name}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 1 }}>
+                <span style={{ fontSize: 20, fontWeight: 700, lineHeight: 1, color }}>{fmtNum(last.y)}</span>
+                <span className="small dim">cm</span>
+              </div>
+              {delta !== null && (
+                <div className="small" style={{ color: deltaColor, marginBottom: 5, fontSize: 11, fontWeight: 600 }}>
+                  {delta > 0 ? '+' : ''}{fmtNum(delta)} cm{arrow}
+                </div>
+              )}
+              {pts.length >= 2 && (
+                <div style={{ marginTop: 5 }}>
+                  <LineChart points={pts} h={40} unit="cm" color={color} axes={false} />
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      {lastDate && (
+        <div className="small dim" style={{ marginTop: 10, textAlign: 'right' }}>
+          {t('Last')}{' '}<b style={{ color: 'var(--label)' }}>{fmtDate(lastDate, true)}</b>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── main Stats view ──────────────────────────────────────────────── */
 export default function Stats() {
   const nav = useNavigate()
@@ -423,13 +526,26 @@ export default function Stats() {
   const [range, setRange] = useState(90)
   const [exId, setExId] = useState(null)
   const [exMetric, setExMetric] = useState('top')
+  const [measRange, setMeasRange] = useState(90)
   const now = Date.now()
   const anyEffort = hasEffort(S)
   const kind = displayScale(S)
   const hd = scaleName(kind)
 
-  const bwPts = S.bodyweight.filter(b => range === 0 || (b.t || new Date(b.d).getTime()) > now - range * 86400000)
+  const bwPts = S.bodyweight
+    .filter(b => range === 0 || (b.t || new Date(b.d).getTime()) > now - range * 86400000)
     .map(b => ({ t: b.t || new Date(b.d).getTime(), y: b.w, d: b.d }))
+    .sort((a, b) => a.t - b.t)
+  const _bwReg = _bwLinReg(bwPts)
+  const bwExtraLines = (() => {
+    if (!_bwReg || bwPts.length < 2) return []
+    const lat = bwPts[bwPts.length - 1]
+    const projT = lat.t + _PROJ_WEEKS * 7 * _DAY_MS
+    return [
+      { pts: [{ t: bwPts[0].t, y: +_evalReg(_bwReg, bwPts[0].t).toFixed(2) }, { t: lat.t, y: +_evalReg(_bwReg, lat.t).toFixed(2) }], color: 'var(--yellow)', dashed: true, thin: true },
+      { pts: [{ t: lat.t, y: +_evalReg(_bwReg, lat.t).toFixed(2) }, { t: projT, y: +_evalReg(_bwReg, projT).toFixed(1) }], color: 'var(--yellow)', dashed: true, thin: true, projection: true },
+    ]
+  })()
   const bw30 = S.bodyweight.filter(b => (b.t || new Date(b.d).getTime()) > now - 30 * 86400000)
   const bwDelta30 = bw30.length > 1 ? bw30[bw30.length - 1].w - bw30[0].w : null
   const monthW = S.workouts.filter(w => w.d.slice(0, 7) === todayISO().slice(0, 7)).length
@@ -479,18 +595,21 @@ export default function Stats() {
     {/* ── header ── */}
     <div className="hdr">
       <div><h1>{t('Stats')}</h1><div className="sub">{t('Progress & history')}</div></div>
-      <button className="iconbtn" onClick={() => nav('/history')} aria-label={t('History')}><Icon name="history" /></button>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <TutorialButton steps={STATS_STEPS} />
+        <button className="iconbtn" onClick={() => nav('/history')} aria-label={t('History')}><Icon name="history" /></button>
+      </div>
     </div>
 
     {/* ── streak badge (only when there's data) ── */}
     {S.workouts.length > 0 && (
-      <div className="card tap" onClick={calendarSheet}>
+      <div className="card tap" data-tuto="stats-streak" onClick={calendarSheet}>
         <StreakBadge weeks={streakWeeks(S)} thisWeek={wThisWeek} planned={plannedPerWeek} />
       </div>
     )}
 
     {/* ── 4-tile metric grid ── */}
-    <div className="stat-grid">
+    <div className="stat-grid" data-tuto="stats-metrics">
       <MetricCard icon="dumbbell" label={t('Workouts')} value={S.workouts.length}
         sub={monthW > 0 ? t('{0} this month', monthW) : null}
         color="var(--acc)" onClick={() => nav('/history')} />
@@ -521,12 +640,12 @@ export default function Stats() {
     {S.workouts.length >= 2 && <VolumeChart S={S} />}
 
     {/* ── muscle balance ── */}
-    {S.workouts.length > 0 && <MuscleBalance S={S} />}
+    {S.workouts.length > 0 && <div data-tuto="stats-muscles"><MuscleBalance S={S} /></div>}
     {anyEffort && <EffortCard S={S} />}
 
     {/* ── body weight + exercise progress ── */}
     <div className="cols">
-      <div className="card">
+      <div className="card" data-tuto="stats-bw">
         <div className="row between" style={{ marginBottom: 8 }}>
           <h2 style={{ margin: 0 }}>{t('Body weight')}</h2>
           <div className="row" style={{ gap: 8 }}>
@@ -536,7 +655,7 @@ export default function Stats() {
         </div>
         <Segmented className="seg-range" value={range} onChange={setRange}
           options={[{ value: 30, label: '1M' }, { value: 90, label: '3M' }, { value: 365, label: '1A' }, { value: 0, label: t('All') }]} />
-        <div className="chart"><LineChart points={bwPts} h={160} unit={S.unit} goal={S.targetW} /></div>
+        <div className="chart"><LineChart points={bwPts} h={160} unit={S.unit} goal={S.targetW} extraLines={bwExtraLines} /></div>
         {currentBW && (
           <div className="row between small" style={{ marginTop: 8, color: 'var(--label-2)' }}>
             <span>{t('Last')}{' '}<b style={{ color: 'var(--label)' }}>{fmtNum(currentBW.w)} {S.unit}</b></span>
@@ -577,6 +696,9 @@ export default function Stats() {
         </> : <div className="muted small">{t('Finish your first workout to see progress curves here.')}</div>}
       </div>
     </div>
+
+    {/* ── body measurements ── */}
+    {(S.measurements || []).length >= 1 && <MeasurementsCard S={S} range={measRange} onRange={setMeasRange} />}
 
     <PRBoard S={S} />
 

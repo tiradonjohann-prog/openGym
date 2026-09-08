@@ -70,9 +70,9 @@ export default function NutriPlan({ goal, macros, target, workoutsPerWeek }) {
   const restTarget  = hasSplit ? Math.round(target - EXTRA_TRAIN * trainN / restN) : null
 
   const macroItems = [
-    { label: 'Protein',        pct: pct.prot,  g: macros?.protG,  bg: 'var(--blue)' },
-    { label: 'Carbohydrates',  pct: pct.carbs, g: macros?.carbsG, bg: 'var(--orange)' },
-    { label: 'Fat',            pct: pct.fat,   g: macros?.fatG,   bg: 'var(--yellow)' },
+    { label: 'Protein',        pct: pct.prot,  g: macros?.protG,  bg: 'var(--nut-prot)' },
+    { label: 'Carbohydrates',  pct: pct.carbs, g: macros?.carbsG, bg: 'var(--nut-carbs)' },
+    { label: 'Fat',            pct: pct.fat,   g: macros?.fatG,   bg: 'var(--nut-fat)' },
   ]
 
   return (
@@ -86,9 +86,9 @@ export default function NutriPlan({ goal, macros, target, workoutsPerWeek }) {
             {t('Macro distribution')}
           </div>
           <div style={{ display: 'flex', height: 16, borderRadius: 8, overflow: 'hidden', gap: 3, marginBottom: 14 }}>
-            <div style={{ flex: pct.prot,  background: 'var(--blue)',   transition: 'flex .5s ease' }} />
-            <div style={{ flex: pct.carbs, background: 'var(--orange)', transition: 'flex .5s ease' }} />
-            <div style={{ flex: pct.fat,   background: 'var(--yellow)', transition: 'flex .5s ease' }} />
+            <div style={{ flex: pct.prot,  background: 'var(--nut-prot)',  transition: 'flex .5s ease' }} />
+            <div style={{ flex: pct.carbs, background: 'var(--nut-carbs)', transition: 'flex .5s ease' }} />
+            <div style={{ flex: pct.fat,   background: 'var(--nut-fat)',   transition: 'flex .5s ease' }} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
             {macroItems.map(m => (
@@ -139,7 +139,7 @@ export default function NutriPlan({ goal, macros, target, workoutsPerWeek }) {
               <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <div style={{
                   width: 30, height: 30, borderRadius: 9,
-                  background: color + '1A',
+                  background: `color-mix(in srgb,${color} 14%,var(--surface-2))`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 }}>
                   <Icon name={tip.icon} style={{ fontSize: 15, color }} />

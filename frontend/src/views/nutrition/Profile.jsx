@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { useStore } from '../../store/useStore.js'
 import { t } from '../../lib/i18n.js'
 import { lastBW } from '../../lib/history.js'
 import { fmtNum, fmtDate, todayISO } from '../../lib/format.js'
+import { bwSheet } from '../../sheets.jsx'
 import { calcBMR, calcTDEE, ACTIVITY_LEVELS, ACTIVITY_LABEL, ACTIVITY_DESC } from '../../lib/nutrition.js'
 import { GOALS, GOAL_LABEL, GOAL_DESC, GOAL_DEFAULT_DELTA, DELTA_MIN, DELTA_MAX, calcTargetKcal, isAggressiveDelta, presetsFor } from '../../lib/goals.js'
 import { calcMacros, MACRO_SOURCE } from '../../lib/macros.js'
@@ -150,7 +152,7 @@ function TDEEBreakdown({ bmr, tdee, target, goalDelta, activityLevel }) {
             </div>
             {s.note && <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 3, marginLeft: 36 }}>{s.note}</div>}
             {i < steps.length - 1 && (
-              <div style={{ marginLeft: 14, marginTop: 4, borderLeft: '2px dashed var(--separator)', height: 6 }} />
+              <div style={{ marginLeft: 14, marginTop: 4, borderLeft: '2px dashed var(--sep)', height: 6 }} />
             )}
           </div>
         ))}
@@ -176,6 +178,76 @@ export default function Profile() {
   const tdee   = calcTDEE(bmr, n.activityLevel, n.workoutsPerWeek)
   const target = calcTargetKcal(tdee, n.goalDelta)
   const macros = calcMacros(target, weightKg, n.goal, n.workoutsPerWeek)
+
+  const KCAL_PER_KG = 7700
+  const _DAY_MS = 86_400_000
+  const isWeightGoal = n.goal === 'cut' || n.goal === 'bulk'
+  const kgToGoal = isWeightGoal && S.targetW != null && weightKg != null
+    ? Math.abs(weightKg - S.targetW)
+    : null
+
+  // ── P1: tendance poids observée (régression linéaire, 90j, min 3 pesées) ──
+  let weeklyRateKg = null
+  if (kgToGoal != null) {
+    const bwRecent = [...S.bodyweight]
+      .map(e => ({ t: e.t || new Date(e.d).getTime(), y: e.w }))
+      .filter(e => e.t > Date.now() - 90 * _DAY_MS)
+      .sort((a, b) => a.t - b.t)
+    if (bwRecent.length >= 3) {
+      const t0 = bwRecent[0].t
+      const xs = bwRecent.map(p => (p.t - t0) / _DAY_MS)
+      const ys = bwRecent.map(p => p.y)
+      const mx = xs.reduce((s, x) => s + x, 0) / xs.length
+      const my = ys.reduce((s, y) => s + y, 0) / ys.length
+      const num = xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0)
+      const den = xs.reduce((s, x) => s + (x - mx) ** 2, 0)
+      if (den > 0) weeklyRateKg = +((num / den) * 7).toFixed(3)
+    }
+  }
+  const trendValid = weeklyRateKg !== null && kgToGoal != null && kgToGoal > 0.05 && (
+    (n.goal === 'cut' && weeklyRateKg < -0.01) ||
+    (n.goal === 'bulk' && weeklyRateKg > 0.01)
+  )
+  const daysFromTrend = trendValid
+    ? Math.round(kgToGoal / Math.abs(weeklyRateKg) * 7)
+    : null
+
+  // ── P2: déficit calorique réel (logs vs TDEE, 30j, min 5 jours loggés) ──
+  let daysFromRealKcal = null
+  let realDailyDeficit = null
+  let loggedDaysCount = 0
+  if (kgToGoal != null && kgToGoal > 0.05 && n.tdee) {
+    const log = S.nutritionLog || {}
+    const loggedKcals = []
+    for (let i = 1; i <= 30; i++) {
+      const d = new Date(Date.now() - i * _DAY_MS)
+      const iso = d.toISOString().slice(0, 10)
+      let kcal = 0
+      ;(log[iso]?.meals || []).forEach(m => m.items.forEach(item => { kcal += item.kcal || 0 }))
+      if (kcal > 0) loggedKcals.push(kcal)
+    }
+    loggedDaysCount = loggedKcals.length
+    if (loggedDaysCount >= 5) {
+      const avgKcal = loggedKcals.reduce((s, k) => s + k, 0) / loggedDaysCount
+      realDailyDeficit = Math.round(n.tdee - avgKcal)
+      const realValid = (n.goal === 'cut' && realDailyDeficit > 50) ||
+                        (n.goal === 'bulk' && realDailyDeficit < -50)
+      if (realValid) daysFromRealKcal = Math.round(kgToGoal * KCAL_PER_KG / Math.abs(realDailyDeficit))
+    }
+  }
+
+  // ── P3: théorique (goalDelta) ──
+  const daysFromTheory = kgToGoal != null && kgToGoal > 0.05 && n.goalDelta && Math.abs(n.goalDelta) > 50
+    ? Math.round(kgToGoal * KCAL_PER_KG / Math.abs(n.goalDelta))
+    : null
+
+  const daysToGoal = daysFromTrend ?? daysFromRealKcal ?? daysFromTheory
+  const projSource = daysFromTrend !== null ? 'trend' : daysFromRealKcal !== null ? 'real' : 'theory'
+  const goalDateStr = daysToGoal
+    ? new Date(Date.now() + daysToGoal * _DAY_MS)
+        .toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+    : null
+  const setTargetW = v => update(s => { s.targetW = (v != null && v > 0) ? v : null })
 
   const setN = patch => update(s => {
     const prev = s.nutrition || {}
@@ -217,6 +289,12 @@ export default function Profile() {
     }
   })
 
+  // Recalculate stored calories whenever body weight changes
+  useEffect(() => {
+    if (bw) setN({})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bw?.w, bw?.d])
+
   const setGoal = goal => {
     setN({ goal, goalDelta: GOAL_DEFAULT_DELTA[goal] })
   }
@@ -247,10 +325,18 @@ export default function Profile() {
       {/* ── Profile ── */}
       <Section
         title={t('Your profile')}
-        footer={bw
-          ? t('Weight from your last weigh-in: {0} {1}.', fmtNum(bw.w), S.unit)
-          : t('Log a body weight in the main app — it is required for the BMR calculation.')}
+        footer={!bw ? t('Body weight is required for BMR/TDEE calculation — tap the weight row to log it.') : undefined}
       >
+        {/* Body weight — fetched from workout tracker, editable inline */}
+        <Row
+          icon="scale"
+          iconTint="var(--blue)"
+          title={t('Body weight')}
+          subtitle={bw ? fmtDate(bw.d, true) : t('Tap to log — required for BMR')}
+          value={bw ? fmtNum(bw.w) + ' ' + S.unit : '—'}
+          accessory="chevron"
+          onClick={() => bwSheet()}
+        />
         <Row icon="person" iconTint="var(--blue)" title={t('Sex')}>
           <Segmented
             className="seg-inline"
@@ -340,6 +426,58 @@ export default function Profile() {
             )}
             {target != null && (
               <Row icon="star" iconTint="var(--yellow)" title={t('Daily calorie target')} value={fmtNum(target) + ' kcal'} />
+            )}
+
+            {/* ── Target weight + fat-loss projection (cut / bulk only) ── */}
+            {isWeightGoal && weightKg != null && (
+              <Row icon="target" iconTint="var(--teal)" title={t('Target weight')} subtitle={S.unit}>
+                <NumberField
+                  value={S.targetW ?? null}
+                  decimal
+                  nullable
+                  onChange={setTargetW}
+                  style={{ width: 68, textAlign: 'right' }}
+                  placeholder="—"
+                />
+              </Row>
+            )}
+
+            {daysToGoal != null && (
+              <div style={{ margin: '4px 16px 8px', padding: '12px 14px', background: 'var(--surface-2)', borderRadius: 12 }}>
+                {/* Source badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em',
+                    padding: '2px 7px', borderRadius: 20,
+                    background: projSource === 'trend' ? 'color-mix(in srgb,var(--teal) 18%,transparent)' : projSource === 'real' ? 'color-mix(in srgb,var(--blue) 18%,transparent)' : 'color-mix(in srgb,var(--label-3) 18%,transparent)',
+                    color: projSource === 'trend' ? 'var(--teal)' : projSource === 'real' ? 'var(--blue)' : 'var(--label-3)',
+                  }}>
+                    {projSource === 'trend' ? t('Observed trend') : projSource === 'real' ? t('Real calories') : t('Theoretical')}
+                  </span>
+                </div>
+                {/* Main estimate */}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
+                  <Icon name="calendar" style={{ fontSize: 14, color: 'var(--teal)', flexShrink: 0, alignSelf: 'center' }} />
+                  <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--label)' }}>~{Math.min(daysToGoal, 999)}</span>
+                  <span style={{ fontSize: 13, color: 'var(--label-2)' }}>{t('days')}</span>
+                  {goalDateStr && <span style={{ fontSize: 12, color: 'var(--label-3)', marginLeft: 2 }}>· {goalDateStr}</span>}
+                </div>
+                {/* Source detail */}
+                <div style={{ fontSize: 11, color: 'var(--label-3)', lineHeight: 1.6 }}>
+                  {projSource === 'trend' && weeklyRateKg !== null && (
+                    <>{fmtNum(Math.abs(weeklyRateKg))} {S.unit}/{t('week')} {n.goal === 'cut' ? t('lost') : t('gained')} · {S.bodyweight.filter(e => (e.t || new Date(e.d).getTime()) > Date.now() - 90 * _DAY_MS).length} {t('weigh-ins')}</>
+                  )}
+                  {projSource === 'real' && realDailyDeficit !== null && (
+                    <>{Math.abs(realDailyDeficit)} kcal/j {n.goal === 'cut' ? t('deficit') : t('surplus')} {t('real')} · {loggedDaysCount} {t('days logged')}</>
+                  )}
+                  {projSource === 'theory' && (
+                    <>{fmtNum(kgToGoal)} {S.unit} × {KCAL_PER_KG} kcal/kg ÷ {Math.abs(Math.round(n.goalDelta))} kcal/j</>
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 5, lineHeight: 1.4 }}>
+                  {t('Estimate based on fat mass (7 700 kcal/kg). Actual scale weight varies with water and muscle.')}
+                </div>
+              </div>
             )}
           </Section>
         )
