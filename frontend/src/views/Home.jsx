@@ -249,6 +249,7 @@ function ProgrammeHome({ S, user, nav }) {
         <div>
           <h1>{user ? t('Hi {0}', user.name) : S.displayName ? t('Hi {0}', S.displayName) : <SasoianWordmark fontSize={28} />}</h1>
           <div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+          <div style={{ fontSize: 11, color: 'var(--label-4)', fontStyle: 'italic', marginTop: 1, letterSpacing: '.01em' }}>Sois en forme, reste en forme</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <TutorialButton steps={HOME_STEPS} />
@@ -360,7 +361,11 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
 
   return <div className="narrow">
     <div className="hdr" data-tuto="home-header">
-      <div><h1>{user ? t('Hi {0}', user.name) : S.displayName ? t('Hi {0}', S.displayName) : 'openGym'}</h1><div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
+      <div>
+        <h1>{user ? t('Hi {0}', user.name) : S.displayName ? t('Hi {0}', S.displayName) : 'openGym'}</h1>
+        <div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+        <div style={{ fontSize: 11, color: 'var(--label-4)', fontStyle: 'italic', marginTop: 1, letterSpacing: '.01em' }}>Sois en forme, reste en forme</div>
+      </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <TutorialButton steps={HOME_STEPS} />
         <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>

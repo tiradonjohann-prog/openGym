@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore.js'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Stepper } from '../components/ui.jsx'
-import { SasoianMark } from '../components/SasoianLogo.jsx'
+import { SasoianMark, SasoianLockup } from '../components/SasoianLogo.jsx'
 import { loadStarterPlan } from '../sheets.jsx'
 import { ACTIVITY_LEVELS, ACTIVITY_LABEL, ACTIVITY_DESC, calcBMR, calcTDEE } from '../lib/nutrition.js'
 import { GOALS, GOAL_LABEL, GOAL_DESC, GOAL_DEFAULT_DELTA, calcTargetKcal } from '../lib/goals.js'
@@ -248,22 +248,15 @@ function Step0({ name, setName, onNext }) {
         background: 'radial-gradient(ellipse at center, color-mix(in srgb,var(--acc) 12%,transparent) 0%, transparent 72%)',
       }} />
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, animation: 'badgePop .45s var(--ease)' }}>
-        <div style={{ position: 'relative' }}>
-          <div style={{
-            position: 'absolute', inset: -12, borderRadius: '50%',
-            background: 'radial-gradient(circle, color-mix(in srgb,var(--acc) 20%,transparent), transparent 70%)',
-          }} />
-          <SasoianMark size={76} />
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28, animation: 'badgePop .45s var(--ease)' }}>
+        <SasoianLockup markSize={68} fontSize={34} showTagline />
       </div>
 
-      <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-.028em', lineHeight: 1.12, textAlign: 'center', marginBottom: 8 }}>
-        {name.trim() ? t('Hi {0}! 👋', name.trim()) : t('Welcome to Sasoian!')}
-      </h1>
-      <p style={{ textAlign: 'center', color: 'var(--label-2)', fontSize: 15, lineHeight: 1.5, marginBottom: 32 }}>
-        {t('Your personal fitness tracker — built for consistency.')}
-      </p>
+      {name.trim() && (
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.028em', lineHeight: 1.12, textAlign: 'center', marginBottom: 24 }}>
+          {t('Hi {0}! 👋', name.trim())}
+        </h1>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
         {FEATURES.map(f => (
