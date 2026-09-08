@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store/useStore.js'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
-import { Button, NumberField, Stepper } from '../components/ui.jsx'
+import { Button, Stepper } from '../components/ui.jsx'
 import { SasoianMark } from '../components/SasoianLogo.jsx'
 import { loadStarterPlan } from '../sheets.jsx'
 import { ACTIVITY_LEVELS, ACTIVITY_LABEL, ACTIVITY_DESC, calcBMR, calcTDEE } from '../lib/nutrition.js'
@@ -10,7 +10,7 @@ import { GOALS, GOAL_LABEL, GOAL_DESC, GOAL_DEFAULT_DELTA, calcTargetKcal } from
 import { calcMacros } from '../lib/macros.js'
 import { todayISO } from '../lib/format.js'
 
-/* ── Equipment catalogue ─────────────────────────────────────────────── */
+/* ── Equipment catalogue (exporté pour Settings) ─────────────────── */
 export const EQUIPMENT_OPTIONS = [
   { key: 'body weight',       label: 'Poids de corps' },
   { key: 'dumbbell',          label: 'Haltères' },
@@ -24,19 +24,18 @@ export const EQUIPMENT_OPTIONS = [
   { key: 'medicine ball',     label: 'Médecine ball' },
   { key: 'stationary bike',   label: 'Vélo stationnaire' },
 ]
-const ALL_EQ = EQUIPMENT_OPTIONS.map(e => e.key)
 
-const TOTAL_STEPS = 5 // steps 0..4
-
-/* ── Progress dots ───────────────────────────────────────────────────── */
+/* ── Progress dots (étapes 1-3) ───────────────────────────────────── */
 function ProgressDots({ step }) {
   if (step === 0) return null
   return (
     <div style={{ display: 'flex', justifyContent: 'center', gap: 6, paddingTop: 16, paddingBottom: 4 }}>
-      {[1, 2, 3, 4].map(i => (
+      {[1, 2, 3].map(i => (
         <div key={i} style={{
           width: i <= step ? 20 : 6, height: 6, borderRadius: 3,
-          background: i === step ? 'var(--acc)' : i < step ? 'color-mix(in srgb,var(--acc) 40%,transparent)' : 'var(--sep)',
+          background: i === step ? 'var(--acc)' : i < step
+            ? 'color-mix(in srgb,var(--acc) 40%,transparent)'
+            : 'var(--sep)',
           transition: 'all .25s var(--ease)',
         }} />
       ))}
@@ -44,7 +43,7 @@ function ProgressDots({ step }) {
   )
 }
 
-/* ── Step title ──────────────────────────────────────────────────────── */
+/* ── Titre d'étape ────────────────────────────────────────────────── */
 function StepHeader({ title, subtitle }) {
   return (
     <div style={{ marginBottom: 24, marginTop: 8 }}>
@@ -58,7 +57,7 @@ function StepHeader({ title, subtitle }) {
   )
 }
 
-/* ── Selection tile ──────────────────────────────────────────────────── */
+/* ── Tuile de sélection ───────────────────────────────────────────── */
 function Tile({ selected, onClick, icon, color, label, subtitle }) {
   return (
     <button
@@ -103,108 +102,33 @@ function Tile({ selected, onClick, icon, color, label, subtitle }) {
   )
 }
 
-/* ── Sex tile (compact, 2-column) ────────────────────────────────────── */
-function SexGrid({ value, onChange }) {
-  const options = [
-    { key: 'male',   label: t('Homme'),  icon: 'person',       color: 'var(--blue)' },
-    { key: 'female', label: t('Femme'),  icon: 'person',       color: 'var(--pink)' },
-  ]
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-      {options.map(o => (
-        <button
-          key={o.key}
-          onClick={() => onChange(o.key)}
-          style={{
-            padding: '16px 12px', borderRadius: 14, cursor: 'pointer',
-            background: value === o.key ? `color-mix(in srgb,${o.color} 14%,var(--surface))` : 'var(--surface)',
-            border: `1.5px solid ${value === o.key ? o.color : 'var(--sep)'}`,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-            transition: 'all .15s',
-          }}
-        >
-          <div style={{
-            width: 44, height: 44, borderRadius: 14,
-            background: `color-mix(in srgb,${o.color} 20%,var(--surface-2))`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: o.color, fontSize: 22,
-          }}>
-            <Icon name={o.icon} />
-          </div>
-          <span style={{ fontWeight: 700, fontSize: 15, color: value === o.key ? o.color : 'var(--label-1)' }}>
-            {o.label}
-          </span>
-        </button>
-      ))}
-    </div>
-  )
-}
+/* ── Icônes et couleurs des niveaux d'activité ────────────────────── */
+const ACTIVITY_ICON  = { sedentary: 'person', light: 'figureStrength', moderate: 'figureRun', active: 'bolt', extra: 'flame' }
+const ACTIVITY_COLOR = { sedentary: 'var(--label-3)', light: 'var(--teal)', moderate: 'var(--blue)', active: 'var(--orange)', extra: 'var(--red)' }
+const GOAL_ICON      = { maintain: 'target', cut: 'arrowDown', bulk: 'arrowUp', recomp: 'shuffle' }
+const GOAL_COLOR     = { maintain: 'var(--teal)', cut: 'var(--blue)', bulk: 'var(--green)', recomp: 'var(--purple)' }
 
-/* ── Equipment chip grid ─────────────────────────────────────────────── */
-function EquipmentGrid({ value, onChange }) {
-  const allSelected = ALL_EQ.every(k => value.includes(k))
-  const toggle = key => onChange(value.includes(key) ? value.filter(k => k !== key) : [...value, key])
-  const toggleAll = () => onChange(allSelected ? [] : [...ALL_EQ])
-
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-        <button
-          className="chip on"
-          style={{ fontSize: 12, padding: '5px 12px', borderRadius: 8, background: allSelected ? 'var(--sep)' : 'var(--acc)', color: allSelected ? 'var(--label-2)' : '#fff', border: 'none' }}
-          onClick={toggleAll}
-        >
-          {allSelected ? t('Tout décocher') : t('Tout cocher')}
-        </button>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {EQUIPMENT_OPTIONS.map(eq => {
-          const on = value.includes(eq.key)
-          return (
-            <button
-              key={eq.key}
-              onClick={() => toggle(eq.key)}
-              className={'chip' + (on ? ' on' : '')}
-              style={{ fontSize: 13, padding: '7px 14px', borderRadius: 10 }}
-            >
-              {t(eq.label)}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-/* ══════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════ */
 export default function Onboarding() {
   const update = useStore(s => s.update)
-
   const [step, setStep] = useState(0)
 
-  // Step 0
+  // Étape 0
   const [name, setName] = useState('')
 
-  // Step 1 — profil de base
+  // Étape 1 — profil de base
   const [unit, setUnit]         = useState('kg')
-  const [sex, setSex]           = useState(null)
+  const [sex, setSex]           = useState(null)   // null = non sélectionné
   const [age, setAge]           = useState(null)
   const [heightCm, setHeightCm] = useState(null)
 
-  // Step 2 — activité & objectif
-  const [activityLevel, setActivityLevel]     = useState('sedentary')
-  const [workoutsPerWeek, setWorkoutsPerWeek] = useState(3)
-  const [goal, setGoal]                       = useState('maintain')
+  // Étape 2 — activité & objectif
+  const [activityLevel, setActivityLevel]     = useState(null) // null = non sélectionné
+  const [workoutsPerWeek, setWorkoutsPerWeek] = useState(0)
+  const [goal, setGoal]                       = useState(null) // null = non sélectionné
   const [goalDelta, setGoalDelta]             = useState(0)
 
-  // Step 3 — équipement
-  const [equipment, setEquipment]   = useState([])
-  const [daysPerWeek, setDaysPerWeek] = useState(3)
-
-  // Step 4 — poids (optionnel)
-  const [weight, setWeight] = useState(null)
-
-  /* ── Helpers ─────────────────────────────────────────────────────── */
+  /* ── Handlers ─────────────────────────────────────────────────── */
 
   const handleGoalChange = g => {
     setGoal(g)
@@ -226,9 +150,8 @@ export default function Onboarding() {
     }
     if (n === 2) {
       update(s => {
-        const wKg = null // weight not yet entered
-        const newBmr  = calcBMR(s.nutrition?.sex, wKg, s.nutrition?.heightCm, s.nutrition?.age)
-        const newTdee = calcTDEE(newBmr, activityLevel, workoutsPerWeek)
+        const newBmr    = calcBMR(s.nutrition?.sex, null, s.nutrition?.heightCm, s.nutrition?.age)
+        const newTdee   = calcTDEE(newBmr, activityLevel, workoutsPerWeek)
         const newTarget = calcTargetKcal(newTdee, goalDelta)
         s.nutrition = {
           ...(s.nutrition || {}),
@@ -243,12 +166,6 @@ export default function Onboarding() {
         }
       })
     }
-    if (n === 3) {
-      update(s => {
-        s.equipment  = equipment
-        s.daysPerWeek = daysPerWeek
-      })
-    }
   }
 
   const next = () => {
@@ -258,24 +175,14 @@ export default function Onboarding() {
 
   const back = () => setStep(s => s - 1)
 
-  const finish = (loadPlan, bw) => {
-    // Save step 3 fields if we're jumping from step 4
-    update(s => {
-      s.equipment   = equipment
-      s.daysPerWeek = daysPerWeek
-    })
-
-    if (bw && bw > 0) {
+  const finish = (loadPlan, weight) => {
+    if (weight && weight > 0) {
       update(s => {
         const now = Date.now()
-        s.bodyweight = [
-          ...(s.bodyweight || []),
-          { t: now, w: bw, d: todayISO() },
-        ]
-        // Recompute nutrition with real weight
-        const toKg = w => unit === 'lb' ? w / 2.2046 : w
-        const wKg  = toKg(bw)
-        const n    = s.nutrition || {}
+        s.bodyweight = [...(s.bodyweight || []), { t: now, w: weight, d: todayISO() }]
+        const toKg  = w => unit === 'lb' ? w / 2.2046 : w
+        const wKg   = toKg(weight)
+        const n     = s.nutrition || {}
         const newBmr    = calcBMR(n.sex, wKg, n.heightCm, n.age)
         const newTdee   = calcTDEE(newBmr, n.activityLevel, n.workoutsPerWeek)
         const newTarget = calcTargetKcal(newTdee, n.goalDelta)
@@ -289,23 +196,28 @@ export default function Onboarding() {
     if (loadPlan) loadStarterPlan()
   }
 
-  /* ── Layout wrapper ─────────────────────────────────────────────── */
-  const renderContent = () => {
+  /* ── Rendu ────────────────────────────────────────────────────── */
+  const renderStep = () => {
     switch (step) {
       case 0: return <Step0 name={name} setName={setName} onNext={next} />
-      case 1: return <Step1 unit={unit} sex={sex} age={age} heightCm={heightCm}
-                       onUnit={setUnit} onSex={setSex} onAge={setAge} onHeight={setHeightCm}
-                       onNext={next} onBack={back} />
-      case 2: return <Step2 activityLevel={activityLevel} workoutsPerWeek={workoutsPerWeek}
-                       goal={goal} goalDelta={goalDelta}
-                       onActivity={setActivityLevel} onWorkouts={setWorkoutsPerWeek}
-                       onGoal={handleGoalChange}
-                       onNext={next} onBack={back} />
-      case 3: return <Step3 equipment={equipment} daysPerWeek={daysPerWeek}
-                       onEquipment={setEquipment} onDays={setDaysPerWeek}
-                       onNext={next} onBack={back} />
-      case 4: return <Step4 unit={unit} weight={weight} onWeight={setWeight}
-                       onBack={back} onFinish={finish} />
+      case 1: return (
+        <Step1
+          unit={unit} sex={sex} age={age} heightCm={heightCm}
+          onUnit={setUnit} onSex={setSex} onAge={setAge} onHeight={setHeightCm}
+          onNext={next} onBack={back}
+        />
+      )
+      case 2: return (
+        <Step2
+          activityLevel={activityLevel} workoutsPerWeek={workoutsPerWeek}
+          goal={goal} onActivity={setActivityLevel}
+          onWorkouts={setWorkoutsPerWeek} onGoal={handleGoalChange}
+          onNext={next} onBack={back}
+        />
+      )
+      case 3: return (
+        <Step3 unit={unit} onBack={back} onFinish={finish} />
+      )
       default: return null
     }
   }
@@ -314,13 +226,13 @@ export default function Onboarding() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <ProgressDots step={step} />
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px', paddingBottom: 140 }}>
-        {renderContent()}
+        {renderStep()}
       </div>
     </div>
   )
 }
 
-/* ══ STEP 0 — Bienvenue ══════════════════════════════════════════════ */
+/* ══ STEP 0 — Bienvenue ════════════════════════════════════════════ */
 const FEATURES = [
   { icon: 'dumbbell',  color: 'var(--acc)',    label: 'Smart progression',  desc: 'Auto-increments weight, predicts your next set.' },
   { icon: 'chartLine', color: 'var(--blue)',   label: 'Track everything',   desc: 'PRs, volume, body weight, measurements, macros.' },
@@ -330,14 +242,12 @@ const FEATURES = [
 function Step0({ name, setName, onNext }) {
   return (
     <div style={{ paddingTop: 60, maxWidth: 560, margin: '0 auto' }}>
-      {/* Ambient glow */}
       <div style={{
         position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
         width: 320, height: 320, pointerEvents: 'none',
         background: 'radial-gradient(ellipse at center, color-mix(in srgb,var(--acc) 12%,transparent) 0%, transparent 72%)',
       }} />
 
-      {/* Logo */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, animation: 'badgePop .45s var(--ease)' }}>
         <div style={{ position: 'relative' }}>
           <div style={{
@@ -380,9 +290,7 @@ function Step0({ name, setName, onNext }) {
       </div>
 
       <div style={{ marginBottom: 8 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--label-2)', marginBottom: 8 }}>
-          {t('What should we call you?')}
-        </div>
+        <FieldLabel>{t('What should we call you?')}</FieldLabel>
         <input
           className="input"
           autoFocus
@@ -400,24 +308,26 @@ function Step0({ name, setName, onNext }) {
       <BottomBar>
         <Button variant="primary" style={{ width: '100%', padding: '15px 0', fontSize: 16, borderRadius: 14 }} icon="arrowRight"
           onClick={onNext}>
-          {t("C'est parti !")}
+          {"C'est parti !"}
         </Button>
       </BottomBar>
     </div>
   )
 }
 
-/* ══ STEP 1 — Profil de base ══════════════════════════════════════════ */
+/* ══ STEP 1 — Profil de base ════════════════════════════════════════ */
 function Step1({ unit, sex, age, heightCm, onUnit, onSex, onAge, onHeight, onNext, onBack }) {
+  const canContinue = sex !== null
+
   return (
     <div style={{ paddingTop: 12, maxWidth: 560, margin: '0 auto' }}>
       <StepHeader
-        title={t('Quelques infos sur toi')}
-        subtitle={t('Utilisées pour calculer ton BMR et tes besoins caloriques. Elles restent sur ton appareil.')}
+        title={"Quelques infos sur toi"}
+        subtitle={"Utilisées pour calculer ton BMR et tes besoins caloriques. Elles restent sur ton appareil."}
       />
 
       {/* Unité */}
-      <FieldLabel>{t('Unité de poids')}</FieldLabel>
+      <FieldLabel>{"Unité de poids"}</FieldLabel>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
         {['kg', 'lb'].map(u => (
           <button key={u} onClick={() => onUnit(u)} style={{
@@ -433,37 +343,44 @@ function Step1({ unit, sex, age, heightCm, onUnit, onSex, onAge, onHeight, onNex
       </div>
 
       {/* Sexe biologique */}
-      <FieldLabel>{t('Sexe biologique')}</FieldLabel>
-      <div style={{ marginBottom: 20 }}>
-        <SexGrid value={sex} onChange={onSex} />
-        <p style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 6, lineHeight: 1.4 }}>
-          {t('Requis pour la formule de Mifflin-St Jeor. Pas utilisé ailleurs.')}
-        </p>
+      <FieldLabel>{"Sexe biologique"} <span style={{ color: 'var(--acc)', marginLeft: 4 }}>*</span></FieldLabel>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 6 }}>
+        {[
+          { key: 'male',   label: 'Homme', color: 'var(--blue)' },
+          { key: 'female', label: 'Femme', color: 'var(--pink)' },
+        ].map(o => (
+          <button key={o.key} onClick={() => onSex(o.key)} style={{
+            padding: '18px 12px', borderRadius: 14, fontWeight: 700, fontSize: 15, cursor: 'pointer',
+            background: sex === o.key ? `color-mix(in srgb,${o.color} 14%,var(--surface))` : 'var(--surface)',
+            color: sex === o.key ? o.color : 'var(--label-1)',
+            border: `1.5px solid ${sex === o.key ? o.color : 'var(--sep)'}`,
+            transition: 'all .15s',
+          }}>
+            {o.label}
+          </button>
+        ))}
       </div>
+      <p style={{ fontSize: 11, color: 'var(--label-4)', marginBottom: 20, lineHeight: 1.4 }}>
+        {"Requis pour la formule de Mifflin-St Jeor (BMR). Pas utilisé ailleurs."}
+      </p>
 
       {/* Âge */}
-      <FieldLabel>{t('Âge')}</FieldLabel>
+      <FieldLabel>{"Âge"}</FieldLabel>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
         <input
-          className="input"
-          type="number"
-          inputMode="numeric"
-          placeholder="—"
+          className="input" type="number" inputMode="numeric" placeholder="—"
           value={age ?? ''}
           onChange={e => onAge(e.target.value ? +e.target.value : null)}
           style={{ flex: 1, fontSize: 20, padding: '12px 16px', borderRadius: 12, textAlign: 'center' }}
         />
-        <span style={{ fontSize: 14, color: 'var(--label-3)', minWidth: 32 }}>{t('ans')}</span>
+        <span style={{ fontSize: 14, color: 'var(--label-3)', minWidth: 32 }}>{"ans"}</span>
       </div>
 
       {/* Taille */}
-      <FieldLabel>{t('Taille')}</FieldLabel>
+      <FieldLabel>{"Taille"}</FieldLabel>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <input
-          className="input"
-          type="number"
-          inputMode="numeric"
-          placeholder="—"
+          className="input" type="number" inputMode="numeric" placeholder="—"
           value={heightCm ?? ''}
           onChange={e => onHeight(e.target.value ? +e.target.value : null)}
           style={{ flex: 1, fontSize: 20, padding: '12px 16px', borderRadius: 12, textAlign: 'center' }}
@@ -471,32 +388,39 @@ function Step1({ unit, sex, age, heightCm, onUnit, onSex, onAge, onHeight, onNex
         <span style={{ fontSize: 14, color: 'var(--label-3)', minWidth: 32 }}>cm</span>
       </div>
       <p style={{ fontSize: 11, color: 'var(--label-4)', marginBottom: 8, lineHeight: 1.4 }}>
-        {t('Ces champs sont facultatifs — tu pourras les compléter plus tard dans le profil nutrition.')}
+        {"Âge et taille sont facultatifs — modifiables à tout moment dans Nutrition > Profil."}
       </p>
 
       <BottomBar>
-        <NavButtons onBack={onBack} onNext={onNext} />
+        <NavButtons
+          onBack={onBack}
+          onNext={onNext}
+          disabled={!canContinue}
+          hint={!canContinue ? "Sélectionne un sexe pour continuer" : null}
+        />
       </BottomBar>
     </div>
   )
 }
 
 /* ══ STEP 2 — Activité & Objectif ════════════════════════════════════ */
-const ACTIVITY_ICON  = { sedentary: 'person', light: 'figureStrength', moderate: 'figureRun', active: 'bolt', extra: 'flame' }
-const ACTIVITY_COLOR = { sedentary: 'var(--label-3)', light: 'var(--teal)', moderate: 'var(--blue)', active: 'var(--orange)', extra: 'var(--red)' }
-const GOAL_ICON      = { maintain: 'target', cut: 'arrowDown', bulk: 'arrowUp', recomp: 'shuffle' }
-const GOAL_COLOR     = { maintain: 'var(--teal)', cut: 'var(--blue)', bulk: 'var(--green)', recomp: 'var(--purple)' }
-
 function Step2({ activityLevel, workoutsPerWeek, goal, onActivity, onWorkouts, onGoal, onNext, onBack }) {
+  const canContinue = activityLevel !== null && goal !== null
+  const hintMsg = activityLevel === null && goal === null
+    ? "Sélectionne un niveau d'activité et un objectif pour continuer"
+    : activityLevel === null
+      ? "Sélectionne un niveau d'activité pour continuer"
+      : "Sélectionne un objectif pour continuer"
+
   return (
     <div style={{ paddingTop: 12, maxWidth: 560, margin: '0 auto' }}>
       <StepHeader
-        title={t('Activité & Objectif')}
-        subtitle={t('Choisis le niveau qui correspond à ta vie quotidienne hors séances de sport.')}
+        title={"Activité & Objectif"}
+        subtitle={"Choisis le niveau qui correspond à ta vie quotidienne hors séances de sport."}
       />
 
       {/* Niveau d'activité */}
-      <FieldLabel>{t('Niveau d\'activité quotidien')}</FieldLabel>
+      <FieldLabel>{"Niveau d'activité quotidien"} <span style={{ color: 'var(--acc)', marginLeft: 4 }}>*</span></FieldLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
         {ACTIVITY_LEVELS.map(k => (
           <Tile
@@ -511,14 +435,14 @@ function Step2({ activityLevel, workoutsPerWeek, goal, onActivity, onWorkouts, o
         ))}
       </div>
 
-      {/* Séances sport / semaine */}
-      <FieldLabel>{t('Séances de sport par semaine')}</FieldLabel>
+      {/* Séances de sport / semaine */}
+      <FieldLabel>{"Séances de sport par semaine"}</FieldLabel>
       <div className="card" style={{ padding: '12px 16px', marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{t('Entraînements / semaine')}</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{"Entraînements / semaine"}</div>
             <div style={{ fontSize: 12, color: 'var(--label-3)', marginTop: 2 }}>
-              {t('Gym, sport, cardio — hors activité quotidienne')}
+              {"Gym, sport, cardio — hors activité quotidienne ci-dessus"}
             </div>
           </div>
           <Stepper value={workoutsPerWeek} step={1} decimal={false}
@@ -527,7 +451,7 @@ function Step2({ activityLevel, workoutsPerWeek, goal, onActivity, onWorkouts, o
       </div>
 
       {/* Objectif */}
-      <FieldLabel>{t('Objectif principal')}</FieldLabel>
+      <FieldLabel>{"Objectif principal"} <span style={{ color: 'var(--acc)', marginLeft: 4 }}>*</span></FieldLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
         {GOALS.map(k => (
           <Tile
@@ -543,84 +467,58 @@ function Step2({ activityLevel, workoutsPerWeek, goal, onActivity, onWorkouts, o
       </div>
 
       <BottomBar>
-        <NavButtons onBack={onBack} onNext={onNext} />
+        <NavButtons
+          onBack={onBack}
+          onNext={onNext}
+          disabled={!canContinue}
+          hint={!canContinue ? hintMsg : null}
+        />
       </BottomBar>
     </div>
   )
 }
 
-/* ══ STEP 3 — Équipement ═════════════════════════════════════════════ */
-function Step3({ equipment, daysPerWeek, onEquipment, onDays, onNext, onBack }) {
+/* ══ STEP 3 — Poids (optionnel) ═════════════════════════════════════ */
+function Step3({ unit, onBack, onFinish }) {
+  const [weight, setWeight] = useState(null)
+
   return (
     <div style={{ paddingTop: 12, maxWidth: 560, margin: '0 auto' }}>
       <StepHeader
-        title={t('Ton équipement')}
-        subtitle={t('Sélectionne ce dont tu disposes. Utilisé pour personnaliser tes séances à l\'avenir.')}
+        title={"Ton poids actuel"}
+        subtitle={"Optionnel — active le suivi de progression et les projections caloriques."}
       />
 
-      <EquipmentGrid value={equipment} onChange={onEquipment} />
-
-      {/* Jours d'entraînement par semaine */}
-      <div className="card" style={{ padding: '12px 16px', marginTop: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{t('Jours d\'entraînement / semaine')}</div>
-            <div style={{ fontSize: 12, color: 'var(--label-3)', marginTop: 2 }}>
-              {t('Pour planifier ton programme')}
-            </div>
-          </div>
-          <Stepper value={daysPerWeek} step={1} decimal={false}
-            onChange={v => onDays(Math.min(7, Math.max(1, v)))} />
-        </div>
-      </div>
-
-      <BottomBar>
-        <NavButtons onBack={onBack} onNext={onNext} nextLabel={t('Suivant')} />
-      </BottomBar>
-    </div>
-  )
-}
-
-/* ══ STEP 4 — Poids (optionnel) ══════════════════════════════════════ */
-function Step4({ unit, weight, onWeight, onBack, onFinish }) {
-  return (
-    <div style={{ paddingTop: 12, maxWidth: 560, margin: '0 auto' }}>
-      <StepHeader
-        title={t('Ton poids actuel')}
-        subtitle={t('Optionnel — active le suivi de progression et les projections caloriques.')}
-      />
-
-      {/* Info card */}
-      <div className="card" style={{ padding: '14px 16px', marginBottom: 20, background: 'color-mix(in srgb,var(--blue) 8%,var(--surface))', border: '1px solid color-mix(in srgb,var(--blue) 20%,transparent)' }}>
+      <div className="card" style={{
+        padding: '14px 16px', marginBottom: 20,
+        background: 'color-mix(in srgb,var(--blue) 8%,var(--surface))',
+        border: '1px solid color-mix(in srgb,var(--blue) 20%,transparent)',
+      }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <Icon name="lightbulb" style={{ fontSize: 18, color: 'var(--blue)', marginTop: 1, flexShrink: 0 }} />
           <div style={{ fontSize: 13, color: 'var(--label-2)', lineHeight: 1.6 }}>
-            {t('Pour des données comparables dans le temps :')}
+            {"Pour des données comparables dans le temps :"}
             <ul style={{ margin: '6px 0 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <li>{t('Le matin, à jeun')}</li>
-              <li>{t('Après être allé aux toilettes')}</li>
-              <li>{t('Avant de manger ou boire')}</li>
-              <li>{t('Toujours dans les mêmes conditions')}</li>
+              <li>{"Le matin, à jeun"}</li>
+              <li>{"Après être allé aux toilettes"}</li>
+              <li>{"Avant de manger ou boire"}</li>
+              <li>{"Toujours dans les mêmes conditions"}</li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Weight input */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
         <input
-          className="input"
-          type="number"
-          inputMode="decimal"
-          placeholder="—"
+          className="input" type="number" inputMode="decimal" placeholder="—"
           value={weight ?? ''}
-          onChange={e => onWeight(e.target.value ? +e.target.value : null)}
+          onChange={e => setWeight(e.target.value ? +e.target.value : null)}
           style={{ flex: 1, fontSize: 28, fontWeight: 700, padding: '16px', borderRadius: 14, textAlign: 'center' }}
         />
         <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--label-2)', minWidth: 36 }}>{unit}</span>
       </div>
       <p style={{ fontSize: 12, color: 'var(--label-4)', marginBottom: 24, lineHeight: 1.4 }}>
-        {t('Tu peux entrer ou modifier ton poids à tout moment dans l\'onglet Poids.')}
+        {"Modifiable à tout moment dans l'onglet Poids."}
       </p>
 
       <BottomBar>
@@ -628,37 +526,28 @@ function Step4({ unit, weight, onWeight, onBack, onFinish }) {
           <Button variant="primary" icon="sparkles"
             style={{ width: '100%', padding: '15px 0', fontSize: 16, borderRadius: 14 }}
             onClick={() => onFinish(true, weight)}>
-            {t('Charger un plan starter (PPL)')}
+            {"Charger un plan starter (PPL)"}
           </Button>
           <Button style={{ width: '100%', padding: '12px 0', fontSize: 14, borderRadius: 12 }}
             onClick={() => onFinish(false, weight)}>
-            {t('Je configure mon plan manuellement')}
+            {"Je configure mon plan manuellement"}
           </Button>
-          {!!weight && (
-            <button
-              style={{ width: '100%', padding: '8px', fontSize: 13, color: 'var(--label-3)', background: 'none', border: 'none', cursor: 'pointer' }}
-              onClick={() => onFinish(false, null)}>
-              {t('Ignorer le poids pour l\'instant')}
-            </button>
-          )}
-          {!weight && (
-            <button
-              style={{ width: '100%', padding: '8px', fontSize: 13, color: 'var(--label-3)', background: 'none', border: 'none', cursor: 'pointer' }}
-              onClick={() => onFinish(false, null)}>
-              {t('Je me pèserai demain matin →')}
-            </button>
-          )}
+          <button
+            style={{ width: '100%', padding: '8px', fontSize: 13, color: 'var(--label-3)', background: 'none', border: 'none', cursor: 'pointer' }}
+            onClick={() => onFinish(false, null)}>
+            {"Je me pèserai demain matin →"}
+          </button>
         </div>
       </BottomBar>
     </div>
   )
 }
 
-/* ── Shared sub-components ───────────────────────────────────────────── */
+/* ── Composants partagés ─────────────────────────────────────────── */
 
 function FieldLabel({ children }) {
   return (
-    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--label-2)', marginBottom: 10, letterSpacing: '.01em' }}>
+    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--label-2)', marginBottom: 10, letterSpacing: '.01em', display: 'flex', alignItems: 'center' }}>
       {children}
     </div>
   )
@@ -678,15 +567,31 @@ function BottomBar({ children }) {
   )
 }
 
-function NavButtons({ onBack, onNext, nextLabel }) {
+function NavButtons({ onBack, onNext, disabled, hint }) {
   return (
-    <div style={{ display: 'flex', gap: 10 }}>
-      <Button style={{ padding: '14px 20px', borderRadius: 14, fontSize: 15 }} icon="chevronLeft" onClick={onBack}>
-        {t('Retour')}
-      </Button>
-      <Button variant="primary" style={{ flex: 1, padding: '14px', fontSize: 15, borderRadius: 14 }} icon="arrowRight" onClick={onNext}>
-        {nextLabel || t('Suivant')}
-      </Button>
+    <div>
+      {hint && (
+        <p style={{ fontSize: 12, color: 'var(--orange)', textAlign: 'center', marginBottom: 8 }}>
+          <Icon name="lightbulb" style={{ fontSize: 12, marginRight: 4 }} />{hint}
+        </p>
+      )}
+      <div style={{ display: 'flex', gap: 10 }}>
+        <Button style={{ padding: '14px 20px', borderRadius: 14, fontSize: 15 }} icon="chevronLeft" onClick={onBack}>
+          {"Retour"}
+        </Button>
+        <Button
+          variant="primary"
+          style={{
+            flex: 1, padding: '14px', fontSize: 15, borderRadius: 14,
+            opacity: disabled ? 0.45 : 1,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+          }}
+          icon="arrowRight"
+          onClick={disabled ? undefined : onNext}
+        >
+          {"Suivant"}
+        </Button>
+      </div>
     </div>
   )
 }

@@ -615,8 +615,39 @@ export default {
   'Height': 'Taille',
   'years': 'ans',
   'Current weight': 'Poids actuel',
-  "Let’s go! Load starter plan": "C’est parti ! Charger le programme de démarrage",
-  "Skip — I’ll build my plan manually": "Ignorer — je construirai mon plan moi-même",
+  "Let’s go! Load starter plan": "Démarrer avec un plan PPL",
+  "Skip — I’ll build my plan manually": "Ignorer — je configure manuellement",
+  'Hi {0}! 👋': 'Salut {0} ! 👋',
+  'What should we call you?': "Comment t’appelle-t-on ?",
+
+  // --- onboarding wizard (Sasoian) ---
+  'Smart progression': 'Progression intelligente',
+  'Auto-increments weight, predicts your next set.': 'Augmente automatiquement les charges, prédit ta prochaine série.',
+  'Track everything': 'Suivi complet',
+  'PRs, volume, body weight, measurements, macros.': 'Records perso, volume, poids corporel, mensurations, macros.',
+  'Stay consistent': 'Rester régulier',
+  'Weekly streak, muscle balance heatmap, calendar.': "Série hebdomadaire, heatmap d’équilibre musculaire, calendrier.",
+
+  // --- activity levels (nutrition.js) ---
+  'Sedentary': 'Sédentaire',
+  'Lightly active': 'Peu actif',
+  'Moderately active': 'Modérément actif',
+  'Very active': 'Très actif',
+  'Extremely active': 'Extrêmement actif',
+  'Desk job, minimal movement outside training': "Bureau, peu de déplacements en dehors de l’entraînement",
+  'Some walking or light daily activity outside training': "Quelques marches ou activité légère quotidienne hors entraînement",
+  'Active lifestyle or light physical job, outside training': "Mode de vie actif ou travail physique léger, hors entraînement",
+  'Physical job or very active daily life outside training': "Travail physique ou vie quotidienne très active, hors entraînement",
+  'Manual labour — extremely active outside training': "Travail manuel — extrêmement actif hors entraînement",
+
+  // --- goal labels & descriptions (goals.js) ---
+  'Maintain weight': 'Maintenir le poids',
+  'Gain muscle': 'Prendre de la masse',
+  'Body recomposition': 'Recomposition corporelle',
+  'Match calorie intake to your TDEE to stay at your current weight.': "Adapter les calories au TDEE pour rester au même poids.",
+  'A moderate deficit helps lose body fat while preserving muscle.': "Un déficit modéré permet de perdre de la masse grasse en préservant les muscles.",
+  'A moderate surplus supports muscle growth with minimal fat gain.': "Un surplus modéré favorise la croissance musculaire avec peu de prise de gras.",
+  'Close to maintenance calories with high protein — lose fat and gain muscle over time.': "Proche de la maintenance avec une protéine élevée — perdre du gras et gagner du muscle progressivement.",
 
   // --- programme ---
   'My programmes': "Mes programmes",
@@ -1236,4 +1267,94 @@ export default {
   'Search for foods or enter them manually. Each entry shows calories, protein, carbs, and fat. The ring fills as you approach your daily target.': 'Recherche des aliments ou saisis-les manuellement. Chaque entrée affiche calories, protéines, glucides et lipides. L\'anneau se remplit au fur et à mesure.',
   'Weekly view': 'Vue hebdomadaire',
   'See your average daily intake vs. target over the last 7 days. Consistency matters more than hitting the exact number every day.': 'Vois ta moyenne journalière vs. objectif sur les 7 derniers jours. La régularité compte plus que d\'atteindre le chiffre exact chaque jour.',
+  // --- intensites cardio ---
+  'Very easy': 'Très facile',
+  'Easy': 'Facile',
+  'Moderate': 'Modéré',
+  'Maximal': 'À fond',
+
+  // --- blocs cardio ---
+  'Warm-up': 'Échauffement',
+  'Steady pace': 'Allure constante',
+  'Cooldown': 'Retour au calme',
+
+  // --- sports ---
+  'Strength training': 'Musculation',
+  'Running': 'Course à pied',
+  'Walking': 'Marche',
+  'Cycling': 'Vélo',
+  'Aqua aerobics': 'Aquagym',
+
+  // --- projection poids ---
+  'Observed trend': 'Tendance observée',
+  'Real calories': 'Calories réelles',
+  'Theoretical': 'Théorique',
+  'lost': 'perdus',
+  'gained': 'gagnés',
+  'week': 'semaine',
+  'weekly kg lifted': 'kg soulevés / sem.',
+
+  // --- types de regime ---
+  'Omnivore': 'Omnivore',
+  'Vegetarian': 'Végétarien·ne',
+  'Vegan': 'Vegan',
+  'Keto / Low-carb': 'Keto / Faible en glucides',
+  'Other': 'Autre',
+
+  // --- allergenes EU ---
+  'Gluten': 'Gluten',
+  'Crustaceans': 'Crustacés',
+  'Eggs': 'Œufs',
+  'Fish': 'Poisson',
+  'Peanuts': 'Arachides',
+  'Soy': 'Soja',
+  'Dairy': 'Produits laitiers',
+  'Tree nuts': 'Fruits à coque',
+  'Celery': 'Céleri',
+  'Mustard': 'Moutarde',
+  'Sesame': 'Sésame',
+  'Sulphites': 'Sulfites',
+  'Lupin': 'Lupin',
+  'Molluscs': 'Mollusques',
+
+  // --- standalone units ---
+  'days': 'jours',
+  'weigh-ins': 'pesées',
+
+  // --- estimation poids ---
+  'Estimate based on fat mass (7 700 kcal/kg). Actual scale weight varies with water and muscle.': 'Estimation basée sur la masse grasse (7 700 kcal/kg). Le poids réel varie avec l’eau et les muscles.',
+
+  // --- macros labels ---
+  'Protein': 'Protéines',
+  'Carbohydrates': 'Glucides',
+  'Fat': 'Lipides',
+
+  // --- cut presets ---
+  'Gentle': 'Douce',
+  'Intensive': 'Intensive',
+  '~−10 % TDEE · fat loss with minimal muscle impact': '~−10 % TDEE · perte de gras, impact musculaire minimal',
+  '~−18 % TDEE · steady fat loss, ANSES-recommended range': '~−18 % TDEE · perte régulière, fourchette ANSES',
+  '~−25 % TDEE · fast fat loss, maximum safe limit': '~−25 % TDEE · perte rapide, limite maximale recommandée',
+
+  // --- bulk presets ---
+  'Lean': 'Lean',
+  'Aggressive': 'Agressive',
+  '~+8 % TDEE · slow lean mass gain, minimal fat': '~+8 % TDEE · prise de masse lente, peu de gras',
+  '~+15 % TDEE · classic bulk, muscle + some fat': '~+15 % TDEE · prise de masse classique, muscle + un peu de gras',
+  '~+25 % TDEE · max anabolic stimulus, higher fat gain': '~+25 % TDEE · stimulus anabolique maximal, plus de prise de gras',
+
+  // --- conseils nutritionnels ---
+  'Prioritise protein at every meal to preserve muscle': 'Priorise les protéines à chaque repas pour préserver le muscle',
+  'Fill half your plate with vegetables and high-fibre foods': 'Remplis la moitié de ton assiette de légumes et fibres',
+  'Favour whole grains and legumes over refined carbs': 'Privilégie les céréales complètes et légumineuses aux glucides raffinés',
+  'Time carbs and protein around your workouts': 'Planifie glucides et protéines autour de tes séances',
+  'Hit your calorie target every day — consistency builds mass': 'Atteins ton objectif calorique chaque jour — la régularité construit la masse',
+  'Include slow-digesting protein (cottage cheese) before bed': 'Inclus une protéine à digestion lente (fromage blanc) avant de dormir',
+  'Protein is top priority — aim for 2 g per kg of body weight': 'La protéine est la priorité — vise 2 g par kg de poids de corps',
+  'Cycle calories: more on training days, fewer on rest days': 'Cycle tes calories : plus les jours d’entraînement, moins les jours de repos',
+  'Whole foods first — minimise ultra-processed products': 'Aliments bruts en priorité — minimise les ultra-transformés',
+  'Balanced plate: quality protein, slow carbs and healthy fats': 'Assiette équilibrée : protéines de qualité, glucides lents et bonnes graisses',
+  'Monitor your weight weekly and adjust portions if it drifts': 'Surveille ton poids chaque semaine et ajuste les portions si ça dérive',
+  'Consistency over perfection — small habits compound over time': 'La régularité prime sur la perfection — les petites habitudes s’accumulent',
+
 }

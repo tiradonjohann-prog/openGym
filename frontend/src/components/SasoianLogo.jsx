@@ -84,15 +84,16 @@ export function SasoianLockup({ markSize = 72, fontSize = 48, showTagline = fals
           <span>AN</span>
         </span>
         {showTagline && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-            <div style={{ height: 5, width: 36, borderRadius: 3, background: GREEN, flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+            <div style={{ height: 4, width: 28, borderRadius: 3, background: GREEN, flexShrink: 0 }} />
             <span style={{
               fontFamily: "'Archivo', system-ui, sans-serif",
-              fontWeight: 700, fontSize: 11,
-              letterSpacing: '0.14em', color: RED, textTransform: 'uppercase',
+              fontWeight: 600, fontSize: 13,
+              letterSpacing: '0.01em', color: 'var(--label-2)',
             }}>
-              Training &amp; tracking
+              Sois en forme, reste en forme
             </span>
+            <div style={{ height: 4, width: 28, borderRadius: 3, background: RED, flexShrink: 0 }} />
           </div>
         )}
       </div>

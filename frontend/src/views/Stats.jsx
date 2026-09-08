@@ -598,6 +598,7 @@ export default function Stats() {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <TutorialButton steps={STATS_STEPS} />
         <button className="iconbtn" onClick={() => nav('/history')} aria-label={t('History')}><Icon name="history" /></button>
+        <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
       </div>
     </div>
 

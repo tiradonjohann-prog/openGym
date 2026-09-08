@@ -72,6 +72,7 @@ export default function Plan() {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <TutorialButton steps={PLAN_STEPS} />
         <button className="iconbtn" onClick={planToolsSheet} aria-label={t('Share your plan')} title={t('Share your plan')}><Icon name="upload" /></button>
+        <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
       </div>
     </div>
 

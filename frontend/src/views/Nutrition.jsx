@@ -31,6 +31,7 @@ export default function Nutrition() {
         </button>
         <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Nutrition')}</h1></div>
         <TutorialButton steps={NUTRITION_STEPS} />
+        <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
       </div>
 
       {/* Sub-navigation */}

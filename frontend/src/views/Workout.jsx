@@ -41,7 +41,10 @@ function StartChooser() {
   const todayOvr = S.dayPlan[todayISO()] !== undefined
   const others = S.routines.filter(r => r !== todayRaw && ((r.ex?.length ?? 0) > 0 || (r.blocks?.length ?? 0) > 0))
   return <div className="narrow">
-    <div className="hdr"><div><h1>{t('Start workout')}</h1><div className="sub">{t(DAYN[new Date().getDay()])} — {todayR ? t('today is {0}', todayR.name) : t('rest day, but no one’s stopping you')}</div></div></div>
+    <div className="hdr">
+      <div><h1>{t("Start workout")}</h1><div className="sub">{t(DAYN[new Date().getDay()])} — {todayR ? t("today is {0}", todayR.name) : t("rest day, but no one's stopping you")}</div></div>
+      <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+    </div>
     {todayR && (() => {
       const exSlice = (todayR.ex || []).slice(0, 4)
       return (
