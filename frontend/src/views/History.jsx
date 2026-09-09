@@ -24,7 +24,7 @@ export default function History() {
 
   return <>
     <div className="hdr">
-      <button className="iconbtn" onClick={() => nav('/stats')} aria-label={t('Stats')}><Icon name="chevronLeft" /></button>
+      <button className="iconbtn" onClick={() => window.history.state?.idx > 0 ? nav(-1) : nav('/stats', { replace: true })} aria-label={t('Stats')}><Icon name="chevronLeft" /></button>
       <div style={{ flex: 1, marginLeft: 12 }}>
         <h1>{t('History')}</h1>
         <div className="sub">{t('{0} workouts', S.workouts.length)}</div>

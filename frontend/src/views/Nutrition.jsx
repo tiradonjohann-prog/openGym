@@ -26,7 +26,7 @@ export default function Nutrition() {
   return (
     <div className="narrow">
       <div className="hdr">
-        <button className="iconbtn" onClick={() => nav('/home')} aria-label={t('Home')}>
+        <button className="iconbtn" onClick={() => window.history.state?.idx > 0 ? nav(-1) : nav('/home', { replace: true })} aria-label={t('Home')}>
           <Icon name="chevronLeft" />
         </button>
         <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Nutrition')}</h1></div>
