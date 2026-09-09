@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { App as CapApp } from '@capacitor/app'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { bindUI } from './components/ui.jsx'
@@ -101,5 +102,15 @@ export default function App() {
   const boot = useStore(s => s.boot)
   useEffect(() => { boot() }, [boot])
   useEffect(() => { loadSwEnrichment() }, [])
+  useEffect(() => {
+    const handler = CapApp.addListener('backButton', ({ canGoBack }) => {
+      if (canGoBack) {
+        window.history.back()
+      } else {
+        CapApp.exitApp()
+      }
+    })
+    return () => { handler.then(h => h.remove()) }
+  }, [])
   return <HashRouter><Shell /></HashRouter>
 }

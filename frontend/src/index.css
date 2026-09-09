@@ -252,9 +252,11 @@ h4.sec{
 .lrow-c{color:var(--label);font-size:15px;flex:none;--icon-stroke:2.4}
 .lrow-k{color:var(--acc);font-size:17px;flex:none;--icon-stroke:2.4}
 .lrow.danger,.lrow.danger .lrow-t{color:var(--red)}
-/* rows that contain a stepper: top-align so a wrapped title never hides behind the control */
-.lrow:has(.stp){align-items:flex-start}
-.lrow:has(.stp)>.lrow-i,.lrow:has(.stp)>.stp{margin-top:6px}
+/* rows that contain a control (stepper/numberfield): top-align + fixed stepper width */
+.lrow-ctrl{align-items:flex-start}
+.lrow-ctrl>.lrow-i,.lrow-ctrl>.stp,.lrow-ctrl>.stp-w{margin-top:6px}
+.lrow-ctrl>.stp{flex:none;width:116px}
+.lrow-ctrl>.stp button{width:36px}
 /* an (i) before a row's control: painted small and dim so the control stays the loud thing,
    but with a finger-sized target like everything else — the padding is the hit area and the
    vertical negative margin keeps it from making the row taller. The horizontal ones pull the
