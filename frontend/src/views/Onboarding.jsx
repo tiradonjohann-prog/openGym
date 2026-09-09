@@ -286,7 +286,6 @@ function Step0({ name, setName, onNext }) {
         <FieldLabel>{t('What should we call you?')}</FieldLabel>
         <input
           className="input"
-          autoFocus
           placeholder={t('Your first name or nickname')}
           value={name}
           onChange={e => setName(e.target.value)}
