@@ -3,7 +3,7 @@ import { api } from '../lib/api.js'
 import { localTZ } from '../lib/format.js'
 import { registerCustom } from '../lib/exercises.js'
 import { DEMO, DEMO_SEEDED } from '../lib/demo.js'
-import { MOBILE, nativeLoad, nativeSave, syncReminder } from '../lib/mobile.js'
+import { MOBILE, STATIC, nativeLoad, nativeSave, syncReminder } from '../lib/mobile.js'
 
 const KEY = 'gym_state_v1'
 export const DEF = {
@@ -17,6 +17,8 @@ export const DEF = {
   // server pull, backup import) still falls back to the `showRir` boolean this replaced and
   // keeps the column it had. See effortOf.
   reminder: { on: false, time: '08:00', tz: null }, effort: null, simpleMode: false, promptWeighBefore: false,
+  reminderBW:   { on: true,  hour: 7, minute: 0, every: 1 },
+  reminderMeas: { on: false, hour: 8, minute: 0, every: 14 },
   measurements: [], // [{ d: ISO, values: { chest, waist, hip, arm, thigh, calf, shoulder, neck } }]
   nutritionFavorites: [],
   nutrition: {
@@ -189,6 +191,12 @@ export const useStore = create((set, get) => {
         }
         get().setGuest(true)
         syncReminder(get().S)
+        set({ ready: true })
+        return
+      }
+      // Static build (Vercel/PWA): no backend, data lives in localStorage, guest mode always.
+      if (STATIC) {
+        get().setGuest(true)
         set({ ready: true })
         return
       }
