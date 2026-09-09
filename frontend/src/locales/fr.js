@@ -615,8 +615,39 @@ export default {
   'Height': 'Taille',
   'years': 'ans',
   'Current weight': 'Poids actuel',
-  "Let’s go! Load starter plan": "C’est parti ! Charger le programme de démarrage",
-  "Skip — I’ll build my plan manually": "Ignorer — je construirai mon plan moi-même",
+  "Let’s go! Load starter plan": "Démarrer avec un plan PPL",
+  "Skip — I’ll build my plan manually": "Ignorer — je configure manuellement",
+  'Hi {0}! 👋': 'Salut {0} ! 👋',
+  'What should we call you?': "Comment t’appelle-t-on ?",
+
+  // --- onboarding wizard (Sasoian) ---
+  'Smart progression': 'Progression intelligente',
+  'Auto-increments weight, predicts your next set.': 'Augmente automatiquement les charges, prédit ta prochaine série.',
+  'Track everything': 'Suivi complet',
+  'PRs, volume, body weight, measurements, macros.': 'Records perso, volume, poids corporel, mensurations, macros.',
+  'Stay consistent': 'Rester régulier',
+  'Weekly streak, muscle balance heatmap, calendar.': "Série hebdomadaire, heatmap d’équilibre musculaire, calendrier.",
+
+  // --- activity levels (nutrition.js) ---
+  'Sedentary': 'Sédentaire',
+  'Lightly active': 'Peu actif',
+  'Moderately active': 'Modérément actif',
+  'Very active': 'Très actif',
+  'Extremely active': 'Extrêmement actif',
+  'Desk job, minimal movement outside training': "Bureau, peu de déplacements en dehors de l’entraînement",
+  'Some walking or light daily activity outside training': "Quelques marches ou activité légère quotidienne hors entraînement",
+  'Active lifestyle or light physical job, outside training': "Mode de vie actif ou travail physique léger, hors entraînement",
+  'Physical job or very active daily life outside training': "Travail physique ou vie quotidienne très active, hors entraînement",
+  'Manual labour — extremely active outside training': "Travail manuel — extrêmement actif hors entraînement",
+
+  // --- goal labels & descriptions (goals.js) ---
+  'Maintain weight': 'Maintenir le poids',
+  'Gain muscle': 'Prendre de la masse',
+  'Body recomposition': 'Recomposition corporelle',
+  'Match calorie intake to your TDEE to stay at your current weight.': "Adapter les calories au TDEE pour rester au même poids.",
+  'A moderate deficit helps lose body fat while preserving muscle.': "Un déficit modéré permet de perdre de la masse grasse en préservant les muscles.",
+  'A moderate surplus supports muscle growth with minimal fat gain.': "Un surplus modéré favorise la croissance musculaire avec peu de prise de gras.",
+  'Close to maintenance calories with high protein — lose fat and gain muscle over time.': "Proche de la maintenance avec une protéine élevée — perdre du gras et gagner du muscle progressivement.",
 
   // --- programme ---
   'My programmes': "Mes programmes",
@@ -1112,19 +1143,218 @@ export default {
   'Body measurements': 'Mensurations',
   'Measurements': 'Mensurations',
   'Log in cm — only fill the ones you measured.': 'Saisie en cm — remplis uniquement celles que tu as mesurées.',
-  'Chest': 'Poitrine',
-  'Waist': 'Tour de taille',
-  'Hips': 'Hanches',
-  'Arm': 'Bras',
-  'Thigh': 'Cuisse',
-  'Calf': 'Mollet',
-  'Shoulder': 'Épaules',
-  'Neck': 'Cou',
+  'Tap a field to enter your measurements': 'Appuie sur un champ pour saisir tes mesures',
+  'Save measurements': 'Enregistrer les mensurations',
   'Measurements saved': 'Mensurations enregistrées',
   'Enter at least one measurement': 'Saisis au moins une mensuration',
   'No measurements yet — log your first set to track progress.': 'Pas encore de mensurations — note ton premier relevé pour suivre ta progression.',
   'Recent entries': 'Dernières entrées',
+  'Sessions': 'Sessions',
+  '+ {0} more': '+ {0} de plus',
+  'mo': 'mois',
+  'Log measurements': 'Saisir mensurations',
+  'Show all {1} more': 'Voir tout',
+  'Welcome to Sasoian!': 'Bienvenue sur Sasoian !',
+  'Your personal fitness tracker — built for consistency.': 'Ton compagnon fitness — conçu pour la régularité.',
+  'Your first name or nickname': 'Ton prénom ou surnom',
+  'Optional — shown in your greeting.': 'Facultatif — affiché dans ton accueil.',
+  'Measurements': 'Mensurations',
+
+  // --- health reminders ---
+  'Health reminders': 'Rappels santé',
+  'Shown in the app when you open it. The more regular the tracking, the more accurate the data.': 'Affiché à l\'ouverture de l\'app. Plus le suivi est régulier, plus les données sont précises.',
+  'Weigh fasted, after using the toilet.': 'Pèse-toi à jeun, après être allé(e) aux toilettes.',
+  'Weigh fasted, after using the toilet — for consistent readings.': 'Pèse-toi à jeun, après être allé(e) aux toilettes — pour des mesures fiables.',
+  'Track changes in your body shape over time.': 'Suis l\'évolution de ta silhouette dans le temps.',
+  'Frequency': 'Fréquence',
+  'Daily': 'Quotidien',
+  'Every 2 d': 'Tous les 2 j',
+  'Every 3 d': 'Tous les 3 j',
+  'Every 2 wk': 'Toutes les 2 sem.',
+  'Monthly': 'Mensuel',
+  'Time to weigh yourself': 'C\'est l\'heure de te peser',
+  'Time to take your measurements': 'C\'est l\'heure de tes mensurations',
+  'Log now': 'Saisir',
+  'Skip': 'Passer',
+  'The more regular, the more accurate.': 'Plus c\'est régulier, plus c\'est précis.',
 
   // --- finish summary: PR by kind ---
   '{0}RM': '{0}RM',
+
+  // --- tutorial system ---
+  'Tutorial': 'Tutoriel',
+  'Skip tutorial': 'Passer le tutoriel',
+  'Close tutorial': 'Fermer le tutoriel',
+  'Prev': 'Préc.',
+  'Next': 'Suiv.',
+  'Done': 'Terminé',
+  'Tip': 'Astuce',
+  '{0} / {1}': '{0} / {1}',
+
+  // tutorial step content
+  'Your training starts here. This screen shows your programme for today and a quick overview of your progress.': 'L\'entraînement commence ici. Cet écran affiche le programme du jour et un résumé rapide de ta progression.',
+  'Weekly calendar': 'Calendrier hebdomadaire',
+  'Tap a day to see or change the planned workout. The coloured dot shows: <b>planned</b>, <b>modified</b>, or <b>done</b>.': 'Appuie sur un jour pour voir ou modifier la séance prévue. Le point coloré indique : <b>prévu</b>, <b>modifié</b> ou <b>réalisé</b>.',
+  "Today's workout": "Séance du jour",
+  "Tap here to start the session planned for today. If no routine is assigned, you can pick one or add a rest day.": "Appuie ici pour lancer la séance prévue aujourd\'hui. Si aucune routine n\'est attribuée, tu peux en choisir une ou marquer un jour de repos.",
+  'Body weight': 'Poids corporel',
+  'Log your weight daily — ideally fasted and after using the toilet for consistent readings. Tap the graph to see your full history.': 'Note ton poids quotidiennement — idéalement à jeun et après être allé(e) aux toilettes. Appuie sur le graphique pour voir ton historique complet.',
+  'Quick log': 'Saisie rapide',
+  'Log your body weight or body measurements in one tap. The more regularly you track, the more accurate your progress data becomes.': 'Enregistre ton poids ou tes mensurations en un seul appui. Plus tu te pèses régulièrement, plus tes données de progression sont fiables.',
+  'Streak': 'Série',
+  "Your consecutive training weeks. The arc shows how much of this week's sessions you've completed vs. planned.": "Tes semaines d\'entraînement consécutives. L\'arc montre la progression de cette semaine par rapport aux séances prévues.",
+  'Log activity': 'Saisir une activité',
+  'Log a cardio session: running, cycling, rowing… The app calculates estimated calorie burn from your profile.': 'Enregistre une session cardio : course, vélo, aviron… L\'app calcule les calories brûlées estimées à partir de ton profil.',
+
+  // stats tutorial
+  'Key metrics': 'Métriques clés',
+  'A snapshot of your global performance: total workouts, volume lifted, best single effort, and current streak.': 'Un résumé de tes performances globales : total de séances, volume soulevé, meilleur effort unique et série en cours.',
+  'Streak badge': 'Badge de série',
+  "The ring fills as you complete planned sessions this week. Tap to view the full workout calendar.": "L\'anneau se remplit au fur et à mesure des séances réalisées cette semaine. Appuie pour voir le calendrier complet.",
+  'Body weight history': 'Historique du poids',
+  'Your weight evolution over time. Switch between 30 days, 90 days, or all-time. The trend line and moving average help smooth out daily fluctuations.': 'L\'évolution de ton poids dans le temps. Bascule entre 30 jours, 90 jours ou tout l\'historique. La ligne de tendance et la moyenne mobile lissent les variations quotidiennes.',
+  'Muscle map': 'Carte musculaire',
+  "The colour intensity shows which muscle groups you've trained most in the selected period. Useful for spotting imbalances.": "L\'intensité de couleur montre les groupes musculaires les plus sollicités sur la période. Utile pour repérer les déséquilibres.",
+  'Personal records': 'Records personnels',
+  "Your all-time PRs per exercise. A trophy appears on your home screen every time you break one during a workout.": "Tes records de tous les temps par exercice. Un trophée apparaît à l\'accueil à chaque fois que tu en bats un pendant une séance.",
+  'Measurements': 'Mensurations',
+  'Track changes in chest, waist, arm, thigh and calf over time. Each zone has its own colour for easy reading.': 'Suis l\'évolution de la poitrine, taille, bras, cuisse et mollet dans le temps. Chaque zone a sa propre couleur pour une lecture facile.',
+
+  // workout tutorial
+  'Active workout': 'Séance en cours',
+  "You are now in a live session. The timer starts automatically. Finish at your own pace — the session is saved when you tap <b>Finish</b>.": "Tu es dans une session en direct. Le chrono démarre automatiquement. Termine à ton rythme — la séance est enregistrée quand tu appuies sur <b>Terminer</b>.",
+  'Exercises': 'Exercices',
+  "Each card is one exercise from your routine. Expand it to log sets. The last session's values are pre-filled to save time.": "Chaque carte correspond à un exercice de ta routine. Développe-la pour saisir les séries. Les valeurs de la dernière séance sont pré-remplies.",
+  'Logging a set': 'Saisir une série',
+  'Enter the weight and reps. Tap <b>✓</b> to validate the set. A new row appears automatically so you can log the next set without extra taps.': 'Entre le poids et les reps. Appuie sur <b>✓</b> pour valider. Une nouvelle ligne apparaît automatiquement pour enchaîner.',
+  'Rest timer': 'Chrono de repos',
+  "The timer starts after each completed set. You can adjust the duration or skip it. A vibration alerts you when time is up.": "Le chrono démarre après chaque série validée. Tu peux ajuster la durée ou le passer. Une vibration te prévient quand le temps est écoulé.",
+  'Finishing the session': 'Terminer la séance',
+  'Tap <b>Finish</b> to save the workout. The app calculates total volume, PRs, and updates your stats automatically.': 'Appuie sur <b>Terminer</b> pour enregistrer la séance. L\'app calcule le volume total, les PRs et met à jour tes stats automatiquement.',
+
+  // body weight tutorial
+  'Current stats': 'Stats actuelles',
+  'Your most recent weigh-in, the change vs. the previous entry, and the total change from your first log.': 'Ta dernière pesée, la variation par rapport à la précédente, et la différence totale depuis ton premier enregistrement.',
+  'Weight curve': 'Courbe de poids',
+  'The <b>blue dotted line</b> is the 7-day moving average — it smooths out water weight and meal timing. The <b>yellow dashed line</b> is the linear trend and projection.': 'La <b>ligne bleue pointillée</b> est la moyenne mobile sur 7 jours — elle lisse la rétention d\'eau et les repas. La <b>ligne jaune tiretée</b> est la tendance linéaire et la projection.',
+  'Goal tracking': 'Suivi d\'objectif',
+  'Set a target weight. The app estimates how many days to reach it based on your current trend or calorie deficit — whichever gives a realistic answer.': 'Définis un poids cible. L\'app estime le nombre de jours pour l\'atteindre selon ta tendance ou ton déficit calorique.',
+  'History & measurements': 'Historique & mensurations',
+  'Tap any past entry to delete it. Below is a summary of your latest body measurements — tap to add a new set.': 'Appuie sur une entrée passée pour la supprimer. En dessous, un résumé de tes dernières mensurations — appuie pour en ajouter un nouveau relevé.',
+
+  // settings tutorial
+  'Profile': 'Profil',
+  'Set your display name and choose the unit system (kg / lb). Your name appears in the greeting on the home screen.': 'Définis ton nom d\'affichage et choisis le système d\'unités (kg / lb). Ton prénom apparaît dans le message d\'accueil.',
+  'Health reminders': 'Rappels santé',
+  'Configure automatic reminders to weigh yourself and take measurements. Default: daily weigh-in at 7:00. You can change the frequency and time.': 'Configure des rappels automatiques pour te peser et prendre tes mensurations. Par défaut : pesage quotidien à 7h00. Tu peux modifier la fréquence et l\'heure.',
+  'Workout notifications': 'Notifications entraînement',
+  "Enable push notifications to get reminded on training days. The app sends one notification per planned workout day at the time you choose.": "Active les notifications push pour être rappelé(e) les jours d\'entraînement. L\'app envoie une notification par jour prévu à l\'heure choisie.",
+  'Data & backup': 'Données & sauvegarde',
+  'Export all your data as JSON. Import it on another device to restore everything — workouts, weight history, routines, and settings.': 'Exporte toutes tes données en JSON. Importe-les sur un autre appareil pour tout restaurer — séances, poids, routines et paramètres.',
+
+  // plan tutorial
+  'Weekly plan': 'Plan hebdomadaire',
+  'Assign a routine to each day of the week. Leave a day empty for rest. You can reassign any day without losing logged workouts.': 'Attribue une routine à chaque jour de la semaine. Laisse un jour vide pour le repos. Tu peux modifier n\'importe quel jour sans perdre les séances enregistrées.',
+  'Your routines': 'Tes routines',
+  'Each routine is a named workout template with a fixed list of exercises. Tap to edit exercises, order, and set targets.': 'Chaque routine est un modèle de séance avec une liste fixe d\'exercices. Appuie pour modifier les exercices, l\'ordre et les objectifs.',
+  'Training programmes': 'Programmes d\'entraînement',
+  "A programme is a multi-week plan that rotates routines automatically. Great for progressive overload phases like PPL, 5/3/1, or hypertrophy blocks.": "Un programme est un plan sur plusieurs semaines qui fait tourner les routines automatiquement. Idéal pour les phases de surcharge progressive : PPL, 5/3/1, blocs d\'hypertrophie.",
+
+  // nutrition tutorial
+  'Nutrition profile': 'Profil nutritionnel',
+  'Enter your stats to calculate your TDEE (total daily energy expenditure). The app uses this to set your calorie target based on your goal.': 'Entre tes données pour calculer ta TDEE (dépense énergétique totale journalière). L\'app s\'en sert pour définir ton objectif calorique.',
+  "Today's intake": 'Apports du jour',
+  'Search for foods or enter them manually. Each entry shows calories, protein, carbs, and fat. The ring fills as you approach your daily target.': 'Recherche des aliments ou saisis-les manuellement. Chaque entrée affiche calories, protéines, glucides et lipides. L\'anneau se remplit au fur et à mesure.',
+  'Weekly view': 'Vue hebdomadaire',
+  'See your average daily intake vs. target over the last 7 days. Consistency matters more than hitting the exact number every day.': 'Vois ta moyenne journalière vs. objectif sur les 7 derniers jours. La régularité compte plus que d\'atteindre le chiffre exact chaque jour.',
+  // --- intensites cardio ---
+  'Very easy': 'Très facile',
+  'Easy': 'Facile',
+  'Moderate': 'Modéré',
+  'Maximal': 'À fond',
+
+  // --- blocs cardio ---
+  'Warm-up': 'Échauffement',
+  'Steady pace': 'Allure constante',
+  'Cooldown': 'Retour au calme',
+
+  // --- sports ---
+  'Strength training': 'Musculation',
+  'Running': 'Course à pied',
+  'Walking': 'Marche',
+  'Cycling': 'Vélo',
+  'Aqua aerobics': 'Aquagym',
+
+  // --- projection poids ---
+  'Observed trend': 'Tendance observée',
+  'Real calories': 'Calories réelles',
+  'Theoretical': 'Théorique',
+  'lost': 'perdus',
+  'gained': 'gagnés',
+  'week': 'semaine',
+  'weekly kg lifted': 'kg soulevés / sem.',
+
+  // --- types de regime ---
+  'Omnivore': 'Omnivore',
+  'Vegetarian': 'Végétarien·ne',
+  'Vegan': 'Vegan',
+  'Keto / Low-carb': 'Keto / Faible en glucides',
+  'Other': 'Autre',
+
+  // --- allergenes EU ---
+  'Gluten': 'Gluten',
+  'Crustaceans': 'Crustacés',
+  'Eggs': 'Œufs',
+  'Fish': 'Poisson',
+  'Peanuts': 'Arachides',
+  'Soy': 'Soja',
+  'Dairy': 'Produits laitiers',
+  'Tree nuts': 'Fruits à coque',
+  'Celery': 'Céleri',
+  'Mustard': 'Moutarde',
+  'Sesame': 'Sésame',
+  'Sulphites': 'Sulfites',
+  'Lupin': 'Lupin',
+  'Molluscs': 'Mollusques',
+
+  // --- standalone units ---
+  'days': 'jours',
+  'weigh-ins': 'pesées',
+
+  // --- estimation poids ---
+  'Estimate based on fat mass (7 700 kcal/kg). Actual scale weight varies with water and muscle.': 'Estimation basée sur la masse grasse (7 700 kcal/kg). Le poids réel varie avec l’eau et les muscles.',
+
+  // --- macros labels ---
+  'Protein': 'Protéines',
+  'Carbohydrates': 'Glucides',
+  'Fat': 'Lipides',
+
+  // --- cut presets ---
+  'Gentle': 'Douce',
+  'Intensive': 'Intensive',
+  '~−10 % TDEE · fat loss with minimal muscle impact': '~−10 % TDEE · perte de gras, impact musculaire minimal',
+  '~−18 % TDEE · steady fat loss, ANSES-recommended range': '~−18 % TDEE · perte régulière, fourchette ANSES',
+  '~−25 % TDEE · fast fat loss, maximum safe limit': '~−25 % TDEE · perte rapide, limite maximale recommandée',
+
+  // --- bulk presets ---
+  'Lean': 'Lean',
+  'Aggressive': 'Agressive',
+  '~+8 % TDEE · slow lean mass gain, minimal fat': '~+8 % TDEE · prise de masse lente, peu de gras',
+  '~+15 % TDEE · classic bulk, muscle + some fat': '~+15 % TDEE · prise de masse classique, muscle + un peu de gras',
+  '~+25 % TDEE · max anabolic stimulus, higher fat gain': '~+25 % TDEE · stimulus anabolique maximal, plus de prise de gras',
+
+  // --- conseils nutritionnels ---
+  'Prioritise protein at every meal to preserve muscle': 'Priorise les protéines à chaque repas pour préserver le muscle',
+  'Fill half your plate with vegetables and high-fibre foods': 'Remplis la moitié de ton assiette de légumes et fibres',
+  'Favour whole grains and legumes over refined carbs': 'Privilégie les céréales complètes et légumineuses aux glucides raffinés',
+  'Time carbs and protein around your workouts': 'Planifie glucides et protéines autour de tes séances',
+  'Hit your calorie target every day — consistency builds mass': 'Atteins ton objectif calorique chaque jour — la régularité construit la masse',
+  'Include slow-digesting protein (cottage cheese) before bed': 'Inclus une protéine à digestion lente (fromage blanc) avant de dormir',
+  'Protein is top priority — aim for 2 g per kg of body weight': 'La protéine est la priorité — vise 2 g par kg de poids de corps',
+  'Cycle calories: more on training days, fewer on rest days': 'Cycle tes calories : plus les jours d’entraînement, moins les jours de repos',
+  'Whole foods first — minimise ultra-processed products': 'Aliments bruts en priorité — minimise les ultra-transformés',
+  'Balanced plate: quality protein, slow carbs and healthy fats': 'Assiette équilibrée : protéines de qualité, glucides lents et bonnes graisses',
+  'Monitor your weight weekly and adjust portions if it drifts': 'Surveille ton poids chaque semaine et ajuste les portions si ça dérive',
+  'Consistency over perfection — small habits compound over time': 'La régularité prime sur la perfection — les petites habitudes s’accumulent',
+
 }

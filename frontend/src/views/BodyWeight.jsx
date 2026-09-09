@@ -7,7 +7,9 @@ import { bwSheet, goalSheet, bwDeltaColor, measurementsSheet } from '../sheets.j
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button, Check } from '../components/ui.jsx'
-import { MEASURE_FIELDS, latestMeasurements, measureSeries } from '../lib/measurements.js'
+import { TutorialButton } from '../components/TutorialOverlay.jsx'
+import { BODYWEIGHT_STEPS } from '../lib/tutorials.js'
+import { MEASURE_FIELDS, latestMeasurements, measureSeries, MEASURE_COLORS } from '../lib/measurements.js'
 
 const DAY_MS = 86_400_000
 const WEEK_MS = 7 * DAY_MS
@@ -59,6 +61,10 @@ export default function BodyWeight() {
   const [showMA, setShowMA] = useState(true)
   const [showTrend, setShowTrend] = useState(true)
   const [showProjection, setShowProjection] = useState(true)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [measOpen, setMeasOpen] = useState(false)
+
+  const HISTORY_LIMIT = 5
 
   const sorted = useMemo(
     () => [...S.bodyweight].sort((a, b) => (a.t || new Date(a.d).getTime()) - (b.t || new Date(b.d).getTime())),
@@ -136,6 +142,7 @@ export default function BodyWeight() {
         </button>
         <h1>{t('Body weight')}</h1>
         <div className="row" style={{ gap: 8 }}>
+          <TutorialButton steps={BODYWEIGHT_STEPS} />
           <Button size="sm" icon="target" style={S.targetW ? { color: 'var(--yellow)' } : undefined} onClick={goalSheet}>
             {S.targetW ? fmtNum(S.targetW) : t('Goal')}
           </Button>
@@ -145,7 +152,7 @@ export default function BodyWeight() {
 
       {/* ── Summary stats ── */}
       {latest && (
-        <div className="tiles">
+        <div className="tiles" data-tuto="bw-summary">
           <div className="tile colored tappable" style={{ '--card-color': 'var(--acc)' }} onClick={() => bwSheet()}>
             <div className="l">{t('Current')}</div>
             <div className="v">{fmtNum(latest.w)} <span style={{ fontSize: '0.55em', fontWeight: 400, color: 'var(--label-2)' }}>{S.unit}</span></div>
@@ -216,7 +223,7 @@ export default function BodyWeight() {
       )}
 
       {/* ── Chart + controls ── */}
-      <div className="card">
+      <div className="card" data-tuto="bw-chart">
         {/* Range selector */}
         <div className="row" style={{ gap: 6, marginBottom: 10 }}>
           {RANGES.map(r => (
@@ -267,14 +274,25 @@ export default function BodyWeight() {
         )}
       </div>
 
-      {/* ── History list ── */}
+      {/* ── History list (collapsible) ── */}
       <div className="card">
-        <h2 style={{ margin: '0 0 10px' }}>{t('History')}</h2>
+        <div className="row between" style={{ marginBottom: sorted.length > 0 ? 10 : 0 }}>
+          <h2 style={{ margin: 0 }}>{t('History')}</h2>
+          {sorted.length > HISTORY_LIMIT && (
+            <button
+              className="chip"
+              style={{ fontSize: 12 }}
+              onClick={() => setHistoryOpen(v => !v)}
+            >
+              {historyOpen ? t('Show less') : t('Show all {0}', sorted.length)}
+            </button>
+          )}
+        </div>
         {sorted.length === 0 ? (
           <div className="muted small">{t('No entries yet.')}</div>
         ) : (
           <div>
-            {[...sorted].reverse().map(e => (
+            {[...sorted].reverse().slice(0, historyOpen ? undefined : HISTORY_LIMIT).map(e => (
               <div key={e.id || e.d} className="lrow">
                 <div className="row" style={{ gap: 8, flex: 1 }}>
                   <span className="lrow-i" style={{ background: 'var(--surface-3)', fontSize: 16 }}>
@@ -295,6 +313,15 @@ export default function BodyWeight() {
                 </button>
               </div>
             ))}
+            {!historyOpen && sorted.length > HISTORY_LIMIT && (
+              <button
+                className="lrow"
+                style={{ width: '100%', justifyContent: 'center', color: 'var(--label-3)', fontSize: 13, border: 'none', background: 'none', cursor: 'pointer', paddingTop: 6 }}
+                onClick={() => setHistoryOpen(true)}
+              >
+                {t('+ {0} more', sorted.length - HISTORY_LIMIT)}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -304,34 +331,119 @@ export default function BodyWeight() {
         const latest = latestMeasurements(S)
         const hasAny = Object.keys(latest).length > 0
         const tracked = MEASURE_FIELDS.filter(f => latest[f.key])
+        const allSessions = [...(S.measurements || [])].sort((a, b) => a.d < b.d ? 1 : -1)
+        const MEAS_LIMIT = 3
+
+        const monthlyRate = (series) => {
+          if (series.length < 2) return null
+          const first = series[0], last = series[series.length - 1]
+          const days = (last.t - first.t) / 86400000
+          if (days < 7) return null
+          return Math.round((last.y - first.y) / days * 30 * 10) / 10
+        }
+
         return (
           <div className="card">
-            <div className="row between" style={{ marginBottom: hasAny ? 12 : 0 }}>
+            <div className="row between" style={{ marginBottom: hasAny ? 14 : 0 }}>
               <h2 style={{ margin: 0 }}>{t('Measurements')}</h2>
               <Button size="sm" icon="plus" onClick={measurementsSheet}>{t('Log')}</Button>
             </div>
             {hasAny ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {tracked.map(f => {
-                  const series = measureSeries(S, f.key)
-                  const cur = latest[f.key]
-                  const prev = series.length >= 2 ? series[series.length - 2].y : null
-                  const delta = prev !== null ? Math.round((cur.v - prev) * 10) / 10 : null
-                  return (
-                    <div key={f.key} style={{
-                      background: 'var(--surface-2)', borderRadius: 10, padding: '10px 12px',
-                    }}>
-                      <div className="small muted" style={{ marginBottom: 3 }}>{t(f.label)}</div>
-                      <div style={{ fontWeight: 700, fontSize: 16 }}>{cur.v} <span className="muted" style={{ fontSize: 11, fontWeight: 400 }}>cm</span></div>
-                      {delta !== null && (
-                        <div style={{ fontSize: 11, color: delta === 0 ? 'var(--label-4)' : delta < 0 ? 'var(--teal)' : 'var(--orange)', marginTop: 2 }}>
-                          {delta > 0 ? '+' : ''}{delta}
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {tracked.map(f => {
+                    const series = measureSeries(S, f.key)
+                    const cur = latest[f.key]
+                    const prev = series.length >= 2 ? series[series.length - 2].y : null
+                    const delta = prev !== null ? Math.round((cur.v - prev) * 10) / 10 : null
+                    const rate = monthlyRate(series)
+                    const color = MEASURE_COLORS[f.key] || 'var(--acc)'
+                    const trendColor = rate === null || Math.abs(rate) < 0.2 ? 'var(--label-4)'
+                      : rate > 0 ? 'var(--orange)' : 'var(--teal)'
+                    return (
+                      <div key={f.key} style={{
+                        background: `linear-gradient(135deg,color-mix(in srgb,${color} 13%,var(--surface-2)),color-mix(in srgb,${color} 5%,var(--surface-2)))`,
+                        border: `1px solid color-mix(in srgb,${color} 22%,transparent)`,
+                        borderRadius: 12, padding: '10px 12px',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                          <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0, opacity: 0.9 }} />
+                          <div style={{
+                            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                            letterSpacing: '.06em', color,
+                          }}>
+                            {f.name}
+                          </div>
                         </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 2 }}>
+                          <span style={{ fontWeight: 700, fontSize: 17 }}>{cur.v}</span>
+                          <span style={{ fontSize: 11, color: 'var(--label-3)' }}>cm</span>
+                          {delta !== null && (
+                            <span style={{
+                              fontSize: 11, fontWeight: 600, marginLeft: 'auto',
+                              color: delta === 0 ? 'var(--label-4)' : delta < 0 ? 'var(--teal)' : 'var(--orange)',
+                            }}>
+                              {delta > 0 ? '+' : ''}{delta}
+                            </span>
+                          )}
+                        </div>
+                        {rate !== null && (
+                          <div style={{ fontSize: 10, color: trendColor, fontWeight: 600, marginBottom: 4 }}>
+                            {rate > 0.2 ? '↑' : rate < -0.2 ? '↓' : '→'}{' '}
+                            {rate > 0 ? '+' : ''}{rate} cm/{t('mo')}
+                          </div>
+                        )}
+                        {series.length >= 2 && (
+                          <div style={{ marginTop: 4 }}>
+                            <LineChart points={series} h={42} unit="cm" color={color} axes={false} />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Collapsible session history */}
+                {allSessions.length > 0 && (
+                  <div style={{ marginTop: 14 }}>
+                    <div className="row between" style={{ marginBottom: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--label-3)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{t('Sessions')}</span>
+                      {allSessions.length > MEAS_LIMIT && (
+                        <button className="chip" style={{ fontSize: 12 }} onClick={() => setMeasOpen(v => !v)}>
+                          {measOpen ? t('Show less') : t('Show all {0}', allSessions.length)}
+                        </button>
                       )}
                     </div>
-                  )
-                })}
-              </div>
+                    {allSessions.slice(0, measOpen ? undefined : MEAS_LIMIT).map(entry => (
+                      <div key={entry.d} style={{
+                        background: 'var(--surface-2)', borderRadius: 10,
+                        padding: '8px 12px', marginBottom: 6,
+                      }}>
+                        <div style={{ fontSize: 11, color: 'var(--label-3)', marginBottom: 5, fontWeight: 600 }}>
+                          {fmtDate(entry.d, true)}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px' }}>
+                          {MEASURE_FIELDS.filter(f => (entry.values || {})[f.key] > 0).map(f => (
+                            <span key={f.key} style={{ fontSize: 12 }}>
+                              <span style={{ color: MEASURE_COLORS[f.key] || 'var(--label-3)', fontSize: 10, fontWeight: 700 }}>{f.name} </span>
+                              <b>{entry.values[f.key]}</b>
+                              <span style={{ color: 'var(--label-4)', fontSize: 10 }}> cm</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {!measOpen && allSessions.length > MEAS_LIMIT && (
+                      <button
+                        style={{ width: '100%', color: 'var(--label-3)', fontSize: 13, border: 'none', background: 'none', cursor: 'pointer', padding: '4px 0' }}
+                        onClick={() => setMeasOpen(true)}
+                      >
+                        {t('+ {0} more', allSessions.length - MEAS_LIMIT)}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
             ) : (
               <div className="muted small">{t('No measurements yet — log your first set to track progress.')}</div>
             )}

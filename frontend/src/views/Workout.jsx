@@ -17,6 +17,21 @@ import { historicalBests, prKindOf } from '../lib/prs.js'
 import { estimate1RM } from '../lib/onerm.js'
 import { glyphOf } from '../lib/glyphs.js'
 
+/* Muscle-group accent colors — drives card left-border + tag tint */
+const BP_COLOR = {
+  chest:         'var(--acc)',
+  back:          'var(--blue)',
+  shoulders:     'var(--purple)',
+  'upper arms':  'var(--orange)',
+  'lower arms':  'var(--yellow)',
+  waist:         'var(--teal)',
+  'upper legs':  'var(--pink)',
+  'lower legs':  'var(--teal)',
+  neck:          'var(--label-3)',
+  cardio:        'var(--orange)',
+}
+const bpColorOf = ex => BP_COLOR[ex.bp] || 'var(--label-3)'
+
 /* ---------- start chooser (no active workout) ---------- */
 function StartChooser() {
   const nav = useNavigate()
@@ -26,20 +41,74 @@ function StartChooser() {
   const todayOvr = S.dayPlan[todayISO()] !== undefined
   const others = S.routines.filter(r => r !== todayRaw && ((r.ex?.length ?? 0) > 0 || (r.blocks?.length ?? 0) > 0))
   return <div className="narrow">
-    <div className="hdr"><div><h1>{t('Start workout')}</h1><div className="sub">{t(DAYN[new Date().getDay()])} — {todayR ? t('today is {0}', todayR.name) : t('rest day, but no one’s stopping you')}</div></div></div>
-    {todayR && <div className="card" style={{ borderColor: 'color-mix(in srgb,var(--acc) 40%,transparent)', background: 'linear-gradient(135deg,color-mix(in srgb,var(--acc) 12%,var(--surface)),color-mix(in srgb,var(--acc) 4%,var(--surface)))' }}>
-      <h2 className="accent">{t("Today's plan")}{todayOvr ? ' · ' + t('rescheduled') : ''}</h2>
-      <div className="row between" style={{ marginBottom: 12 }}>
-        <div><div className="big">{todayR.name}</div><div className="muted small">{exCount(todayR.ex.length)}</div></div>
-        <span className="lrow-i" style={{ width: 42, height: 42, borderRadius: 12, fontSize: 24, background: 'var(--acc)', color: 'var(--on-acc)' }}><Icon name={glyphOf(todayR.emoji)} /></span>
-      </div>
-      <Button variant="primary" icon="play" onClick={() => startFlow(todayR.id)}>{t('Start {0}', todayR.name)}</Button>
-    </div>}
+    <div className="hdr">
+      <div><h1>{t("Start workout")}</h1><div className="sub">{t(DAYN[new Date().getDay()])} — {todayR ? t("today is {0}", todayR.name) : t("rest day, but no one's stopping you")}</div></div>
+      <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+    </div>
+    {todayR && (() => {
+      const exSlice = (todayR.ex || []).slice(0, 4)
+      return (
+        <div className="card" style={{
+          borderColor: 'color-mix(in srgb,var(--acc) 45%,transparent)',
+          borderWidth: 1.5,
+          background: 'linear-gradient(145deg,color-mix(in srgb,var(--acc) 13%,var(--surface)),color-mix(in srgb,var(--acc) 4%,var(--surface)))',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {/* accent glow orb */}
+          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: `radial-gradient(circle,color-mix(in srgb,var(--acc) 22%,transparent),transparent 70%)`, pointerEvents: 'none' }} />
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--acc)', marginBottom: 3 }}>
+                {t("Today's plan")}{todayOvr ? ' · ' + t('rescheduled') : ''}
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.15 }}>{todayR.name}</div>
+              <div className="muted small" style={{ marginTop: 2 }}>{exCount(todayR.ex?.length ?? 0)}</div>
+            </div>
+            <div style={{ width: 48, height: 48, borderRadius: 14, fontSize: 26, flexShrink: 0, background: 'var(--acc)', color: 'var(--on-acc)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px -2px color-mix(in srgb,var(--acc) 50%,transparent)' }}>
+              <Icon name={glyphOf(todayR.emoji)} />
+            </div>
+          </div>
+          {/* Exercise preview chips */}
+          {exSlice.length > 0 && (
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 14 }}>
+              {exSlice.map(e => {
+                const ex = exOr(e.id || e)
+                const col = bpColorOf(ex)
+                return (
+                  <span key={e.id || e} style={{
+                    fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+                    background: `color-mix(in srgb,${col} 14%,var(--surface-2))`,
+                    color: col,
+                    border: `1px solid color-mix(in srgb,${col} 22%,transparent)`,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120,
+                  }}>{ex.n}</span>
+                )
+              })}
+              {(todayR.ex?.length ?? 0) > 4 && (
+                <span style={{ fontSize: 11, fontWeight: 500, padding: '3px 8px', borderRadius: 6, background: 'var(--surface-2)', color: 'var(--label-3)' }}>
+                  +{(todayR.ex?.length ?? 0) - 4}
+                </span>
+              )}
+            </div>
+          )}
+          <Button variant="primary" icon="play" onClick={() => startFlow(todayR.id)}>{t('Start {0}', todayR.name)}</Button>
+        </div>
+      )
+    })()}
     {others.length > 0 && <><h4 className="sec">{t('Other routines')}</h4>
-      <div className="list">{others.map(r => <div key={r.id} className="item" onClick={() => startFlow(r.id)}>
-        <span className="lrow-i"><Icon name={glyphOf(r.emoji)} /></span>
-        <div className="grow"><div className="tt">{r.name}</div><div className="ss">{exCount(r.ex.length)}</div></div>
-        <span className="tag acc">{t('Start')}</span></div>)}</div></>}
+      <div className="list">{others.map(r => {
+        const isCardio = r.sport && r.sport !== 'strength'
+        const col = isCardio ? 'var(--teal)' : 'var(--acc)'
+        return (
+          <div key={r.id} className="item" onClick={() => startFlow(r.id)}>
+            <span className="lrow-i" style={{ background: `color-mix(in srgb,${col} 18%,var(--surface-3))`, color: col }}>
+              <Icon name={glyphOf(r.emoji)} />
+            </span>
+            <div className="grow"><div className="tt">{r.name}</div><div className="ss">{exCount(r.ex?.length ?? r.blocks?.length ?? 0)}</div></div>
+            <span className="tag nocap" style={{ background: `color-mix(in srgb,${col} 14%,transparent)`, color: col, fontSize: 11, fontWeight: 700 }}>{t('Start')}</span>
+          </div>
+        )
+      })}</div></>}
     <div style={{ height: 14 }} />
     <Button icon="shuffle" onClick={() => startFlow(null)}>{t('Freestyle workout (pick as you go)')}</Button>
     {!S.routines.length && <><div style={{ height: 10 }} /><Button variant="primary" onClick={() => nav('/plan')}>{t('Build a plan first')}</Button></>}
@@ -111,6 +180,7 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       <button aria-label="Increase" onClick={() => bump(s, i, col, 1)}><Icon name="plus" /></button>
     </div>
   )
+  const bpColor = bpColorOf(ex)
   return <>
     <Media ex={ex} key={entry.id} compact={compact} minimizable />
     <div className="row between" style={{ marginBottom: 6 }}>
@@ -122,10 +192,14 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
     </div>
     <div className="row" style={{ gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
       {cardio && <span className="tag acc"><Icon name="figureRun" />{t('Cardio')}</span>}
-      {/* You log the total; this is the split, so the set in front of you is unambiguous
-          without the rep count having to mean two different things (issue #31). */}
       {!cardio && !timed && isPerSide(cfg) && <span className="tag acc nocap"><Icon name="shuffle" />{t('{0} per side', fmtNum(sideReps(entry.sets.find(s => !s.done)?.r ?? entry.sets[0]?.r)))}</span>}
-      {(ex.tg || ex.bp) && <span className="tag">{t(ex.tg || ex.bp)}</span>}
+      {(ex.tg || ex.bp) && (
+        <span className="tag nocap" style={{
+          background: `color-mix(in srgb,${bpColor} 16%,var(--surface-2))`,
+          color: bpColor,
+          border: `1px solid color-mix(in srgb,${bpColor} 28%,transparent)`,
+        }}>{t(ex.tg || ex.bp)}</span>
+      )}
       {ex.eq && <span className="tag">{t(ex.eq)}</span>}
       {best > 0 && <span className="tag nocap pr-ref">{t('Best:')} {fmtNum(best)} {S.unit}</span>}
     </div>
@@ -134,7 +208,10 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       <Icon name={plan.kind === 'up' ? 'arrowUp' : plan.kind === 'deload' ? 'arrowDown' : 'lightbulb'} />
       <span>{t(...plan.why)}</span>
     </div>}
-    <div className="card" style={{ marginTop: 10, marginBottom: 0 }}>
+    <div className="card" style={{
+      marginTop: 10, marginBottom: 0,
+      borderLeft: `3px solid color-mix(in srgb,${bpColor} 55%,transparent)`,
+    }}>
       {/* the header carries the same eff3 sizing as the rows, or the labels drift off their columns */}
       <div className={'sethead' + (col3 ? ' eff3' : '')}><span className="n-sp" /><span className="w-sp">{col1.hd}</span>{col2 && <span className="r-sp">{col2.hd}</span>}{col3 && <span className="eff-sp">{col3.hd}</span>}{timed && <span className="ck-sp" />}<span className="ck-sp" /></div>
       {entry.sets.map((s, i) => <div key={i} className={'setrow' + (s.done ? ' done' : '') + (col3 ? ' eff3' : '')}>
@@ -314,9 +391,9 @@ function ActiveWorkout() {
                     <span key={k} style={{
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       padding: '4px 8px', borderRadius: 7, fontSize: 11, fontWeight: 700,
-                      background: isCur ? 'var(--acc)' : isDone ? 'var(--surface-3)' : 'var(--surface-2)',
-                      color: isCur ? 'var(--on-acc)' : isDone ? 'var(--label-3)' : 'var(--label-2)',
-                      opacity: isDone ? .65 : 1,
+                      background: isCur ? 'var(--acc)' : isDone ? 'color-mix(in srgb,var(--teal) 18%,var(--surface-2))' : 'var(--surface-2)',
+                      color: isCur ? 'var(--on-acc)' : isDone ? 'var(--teal)' : 'var(--label-2)',
+                      opacity: isDone ? .9 : 1,
                     }}>{lbl}</span>
                   )
                 })}
@@ -329,9 +406,9 @@ function ActiveWorkout() {
               style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 padding: '4px 8px', borderRadius: 7, fontSize: 11, fontWeight: 700,
-                background: isCur ? 'var(--acc)' : isDone ? 'var(--surface-3)' : 'var(--surface-2)',
-                color: isCur ? 'var(--on-acc)' : isDone ? 'var(--label-3)' : 'var(--label-2)',
-                opacity: isDone ? .65 : 1,
+                background: isCur ? 'var(--acc)' : isDone ? 'color-mix(in srgb,var(--teal) 18%,var(--surface-2))' : 'var(--surface-2)',
+                color: isCur ? 'var(--on-acc)' : isDone ? 'var(--teal)' : 'var(--label-2)',
+                opacity: isDone ? .9 : 1,
                 border: 'none', cursor: 'pointer',
               }}
             >{lbl}</button>
@@ -390,13 +467,17 @@ function ActiveWorkout() {
       const allCurDone = unit.every(idx => A.entries[idx].sets.every(s => s.done))
       return (
         <div style={{
-          padding: '6px 4px 10px', display: 'flex', alignItems: 'center', gap: 6,
-          opacity: allCurDone ? 1 : 0.5,
-          transition: 'opacity .3s',
+          padding: '7px 10px', marginBottom: 4,
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: allCurDone ? 'color-mix(in srgb,var(--acc) 8%,var(--surface-2))' : 'var(--surface-2)',
+          border: `1px solid ${allCurDone ? 'color-mix(in srgb,var(--acc) 20%,transparent)' : 'var(--sep)'}`,
+          borderRadius: 10,
+          opacity: allCurDone ? 1 : 0.55,
+          transition: 'opacity .3s, background .3s, border-color .3s',
         }}>
-          <Icon name="chevronRight" style={{ fontSize: 12, color: 'var(--label-4)', flexShrink: 0 }} />
-          <span className="small" style={{ color: 'var(--label-3)', fontStyle: 'italic' }}>
-            {t('Next')}: {nextNames.join(' & ')}
+          <Icon name="chevronRight" style={{ fontSize: 11, color: allCurDone ? 'var(--acc)' : 'var(--label-4)', flexShrink: 0 }} />
+          <span className="small" style={{ color: allCurDone ? 'var(--label-2)' : 'var(--label-3)', fontWeight: allCurDone ? 500 : 400 }}>
+            {t('Next')}: <span style={{ textTransform: 'capitalize' }}>{nextNames.join(' & ')}</span>
           </span>
         </div>
       )

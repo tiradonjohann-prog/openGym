@@ -8,6 +8,8 @@ import WeekView    from './nutrition/WeekView.jsx'
 import DayBalance  from './nutrition/DayBalance.jsx'
 import CardioSection from './nutrition/CardioEntry.jsx'
 import FoodsView  from './nutrition/FoodsView.jsx'
+import { TutorialButton } from '../components/TutorialOverlay.jsx'
+import { NUTRITION_STEPS } from '../lib/tutorials.js'
 
 const TABS = [
   { key: 'today',   label: 'Today' },
@@ -28,6 +30,8 @@ export default function Nutrition() {
           <Icon name="chevronLeft" />
         </button>
         <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Nutrition')}</h1></div>
+        <TutorialButton steps={NUTRITION_STEPS} />
+        <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
       </div>
 
       {/* Sub-navigation */}

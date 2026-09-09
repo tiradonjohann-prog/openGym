@@ -81,7 +81,7 @@ export default function Heatmap({ S, onDay }) {
           <Icon name="chevronLeft" />
         </button>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--label-1)', lineHeight: 1.1 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--label)', lineHeight: 1.1 }}>
             {t(MONTHS_LONG[viewMonth])} {viewYear}
           </div>
           {monthCount > 0 && (

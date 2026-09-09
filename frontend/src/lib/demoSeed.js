@@ -287,6 +287,26 @@ export function buildDemoState() {
   const workoutSet = new Set(workouts.map(w => w.d))
   const nutritionLog = buildNutritionLog(rndN, start, today, workoutSet)
 
+  // Body measurements — one session every 2 weeks. Values in cm.
+  // Demo profile is a 28yo male cutting from 82 → 78 kg:
+  //   chest stable/slight gain, waist shrinks, arm grows, thigh/calf stable.
+  const MEAS_FROM = { chest: 103.0, waist: 89.0, arm: 34.8, thigh: 61.5, calf: 38.2 }
+  const MEAS_TO   = { chest: 101.8, waist: 84.2, arm: 36.0, thigh: 59.6, calf: 38.9 }
+  const rndM = rng(20260723 + 2)
+  const measurements = []
+  for (let day = 14; day <= WEEKS * 7; day += 14) {
+    const md = new Date(start)
+    md.setDate(md.getDate() + day)
+    if (md > today) break
+    const p = day / (WEEKS * 7)
+    const values = {}
+    for (const k of ['chest', 'waist', 'arm', 'thigh', 'calf']) {
+      const raw = MEAS_FROM[k] + (MEAS_TO[k] - MEAS_FROM[k]) * p + (rndM() - 0.5) * 0.5
+      values[k] = Math.round(raw * 10) / 10
+    }
+    measurements.push({ id: uid(), d: isoOf(md), values })
+  }
+
   // TDEE history snapshots across the 12-week cut (weight drops → BMR drops slightly).
   const nutriHistory = []
   for (let wk = 0; wk <= WEEKS; wk += 3) {
@@ -307,5 +327,6 @@ export function buildDemoState() {
     effort: 'rir',
     nutrition: { ...DEMO_NUTRI, history: nutriHistory },
     nutritionLog,
+    measurements,
   }
 }

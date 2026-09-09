@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, programmeCreateSheet, cardioLogSheet, workoutDetailSheet, measurementsSheet } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet } from '../sheets.jsx'
 import { isCardioSport } from '../lib/sports.js'
 import { dayTotals } from '../lib/foodSearch.js'
 import LineChart from '../components/LineChart.jsx'
@@ -12,6 +12,10 @@ import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import { glyphOf } from '../lib/glyphs.js'
 import ProgrammeCard from '../components/ProgrammeCard.jsx'
+import { SasoianMark, SasoianWordmark } from '../components/SasoianLogo.jsx'
+import { bwReminderDue, measReminderDue } from '../lib/reminders.js'
+import { TutorialButton } from '../components/TutorialOverlay.jsx'
+import { HOME_STEPS } from '../lib/tutorials.js'
 
 // ── Compact nutrition widget for home screen ──────────────────────────────────
 function NutriWidget({ S, nav }) {
@@ -48,10 +52,10 @@ function NutriWidget({ S, nav }) {
         <div style={{ height: '100%', width: (pct * 100) + '%', background: barColor, borderRadius: 4, transition: 'width .5s var(--ease)' }} />
       </div>
       {(totals.prot > 0 || totals.carbs > 0 || totals.fat > 0) && (
-        <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-          {totals.prot  > 0 && <span className="small" style={{ color: 'var(--blue)'   }}>{totals.prot}g P</span>}
-          {totals.carbs > 0 && <span className="small" style={{ color: 'var(--orange)' }}>{totals.carbs}g G</span>}
-          {totals.fat   > 0 && <span className="small" style={{ color: 'var(--yellow)' }}>{totals.fat}g L</span>}
+        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+          {totals.prot  > 0 && <span className="small" style={{ color: 'var(--nut-prot)',  fontWeight: 600 }}>{totals.prot}g P</span>}
+          {totals.carbs > 0 && <span className="small" style={{ color: 'var(--nut-carbs)', fontWeight: 600 }}>{totals.carbs}g G</span>}
+          {totals.fat   > 0 && <span className="small" style={{ color: 'var(--nut-fat)',   fontWeight: 600 }}>{totals.fat}g L</span>}
         </div>
       )}
     </div>
@@ -63,6 +67,9 @@ function LastWorkoutCard({ S }) {
   const last = S.workouts.length ? S.workouts[S.workouts.length - 1] : null
   if (!last) return null
   const dur = last.end && last.start ? fmtDur(last.end - last.start) : null
+  const routine = S.routines.find(r => r.id === last.routineId)
+  const hasPRs = last.prs?.length > 0
+  const iconColor = hasPRs ? 'var(--yellow)' : 'var(--acc)'
   return (
     <div className="card tap" onClick={() => workoutDetailSheet(last)}>
       <div className="row between" style={{ marginBottom: 8 }}>
@@ -70,8 +77,12 @@ function LastWorkoutCard({ S }) {
         <Icon name="chevronRight" className="chev" />
       </div>
       <div className="row" style={{ gap: 10, marginBottom: 10, alignItems: 'center' }}>
-        <span className="lrow-i" style={{ background: 'var(--surface-2)', flexShrink: 0 }}>
-          <Icon name="dumbbell" />
+        <span className="lrow-i" style={{
+          background: `color-mix(in srgb,${iconColor} 18%,var(--surface-3))`,
+          color: iconColor,
+          flexShrink: 0,
+        }}>
+          <Icon name={routine ? glyphOf(routine.emoji) : 'dumbbell'} />
         </span>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{last.name || t('Workout')}</div>
@@ -81,7 +92,7 @@ function LastWorkoutCard({ S }) {
       <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
         {dur && <span className="tag nocap"><Icon name="timer" style={{ fontSize: 11 }} />{' '}{dur}</span>}
         {last.vol > 0 && <span className="tag nocap"><Icon name="weight" style={{ fontSize: 11 }} />{' '}{fmtVol(last.vol, S.unit)}</span>}
-        {last.prs?.length > 0 && (
+        {hasPRs && (
           <span className="tag nocap" style={{ background: 'color-mix(in srgb,var(--yellow) 16%,transparent)', color: 'var(--yellow)' }}>
             <Icon name="trophy" style={{ fontSize: 11 }} />{' '}{last.prs.length} PR{last.prs.length > 1 ? 's' : ''}
           </span>
@@ -93,71 +104,123 @@ function LastWorkoutCard({ S }) {
 
 // ── Smart in-app nudges ────────────────────────────────────────────────────────
 function SmartNudge({ S }) {
+  const today = todayISO()
+
+  // Dismissals are keyed by date — resets automatically next day.
   const [dismissed, setDismissed] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem('nudges_dismissed') || '{}') } catch { return {} }
+    try {
+      const raw = JSON.parse(sessionStorage.getItem('nudge_dismiss') || '{}')
+      return Object.fromEntries(Object.entries(raw).filter(([, d]) => d === today))
+    } catch { return {} }
   })
   const dismiss = key => {
-    const next = { ...dismissed, [key]: true }
+    const next = { ...dismissed, [key]: today }
     setDismissed(next)
-    sessionStorage.setItem('nudges_dismissed', JSON.stringify(next))
+    sessionStorage.setItem('nudge_dismiss', JSON.stringify(next))
   }
 
-  const today = todayISO()
   const lastW = S.workouts.length ? S.workouts[S.workouts.length - 1] : null
+
+  // Reminder banners (only when configured by user)
+  const showBW   = bwReminderDue(S)   && !dismissed['bw']
+  const showMeas = measReminderDue(S) && !dismissed['meas']
+
+  // Fallback nudge — no reminders configured, been 5+ days since last log
   const lastBWEntry = S.bodyweight.length ? S.bodyweight[S.bodyweight.length - 1] : null
+  const daysSinceBW = lastBWEntry ? Math.round((new Date(today) - new Date(lastBWEntry.d)) / 86400000) : null
+  const showFallbackBW = !S.reminderBW?.on && daysSinceBW !== null && daysSinceBW >= 5 && !dismissed['bw_fallback']
 
-  const nudges = []
+  // Workout absence nudge
+  const lastWDays = lastW ? Math.round((new Date(today) - new Date(lastW.d)) / 86400000) : null
+  const showWO = lastW && lastWDays >= 4 && !dismissed['wo_' + lastW.d]
 
-  // Nudge 1 — poids du corps non noté depuis 5+ jours
-  if (lastBWEntry) {
-    const daysSinceBW = Math.round((new Date(today) - new Date(lastBWEntry.d)) / 86400000)
-    if (daysSinceBW >= 5 && !dismissed['bw_' + lastBWEntry.d]) {
-      nudges.push({
-        key: 'bw_' + lastBWEntry.d,
-        icon: 'scale',
-        color: 'var(--blue)',
-        text: t('No weight logged for {0} days — quick update?', daysSinceBW),
-        action: () => bwSheet(),
-        actionLabel: t('Log'),
-      })
-    }
-  }
-
-  // Nudge 2 — pas d'entraînement depuis 4+ jours
-  if (lastW) {
-    const daysSince = Math.round((new Date(today) - new Date(lastW.d)) / 86400000)
-    if (daysSince >= 4 && !dismissed['wo_' + lastW.d]) {
-      nudges.push({
-        key: 'wo_' + lastW.d,
-        icon: 'dumbbell',
-        color: 'var(--acc)',
-        text: t('Last workout was {0} days ago — time to get moving!', daysSince),
-        action: null,
-        actionLabel: null,
-      })
-    }
-  }
-
-  if (!nudges.length) return null
+  const ReminderBanner = ({ id, icon, color, title, tip, onLog, onSkip }) => (
+    <div className="card" style={{
+      padding: '12px 14px',
+      border: `1.5px solid color-mix(in srgb,${color} 22%,transparent)`,
+      background: `color-mix(in srgb,${color} 6%,var(--surface))`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+        <Icon name={icon} style={{ fontSize: 19, color, flexShrink: 0, marginTop: 1 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.3, marginBottom: tip ? 4 : 0 }}>{title}</div>
+          {tip && <div style={{ fontSize: 12, color: 'var(--label-3)', lineHeight: 1.5 }}>{tip}</div>}
+        </div>
+        <button className="iconbtn" style={{ width: 26, height: 26, fontSize: 12, color: 'var(--label-4)', flexShrink: 0 }}
+          onClick={() => dismiss(id)} aria-label={t('Dismiss')}>
+          <Icon name="xmark" />
+        </button>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button className="chip on" style={{ fontSize: 13, padding: '6px 14px' }} onClick={onLog}>{t('Log now')}</button>
+        <button className="chip" style={{ fontSize: 12, padding: '5px 12px', color: 'var(--label-3)' }}
+          onClick={() => { onSkip?.(); dismiss(id) }}>{t('Skip')}</button>
+        <span style={{ fontSize: 11, color: 'var(--label-4)', lineHeight: 1.35, flex: 1 }}>
+          {t('The more regular, the more accurate.')}
+        </span>
+      </div>
+    </div>
+  )
 
   return <>
-    {nudges.slice(0, 1).map(n => (
-      <div key={n.key} className="card" style={{
+    {/* ── Configured BW reminder ── */}
+    {showBW && (
+      <ReminderBanner
+        id="bw"
+        icon="scale"
+        color="var(--blue)"
+        title={t('Time to weigh yourself')}
+        tip={t('Weigh fasted, after using the toilet — for consistent readings.')}
+        onLog={() => { dismiss('bw'); bwSheet() }}
+      />
+    )}
+
+    {/* ── Configured measurements reminder ── */}
+    {showMeas && (
+      <ReminderBanner
+        id="meas"
+        icon="ruler"
+        color="var(--teal)"
+        title={t('Time to take your measurements')}
+        tip={null}
+        onLog={() => { dismiss('meas'); measurementsSheet() }}
+      />
+    )}
+
+    {/* ── Fallback BW nudge (no reminder configured, 5+ days gap) ── */}
+    {showFallbackBW && (
+      <div className="card" style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-        border: `1.5px solid color-mix(in srgb,${n.color} 25%,transparent)`,
-        background: `color-mix(in srgb,${n.color} 7%,var(--surface))`,
-        position: 'relative',
+        border: '1.5px solid color-mix(in srgb,var(--blue) 20%,transparent)',
+        background: 'color-mix(in srgb,var(--blue) 5%,var(--surface))',
       }}>
-        <Icon name={n.icon} style={{ fontSize: 18, color: n.color, flexShrink: 0 }} />
-        <span style={{ fontSize: 13, flex: 1, lineHeight: 1.4 }}>{n.text}</span>
+        <Icon name="scale" style={{ fontSize: 17, color: 'var(--blue)', flexShrink: 0 }} />
+        <span style={{ fontSize: 13, flex: 1, lineHeight: 1.4 }}>
+          {t('No weight logged for {0} days — quick update?', daysSinceBW)}
+        </span>
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          {n.action && <button className="chip on" style={{ fontSize: 12, padding: '4px 10px' }} onClick={n.action}>{n.actionLabel}</button>}
-          <button className="iconbtn" style={{ width: 26, height: 26, fontSize: 12, color: 'var(--label-4)' }} onClick={() => dismiss(n.key)} aria-label={t('Dismiss')}>
-            <Icon name="xmark" />
-          </button>
+          <button className="chip on" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => { dismiss('bw_fallback'); bwSheet() }}>{t('Log')}</button>
+          <button className="iconbtn" style={{ width: 26, height: 26, fontSize: 12, color: 'var(--label-4)' }}
+            onClick={() => dismiss('bw_fallback')} aria-label={t('Dismiss')}><Icon name="xmark" /></button>
         </div>
       </div>
-    ))}
+    )}
+
+    {/* ── Workout absence nudge ── */}
+    {showWO && (
+      <div className="card" style={{
+        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+        border: '1.5px solid color-mix(in srgb,var(--acc) 20%,transparent)',
+        background: 'color-mix(in srgb,var(--acc) 5%,var(--surface))',
+      }}>
+        <Icon name="dumbbell" style={{ fontSize: 17, color: 'var(--acc)', flexShrink: 0 }} />
+        <span style={{ fontSize: 13, flex: 1, lineHeight: 1.4 }}>
+          {t('Last workout was {0} days ago — time to get moving!', lastWDays)}
+        </span>
+        <button className="iconbtn" style={{ width: 26, height: 26, fontSize: 12, color: 'var(--label-4)' }}
+          onClick={() => dismiss('wo_' + lastW.d)} aria-label={t('Dismiss')}><Icon name="xmark" /></button>
+      </div>
+    )}
   </>
 }
 
@@ -182,12 +245,16 @@ function ProgrammeHome({ S, user, nav }) {
 
   return (
     <div className="narrow">
-      <div className="hdr">
+      <div className="hdr" data-tuto="home-header">
         <div>
-          <h1>{user ? t('Hi {0}', user.name) : S.displayName ? t('Hi {0}', S.displayName) : 'openGym'}</h1>
+          <h1>{user ? t('Hi {0}', user.name) : S.displayName ? t('Hi {0}', S.displayName) : <SasoianWordmark fontSize={28} />}</h1>
           <div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+          <div style={{ fontSize: 11, color: 'var(--label-4)', fontStyle: 'italic', marginTop: 1, letterSpacing: '.01em' }}>Sois en forme, reste en forme</div>
         </div>
-        <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <TutorialButton steps={HOME_STEPS} />
+          <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+        </div>
       </div>
 
       <div style={{ marginBottom: 8 }}>
@@ -200,19 +267,6 @@ function ProgrammeHome({ S, user, nav }) {
         {programmes.map(prog => (
           <ProgrammeCard key={prog.id} prog={prog} />
         ))}
-        <button
-          className="add-dashed"
-          onClick={programmeCreateSheet}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-            background: 'var(--surface-2)', border: '1.5px dashed var(--surface-3)',
-            borderRadius: 14, padding: '12px 16px', cursor: 'pointer',
-            color: 'var(--label-3)', fontSize: 13, fontWeight: 600,
-          }}
-        >
-          <Icon name="plus" style={{ fontSize: 15 }} />
-          {t('New programme')}
-        </button>
       </div>
 
       <SmartNudge S={S} />
@@ -221,20 +275,32 @@ function ProgrammeHome({ S, user, nav }) {
       {/* compact nutrition widget */}
       <NutriWidget S={S} nav={nav} />
 
-      {/* compact body weight row */}
-      <div
-        className="card tap"
-        style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}
-        onClick={() => nav('/bodyweight')}
-      >
-        <Icon name="scale" style={{ fontSize: 20, color: 'var(--label-3)', flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="small muted" style={{ marginBottom: 1 }}>{t('Body weight')}</div>
-          {lastBW(S)
-            ? <div style={{ fontWeight: 600 }}>{fmtNum(lastBW(S).w)} <span className="muted" style={{ fontSize: '0.9em' }}>{S.unit}</span></div>
-            : <div className="small muted">{t('Not logged yet')}</div>}
-        </div>
-        <Icon name="chevronRight" className="chev" />
+      {/* Quick-log buttons: poids corporel + mensurations */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+        <button
+          className="card tap"
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+          onClick={() => bwSheet()}
+        >
+          <Icon name="scale" style={{ fontSize: 18, color: 'var(--blue)', flexShrink: 0 }} />
+          <div style={{ minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label-2)' }}>{t('Body weight')}</div>
+            {lastBW(S)
+              ? <div style={{ fontSize: 12, color: 'var(--label-4)', marginTop: 1 }}>{fmtNum(lastBW(S).w)} {S.unit}</div>
+              : <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{t('Log')}</div>}
+          </div>
+        </button>
+        <button
+          className="card tap"
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+          onClick={measurementsSheet}
+        >
+          <Icon name="ruler" style={{ fontSize: 18, color: 'var(--teal)', flexShrink: 0 }} />
+          <div style={{ minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label-2)' }}>{t('Measurements')}</div>
+            <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{t('Log')}</div>
+          </div>
+        </button>
       </div>
 
       {/* Log activity CTA */}
@@ -294,9 +360,16 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
   const onToday = () => { if (S.active) nav(activeRoute); else if (routine) startFlow(routine.id); else dayOverrideSheet(todayISO()) }
 
   return <div className="narrow">
-    <div className="hdr">
-      <div><h1>{user ? t('Hi {0}', user.name) : S.displayName ? t('Hi {0}', S.displayName) : 'openGym'}</h1><div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
-      <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+    <div className="hdr" data-tuto="home-header">
+      <div>
+        <h1>{user ? t('Hi {0}', user.name) : S.displayName ? t('Hi {0}', S.displayName) : 'openGym'}</h1>
+        <div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+        <div style={{ fontSize: 11, color: 'var(--label-4)', fontStyle: 'italic', marginTop: 1, letterSpacing: '.01em' }}>Sois en forme, reste en forme</div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <TutorialButton steps={HOME_STEPS} />
+        <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+      </div>
     </div>
 
     {/* ── Beginner mode: large "today" CTA ── */}
@@ -329,14 +402,14 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
       </div>
     )}
 
-    <div className="card">
+    <div className="card" data-tuto="home-week">
       <div className="row between" style={{ marginBottom: 8 }}>
         <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w - 1)} aria-label={t('Previous week')}><Icon name="chevronLeft" /></button>
         <div className="small muted" style={{ fontWeight: 500 }}>{wkLabel}</div>
         <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w + 1)} aria-label={t('Next week')}><Icon name="chevronRight" /></button>
       </div>
       <div className="week">{strip}</div>
-      <div className="today-row" onClick={onToday} style={S.active ? { background: 'color-mix(in srgb,var(--orange) 8%,var(--surface-2))' } : undefined}>
+      <div className="today-row" data-tuto="home-today" onClick={onToday} style={S.active ? { background: 'color-mix(in srgb,var(--orange) 8%,var(--surface-2))' } : undefined}>
         <div className="row" style={{ gap: 9, minWidth: 0 }}>
           <span className="lrow-i" style={{ background: S.active ? 'var(--orange)' : routine ? 'var(--acc)' : 'var(--surface-3)' }}>
             <Icon name={S.active ? 'timer' : routine ? glyphOf(routine.emoji) : 'moon'} />
@@ -384,7 +457,49 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
 
     <NutriWidget S={S} nav={nav} />
 
-    <div className="card tap" onClick={() => nav('/bodyweight')}>
+    {/* Quick-log buttons: poids corporel + mensurations */}
+    <div data-tuto="home-quicklog" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <button
+        className="card tap"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
+          background: 'linear-gradient(135deg,color-mix(in srgb,var(--blue) 9%,var(--surface)),var(--surface))',
+          border: '1px solid color-mix(in srgb,var(--blue) 20%,transparent)',
+          cursor: 'pointer', textAlign: 'left', width: '100%',
+        }}
+        onClick={e => { e.stopPropagation(); bwSheet() }}
+      >
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in srgb,var(--blue) 15%,transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon name="scale" style={{ fontSize: 17, color: 'var(--blue)' }} />
+        </div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label-2)' }}>{t('Body weight')}</div>
+          {bw
+            ? <div style={{ fontSize: 12, color: 'var(--blue)', fontWeight: 600, marginTop: 1 }}>{fmtNum(bw.w)} {S.unit}</div>
+            : <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{t('Log')}</div>}
+        </div>
+      </button>
+      <button
+        className="card tap"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
+          background: 'linear-gradient(135deg,color-mix(in srgb,var(--teal) 9%,var(--surface)),var(--surface))',
+          border: '1px solid color-mix(in srgb,var(--teal) 20%,transparent)',
+          cursor: 'pointer', textAlign: 'left', width: '100%',
+        }}
+        onClick={measurementsSheet}
+      >
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in srgb,var(--teal) 15%,transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon name="ruler" style={{ fontSize: 17, color: 'var(--teal)' }} />
+        </div>
+        <div style={{ minWidth: 0, overflow: 'hidden' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label-2)' }}>{t('Measurements')}</div>
+          <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{t('Log')}</div>
+        </div>
+      </button>
+    </div>
+
+    <div className="card tap" data-tuto="home-bw" onClick={() => nav('/bodyweight')}>
       <div className="row between" style={{ marginBottom: 6 }}>
         <h2 style={{ margin: 0 }}>{t('Body weight')}</h2>
         <div className="row" style={{ gap: 8 }}>
@@ -394,7 +509,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
       </div>
       {bw ? <>
         {/* framed weight reading with direction indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface-2)', borderRadius: 12, padding: '12px 14px', marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'linear-gradient(135deg,color-mix(in srgb,var(--blue) 8%,var(--surface-2)),var(--surface-2))', border: '1px solid color-mix(in srgb,var(--blue) 14%,transparent)', borderRadius: 12, padding: '12px 14px', marginBottom: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="big">{fmtNum(bw.w)} <span className="muted" style={{ fontSize: '1rem' }}>{S.unit}</span></div>
             <div className="dim small" style={{ marginTop: 3 }}>{fmtDate(bw.d, true)}</div>
@@ -432,22 +547,45 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
     </div>
 
     {S.workouts.length > 0 && (
-      <div className="card tappable" onClick={() => calendarSheet()}>
-        <div className="row between">
-          <div>
-            <div className="row" style={{ gap: 7, fontSize: 22, fontWeight: 600, letterSpacing: '-.021em' }}>
-              <Icon name="flame" style={{ color: 'var(--orange)' }} />
+      <div
+        className="card tappable"
+        data-tuto="home-streak"
+        onClick={() => calendarSheet()}
+        style={{
+          background: 'linear-gradient(135deg,color-mix(in srgb,var(--orange) 12%,var(--surface)),color-mix(in srgb,var(--orange) 4%,var(--surface)))',
+          border: '1px solid color-mix(in srgb,var(--orange) 28%,transparent)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 15, background: 'color-mix(in srgb,var(--orange) 18%,transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, color: 'var(--orange)', flexShrink: 0 }}>
+            <Icon name="flame" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--orange)', lineHeight: 1.2 }}>
               {t('{0} week streak', streakWeeks(S))}
             </div>
-            <div className="muted small" style={{ marginTop: 2 }}>{wThisWeek}{plannedPerWeek ? ' / ' + plannedPerWeek : ''} {t('this week')}{' · '}{t(S.workouts.length === 1 ? '{0} workout total' : '{0} workouts total', S.workouts.length)}</div>
+            <div className="muted small" style={{ marginTop: 3 }}>
+              {wThisWeek}{plannedPerWeek ? ' / ' + plannedPerWeek : ''} {t('this week')}{' · '}{t(S.workouts.length === 1 ? '{0} workout total' : '{0} workouts total', S.workouts.length)}
+            </div>
+            {plannedPerWeek > 0 && (
+              <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+                {Array.from({ length: Math.min(plannedPerWeek, 7) }).map((_, i) => (
+                  <div key={i} style={{
+                    flex: 1, height: 4, borderRadius: 99,
+                    background: i < wThisWeek ? 'var(--orange)' : 'color-mix(in srgb,var(--orange) 22%,var(--surface-3))',
+                  }} />
+                ))}
+              </div>
+            )}
           </div>
-          <Icon name="calendar" className="chev" style={{ fontSize: 20 }} />
+          <Icon name="chevronRight" className="chev" style={{ fontSize: 16, color: 'var(--orange)', opacity: 0.55, flexShrink: 0 }} />
         </div>
       </div>
     )}
 
     {/* ── Log activity CTA ── */}
     <button
+      data-tuto="home-activity"
       className="lrow tap"
       style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 12,

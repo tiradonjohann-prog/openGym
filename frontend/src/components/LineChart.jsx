@@ -4,6 +4,35 @@ import { t } from '../lib/i18n.js'
 
 const W = 340   // viewBox width; the svg stretches to its container, height comes from `h`
 
+// Catmull-Rom → cubic bezier conversion.
+// Returns an SVG path `d` string for a smooth curve through all points.
+function smoothPath(plotted) {
+  if (!plotted.length) return ''
+  if (plotted.length === 1) return `M ${plotted[0].x.toFixed(1)},${plotted[0].y.toFixed(1)}`
+  const d = [`M ${plotted[0].x.toFixed(1)},${plotted[0].y.toFixed(1)}`]
+  for (let i = 0; i < plotted.length - 1; i++) {
+    const p0 = plotted[Math.max(0, i - 1)]
+    const p1 = plotted[i]
+    const p2 = plotted[i + 1]
+    const p3 = plotted[Math.min(plotted.length - 1, i + 2)]
+    const cp1x = p1.x + (p2.x - p0.x) / 6
+    const cp1y = p1.y + (p2.y - p0.y) / 6
+    const cp2x = p2.x - (p3.x - p1.x) / 6
+    const cp2y = p2.y - (p3.y - p1.y) / 6
+    d.push(`C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`)
+  }
+  return d.join(' ')
+}
+
+// Smooth area fill: closes the path below the curve.
+function smoothArea(plotted, baseline) {
+  if (!plotted.length) return ''
+  const curve = smoothPath(plotted)
+  const last = plotted[plotted.length - 1]
+  const first = plotted[0]
+  return `${curve} L ${last.x.toFixed(1)},${baseline.toFixed(1)} L ${first.x.toFixed(1)},${baseline.toFixed(1)} Z`
+}
+
 // points: [{ t: ms, y: num, d?: iso, m?: 0..1, note?: str }] sorted by t.
 //   m    marks the point — a second reading carried by the same dot (bigger and more solid =
 //        more of it). Used for effort on the weight curve, where the two belong on one line:
@@ -34,8 +63,6 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
     const M = 4                                   // breathing room against the clip
     const cx = hover.x / W * cw, cy = hover.y / h * ch
     tip.style.left = Math.max(M, Math.min(cw - tw - M, cx - tw / 2)) + 'px'
-    // Parked at the top, but dropped below the point when the point sits high
-    // enough that the label would cover the very value it is reporting.
     tip.style.top = (cy < th + 14 ? Math.min(ch - th - M, cy + 14) : M) + 'px'
   })
 
@@ -45,13 +72,11 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
   const single = points.length === 1
   const pts = single ? [points[0], points[0]] : points
   const ys = pts.map(p => p.y)
-  // Include non-projection extraLines in Y range, but not projection lines
   const extraYs = extraLines.filter(l => !l.projection).flatMap(l => (l.pts || []).map(p => p.y))
   let ymin = Math.min(...ys, ...extraYs), ymax = Math.max(...ys, ...extraYs)
   if (goal != null && isFinite(goal)) { ymin = Math.min(ymin, goal); ymax = Math.max(ymax, goal) }
   if (ymin === ymax) { ymin -= 1; ymax += 1 }
   const pad = (ymax - ymin) * 0.12; ymin -= pad; ymax += pad
-  // Extend t1 to include extraLines (including projections) so they don't get clipped
   const allExtraTs = extraLines.flatMap(l => (l.pts || []).map(p => p.t))
   const t0 = pts[0].t
   const t1 = Math.max(pts[pts.length - 1].t || pts[0].t + 1, ...allExtraTs, pts[0].t + 1)
@@ -95,11 +120,16 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
     })
   }
 
-  const poly = pts.map(p => X(p.t).toFixed(1) + ',' + Y(p.y).toFixed(1)).join(' ')
+  // Build plotted coordinate arrays for bezier helpers
+  const plotted = pts.map(p => ({ x: X(p.t), y: Y(p.y) }))
   const last = pts[pts.length - 1]
+  const lastPlot = plotted[plotted.length - 1]
   const gid = 'g' + Math.round(t0 % 1e7) + '_' + H
   const hoverPts = (single ? [points[0]] : points).map(p => ({ x: X(p.t), y: Y(p.y), iso: p.d || isoOf(new Date(p.t)), v: p.y, note: p.note }))
   const marked = points.some(p => p.m != null)
+
+  const areaD = smoothArea(plotted, H - P.b)
+  const lineD  = smoothPath(plotted)
 
   const onMove = e => {
     const c = e.touches ? e.touches[0] : e
@@ -118,29 +148,41 @@ export default function LineChart({ points, h = 150, unit = '', color = 'var(--a
       onMouseLeave={() => setHover(null)}
       onTouchStart={onMove} onTouchMove={onMove}>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ aspectRatio: `${W}/${H}` }}>
-        <defs><linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={color} stopOpacity=".28" />
-          <stop offset="1" stopColor={color} stopOpacity="0" />
-        </linearGradient></defs>
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={color} stopOpacity=".22" />
+            <stop offset="0.7" stopColor={color} stopOpacity=".06" />
+            <stop offset="1" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
         {gridlines}
         {goal != null && isFinite(goal) && <>
           <line x1={P.l} y1={Y(goal)} x2={W - P.r} y2={Y(goal)} stroke="var(--yellow)" strokeWidth="1.6" strokeDasharray="7 4" />
           <text x={W - P.r - 2} y={Y(goal) - 5} textAnchor="end" fontSize="9.5" fontWeight="700" fill="var(--yellow)">{fmtNum(goal)}</text>
         </>}
-        <polygon points={`${P.l},${H - P.b} ${poly} ${X(last.t).toFixed(1)},${H - P.b}`} fill={`url(#${gid})`} />
-        <polyline points={poly} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        {/* Smooth area fill */}
+        <path d={areaD} fill={`url(#${gid})`} />
+        {/* Smooth line */}
+        <path d={lineD} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        {/* Extra overlay lines (MA, trend, projection) */}
         {extraLines.map((line, li) => {
           if (!line.pts || line.pts.length < 2) return null
-          const ePoly = line.pts.map(p => X(p.t).toFixed(1) + ',' + Y(p.y).toFixed(1)).join(' ')
-          return <polyline key={'el' + li} points={ePoly} fill="none"
+          const ePlotted = line.pts.map(p => ({ x: X(p.t), y: Y(p.y) }))
+          const eD = smoothPath(ePlotted)
+          return <path key={'el' + li} d={eD} fill="none"
             stroke={line.color || 'var(--label-2)'}
             strokeWidth={line.thin ? 1.5 : 2}
             strokeDasharray={line.dashed ? '6 4' : undefined}
             strokeLinejoin="round" strokeLinecap="round" opacity={line.thin ? 0.7 : 1} />
         })}
+        {/* Effort markers */}
         {marked && pts.map((p, i) => (p.m == null ? null :
           <circle key={'m' + i} cx={X(p.t)} cy={Y(p.y)} r={2.4 + p.m * 3} fill={color} opacity={0.3 + p.m * 0.7} />))}
-        <circle cx={X(last.t)} cy={Y(last.y)} r="4" fill={color} />
+        {/* Last point pulsing dot */}
+        <circle cx={lastPlot.x} cy={lastPlot.y} r="7" fill={color} opacity="0.18" />
+        <circle cx={lastPlot.x} cy={lastPlot.y} r="4" fill={color} />
+        <circle cx={lastPlot.x} cy={lastPlot.y} r="2" fill="var(--bg)" opacity="0.7" />
+        {/* Hover crosshair */}
         {hover && <g>
           <line className="cvl" x1={hover.x} y1={P.t} x2={hover.x} y2={H - P.b} stroke="var(--label-3)" strokeWidth="1" strokeDasharray="3 3" />
           <line className="chl" x1={P.l} y1={hover.y} x2={W - P.r} y2={hover.y} stroke="var(--label-3)" strokeWidth="1" strokeDasharray="3 3" />

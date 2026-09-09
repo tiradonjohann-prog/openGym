@@ -13,8 +13,9 @@ function MacroBadge({ value, color, label }) {
   if (value == null) return null
   return (
     <span style={{
-      padding: '2px 6px', borderRadius: 6, fontSize: 11, fontWeight: 700,
-      background: color + '22', color,
+      padding: '2px 7px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+      background: `color-mix(in srgb,${color} 16%,var(--surface-2))`,
+      color,
     }}>
       {value}g {label}
     </span>
@@ -116,9 +117,9 @@ function FoodCard({ item, onDelete, onQuickAdd }) {
             : ''}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          <MacroBadge value={item.prot}  color="var(--blue)"   label="P" />
-          <MacroBadge value={item.carbs} color="var(--orange)" label="G" />
-          <MacroBadge value={item.fat}   color="var(--yellow)" label="L" />
+          <MacroBadge value={item.prot}  color="var(--nut-prot)"  label="P" />
+          <MacroBadge value={item.carbs} color="var(--nut-carbs)" label="G" />
+          <MacroBadge value={item.fat}   color="var(--nut-fat)"   label="L" />
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0, marginTop: 2 }}>
@@ -377,9 +378,9 @@ function DishBuilderSheet({ favorites, onSave, onCancel }) {
           </div>
           <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{totals.kcal} kcal</div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <MacroBadge value={totals.prot}  color="var(--blue)"   label="P" />
-            <MacroBadge value={totals.carbs} color="var(--orange)" label="G" />
-            <MacroBadge value={totals.fat}   color="var(--yellow)" label="L" />
+            <MacroBadge value={totals.prot}  color="var(--nut-prot)"  label="P" />
+            <MacroBadge value={totals.carbs} color="var(--nut-carbs)" label="G" />
+            <MacroBadge value={totals.fat}   color="var(--nut-fat)"   label="L" />
           </div>
         </div>
       )}
@@ -555,7 +556,8 @@ export default function FoodsView() {
           onClick={openCreateFood}
           style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
-            background: 'var(--teal)1A', border: '1.5px solid var(--teal)33',
+            background: 'color-mix(in srgb,var(--teal) 12%,var(--surface))',
+            border: '1.5px solid color-mix(in srgb,var(--teal) 28%,transparent)',
             borderRadius: 12, cursor: 'pointer', color: 'var(--teal)',
           }}
         >
@@ -566,7 +568,8 @@ export default function FoodsView() {
           onClick={openCreateDish}
           style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
-            background: 'var(--purple)1A', border: '1.5px solid var(--purple)33',
+            background: 'color-mix(in srgb,var(--purple) 12%,var(--surface))',
+            border: '1.5px solid color-mix(in srgb,var(--purple) 28%,transparent)',
             borderRadius: 12, cursor: 'pointer', color: 'var(--purple)',
           }}
         >

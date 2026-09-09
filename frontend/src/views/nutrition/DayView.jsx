@@ -19,6 +19,19 @@ import RecipeCard from '../../components/RecipeCard.jsx'
 import Icon from '../../components/Icon.jsx'
 import { Segmented } from '../../components/ui.jsx'
 
+function mealTypeConfig(name) {
+  const n = (name || '').toLowerCase()
+  if (n.includes('breakfast') || n.includes('brunch') || n.includes('matin'))
+    return { icon: 'sun',      color: 'var(--orange)' }
+  if (n.includes('lunch') || n.includes('déjeuner') || n.includes('dejeuner') || n.includes('midi'))
+    return { icon: 'utensils', color: 'var(--blue)' }
+  if (n.includes('dinner') || n.includes('supper') || n.includes('evening meal') || n.includes('dîner') || n.includes('diner') || n.includes('soir'))
+    return { icon: 'moon',     color: 'var(--purple)' }
+  if (n.includes('snack') || n.includes('collation'))
+    return { icon: 'star',     color: 'var(--teal)' }
+  return { icon: 'utensils',   color: 'var(--acc)' }
+}
+
 const MEAL_NAMES_BY_COUNT = {
   1: ['Meal'],
   2: ['Lunch', 'Dinner'],
@@ -255,7 +268,7 @@ export default function DayView() {
           onClick={() => { if (!isToday) setSelectedDate(today) }}
           aria-label={isToday ? undefined : t('Back to today')}
         >
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--label-1)', lineHeight: 1.2 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--label)', lineHeight: 1.2 }}>
             {isToday ? t('Today') : fmtDate(selectedDate, true)}
           </div>
           {!isToday && (
@@ -356,7 +369,7 @@ export default function DayView() {
               <div style={{ fontSize: 11, color: 'var(--label-3)', marginTop: 2 }}>{t('Protein')}</div>
               <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>/ {macros.protG}g</div>
             </div>
-            <div style={{ borderLeft: '1px solid var(--separator)', borderRight: '1px solid var(--separator)' }}>
+            <div style={{ borderLeft: '1px solid var(--sep)', borderRight: '1px solid var(--sep)' }}>
               <div style={{ color: 'var(--nut-carbs)', fontWeight: 700, fontSize: 18, lineHeight: 1.1 }}>
                 {totals.carbs}<span style={{ fontSize: 11, fontWeight: 500 }}>g</span>
               </div>
@@ -388,52 +401,86 @@ export default function DayView() {
           const slotPct = target4slot > 0 ? Math.min(1, slotKcal / target4slot)
             : dayTarget > 0 ? Math.min(1, slotKcal / dayTarget) : 0
           const slotOver = target4slot > 0 && slotKcal > target4slot
+          const { icon: slotIcon, color: slotColor } = mealTypeConfig(slot.name)
           return (
             <div key={slot.id} className="meal-slot">
-              <div className="meal-slot-hd">
-                <span className="slot-name">{t(slot.name)}</span>
-                <span className="slot-kcal">
-                  {slotKcal > 0 ? fmtNum(slotKcal) + ' kcal' : ''}
-                  {target4slot && (
-                    <span style={{ marginLeft: 4, fontSize: 11, color: slotOver ? 'var(--orange)' : 'var(--label-4)' }}>
-                      {slotKcal === 0 ? '/ ' + target4slot : '/ ' + target4slot}
+              {/* ── Slot header ── */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 16px 6px', gap: 8,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                    background: `color-mix(in srgb,${slotColor} 18%,var(--surface-2))`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: slotColor, fontSize: 14,
+                  }}>
+                    <Icon name={slotIcon} />
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--label)', letterSpacing: '-.01em' }}>
+                    {t(slot.name)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                  {slotKcal > 0 && (
+                    <span style={{ fontSize: 14, fontWeight: 700, color: slotOver ? 'var(--orange)' : 'var(--label)' }}>
+                      {fmtNum(slotKcal)}
                     </span>
                   )}
-                </span>
+                  {target4slot && (
+                    <span style={{ fontSize: 12, color: 'var(--label-4)' }}>
+                      {slotKcal === 0 ? '' : '/'}{target4slot} kcal
+                    </span>
+                  )}
+                  {!target4slot && slotKcal === 0 && (
+                    <span style={{ fontSize: 12, color: 'var(--label-4)' }}>—</span>
+                  )}
+                </div>
               </div>
-              {/* micro progress bar for this meal's target */}
+
+              {/* ── Slot progress bar ── */}
               {(slotKcal > 0 || target4slot) && dayTarget > 0 && (
-                <div style={{ height: 2, background: 'var(--surface-3)', margin: '0 16px 4px', borderRadius: 2 }}>
+                <div style={{ height: 4, background: 'var(--surface-3)', margin: '0 16px 6px', borderRadius: 3 }}>
                   <div style={{
                     height: '100%',
-                    width: (slotPct * 100) + '%',
-                    background: slotOver ? 'var(--orange)' : 'var(--nut-carbs)',
-                    borderRadius: 2,
+                    width: Math.min(1, slotPct) * 100 + '%',
+                    background: slotOver
+                      ? 'var(--orange)'
+                      : `linear-gradient(90deg,${slotColor},color-mix(in srgb,${slotColor} 70%,var(--nut-carbs)))`,
+                    borderRadius: 3,
                     transition: 'width .4s var(--ease)',
+                    boxShadow: slotKcal > 0 ? `0 0 6px color-mix(in srgb,${slotColor} 40%,transparent)` : 'none',
                   }} />
                 </div>
               )}
-              {/* per-slot macro targets */}
+
+              {/* ── Per-slot macro targets ── */}
               {(sp || sc || sf) && (
-                <div style={{ padding: '2px 16px 5px', display: 'flex', gap: 10, fontSize: 11, flexWrap: 'wrap' }}>
+                <div style={{ padding: '0 16px 5px', display: 'flex', gap: 8, fontSize: 11, flexWrap: 'wrap' }}>
                   {sp && (
-                    <span style={{ color: 'var(--nut-prot)', fontWeight: 600 }}>
+                    <span style={{ color: 'var(--nut-prot)', fontWeight: 600, background: 'color-mix(in srgb,var(--nut-prot) 12%,var(--surface-2))', padding: '1px 5px', borderRadius: 4 }}>
                       {slotProt > 0 ? slotProt + '/' : ''}{sp}g P
                     </span>
                   )}
                   {sc && (
-                    <span style={{ color: 'var(--nut-carbs)', fontWeight: 600 }}>
+                    <span style={{ color: 'var(--nut-carbs)', fontWeight: 600, background: 'color-mix(in srgb,var(--nut-carbs) 12%,var(--surface-2))', padding: '1px 5px', borderRadius: 4 }}>
                       {slotCarbs > 0 ? slotCarbs + '/' : ''}{sc}g G
                     </span>
                   )}
                   {sf && (
-                    <span style={{ color: 'var(--nut-fat)', fontWeight: 600 }}>
+                    <span style={{ color: 'var(--nut-fat)', fontWeight: 600, background: 'color-mix(in srgb,var(--nut-fat) 12%,var(--surface-2))', padding: '1px 5px', borderRadius: 4 }}>
                       {slotFat > 0 ? slotFat + '/' : ''}{sf}g L
                     </span>
                   )}
                 </div>
               )}
-              <div className="card" style={{ margin: '0 16px 4px', padding: 0, overflow: 'hidden' }}>
+
+              {/* ── Food items card ── */}
+              <div className="card" style={{
+                margin: '0 16px 8px', padding: 0, overflow: 'hidden',
+                borderLeft: `3px solid color-mix(in srgb,${slotColor} 45%,transparent)`,
+              }}>
                 {slot.items.map(item => {
                   const hasMacros = item.prot != null || item.carbs != null || item.fat != null
                   return (
@@ -441,15 +488,15 @@ export default function DayView() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div className="mi-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
                         {hasMacros && (
-                          <div style={{ display: 'flex', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
-                            {item.prot  != null && <span style={{ fontSize: 11, color: 'var(--blue)',   fontWeight: 600 }}>{item.prot}g P</span>}
-                            {item.carbs != null && <span style={{ fontSize: 11, color: 'var(--orange)', fontWeight: 600 }}>{item.carbs}g G</span>}
-                            {item.fat   != null && <span style={{ fontSize: 11, color: 'var(--yellow)', fontWeight: 600 }}>{item.fat}g L</span>}
+                          <div style={{ display: 'flex', gap: 5, marginTop: 3, flexWrap: 'wrap' }}>
+                            {item.prot  != null && <span style={{ fontSize: 11, color: 'var(--nut-prot)',  fontWeight: 600, background: 'color-mix(in srgb,var(--nut-prot) 12%,transparent)',  padding: '1px 4px', borderRadius: 3 }}>{item.prot}g P</span>}
+                            {item.carbs != null && <span style={{ fontSize: 11, color: 'var(--nut-carbs)', fontWeight: 600, background: 'color-mix(in srgb,var(--nut-carbs) 12%,transparent)', padding: '1px 4px', borderRadius: 3 }}>{item.carbs}g G</span>}
+                            {item.fat   != null && <span style={{ fontSize: 11, color: 'var(--nut-fat)',   fontWeight: 600, background: 'color-mix(in srgb,var(--nut-fat) 12%,transparent)',   padding: '1px 4px', borderRadius: 3 }}>{item.fat}g L</span>}
                           </div>
                         )}
                       </div>
                       <span className="mi-kcal" style={{ marginTop: hasMacros ? 2 : 0 }}>{item.kcal != null ? item.kcal + ' kcal' : '—'}</span>
-                      <button className="mi-del iconbtn" style={{ marginTop: hasMacros ? 0 : 0 }} onClick={() => removeItem(slot.id, item.id)} aria-label={t('Remove {0}', item.name)}>
+                      <button className="mi-del iconbtn" onClick={() => removeItem(slot.id, item.id)} aria-label={t('Remove {0}', item.name)}>
                         <Icon name="minus" size={16} />
                       </button>
                     </div>
@@ -457,11 +504,17 @@ export default function DayView() {
                 })}
                 <button
                   className="lrow tap"
-                  style={{ padding: '10px 14px', color: 'var(--acc)', fontWeight: 500 }}
+                  style={{
+                    padding: '11px 14px',
+                    color: slotColor,
+                    fontWeight: 600,
+                    background: `color-mix(in srgb,${slotColor} 6%,transparent)`,
+                    fontSize: 14,
+                  }}
                   onClick={() => openAddFood(slot.id, t(slot.name))}
                 >
-                  <Icon name="plus" />
-                  <span style={{ marginLeft: 8, fontSize: 15 }}>{t('Add food')}</span>
+                  <Icon name="plus" style={{ fontSize: 15 }} />
+                  <span style={{ marginLeft: 7 }}>{t('Add food')}</span>
                 </button>
               </div>
             </div>

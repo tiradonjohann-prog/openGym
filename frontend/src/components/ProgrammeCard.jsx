@@ -200,7 +200,7 @@ export default function ProgrammeCard({ prog }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
                       fontSize: 15, fontWeight: isNext ? 700 : 500,
-                      color: isNext ? 'var(--acc)' : isDone ? 'var(--label-3)' : 'var(--label-1)',
+                      color: isNext ? 'var(--acc)' : isDone ? 'var(--label-3)' : 'var(--label)',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
                       {routineLabel(rid)}

@@ -164,6 +164,7 @@ button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp butto
    (the rest variant is two rows tall — ~44px more than the single-row work timer) */
 body.resting #app{padding-bottom:calc(250px + var(--sab))}
 @keyframes viewfade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes tuto-pulse{0%,100%{box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 22%,transparent),0 0 28px color-mix(in srgb,var(--acc) 38%,transparent)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--acc) 32%,transparent),0 0 42px color-mix(in srgb,var(--acc) 55%,transparent)}}
 #app.vfade{animation:viewfade var(--med) var(--ease)}
 @keyframes cardIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes badgePop{0%{transform:scale(.7);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
@@ -806,10 +807,15 @@ input.num::-webkit-inner-spin-button{display:none}
 /* left/top are written by LineChart after measuring the label, so it can never be
    pushed under the `.chart` clip at either edge — hence no offset here. */
 .ctip{
-  position:absolute;left:0;top:0;background:var(--surface-2);
-  border-radius:8px;padding:4px 10px;font-size:12px;font-weight:500;white-space:nowrap;
+  position:absolute;left:0;top:0;
+  background:color-mix(in srgb,var(--surface-2) 92%,transparent);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid color-mix(in srgb,var(--label-3) 18%,transparent);
+  border-radius:10px;padding:5px 11px;font-size:12px;font-weight:600;white-space:nowrap;
   max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;
-  pointer-events:none;box-shadow:0 6px 18px -4px rgba(0,0,0,.4);
+  pointer-events:none;
+  box-shadow:0 4px 16px -3px rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.06) inset;
+  letter-spacing:.01em;
 }
 
 /* --- activity heatmap --- */

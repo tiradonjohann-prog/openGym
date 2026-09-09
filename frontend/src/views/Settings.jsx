@@ -13,6 +13,11 @@ import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
 import { loadStarterPlan, confirmSheet, importFromApp } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
+import { TutorialButton } from '../components/TutorialOverlay.jsx'
+import { SETTINGS_STEPS } from '../lib/tutorials.js'
+import { EQUIPMENT_OPTIONS } from './Onboarding.jsx'
+
+const ALL_EQ = EQUIPMENT_OPTIONS.map(e => e.key)
 
 export default function Settings() {
   const nav = useNavigate()
@@ -70,6 +75,7 @@ export default function Settings() {
     <div className="hdr">
       <button className="iconbtn" onClick={() => nav('/home')} aria-label={t("Home")}><Icon name="chevronLeft" /></button>
       <div style={{ flex: 1, marginLeft: 10 }}><h1>{t("Settings")}</h1></div>
+      <TutorialButton steps={SETTINGS_STEPS} />
     </div>
 
     {/* ---------- account (demo and mobile builds have nothing to sign in to) ---------- */}
@@ -99,6 +105,7 @@ export default function Settings() {
     {!user && !DEMO && !MOBILE && <p className="sect-f" style={{ marginTop: -18, marginBottom: 22 }}>{t("Guest mode — data lives only in this browser.")}</p>}
 
     {/* ---------- general ---------- */}
+    <div data-tuto="settings-profile">
     <Section title={t("General")} footer={t("Note: switching units only changes the label — logged numbers are not converted.")}>
       <SelectRow
         icon="globe" iconTint="var(--blue)" title={t("Language")}
@@ -114,6 +121,7 @@ export default function Settings() {
           value={S.unit} onChange={v => update(s => { s.unit = v })} />
       </Row>
     </Section>
+    </div>
 
     {/* ---------- during a workout ---------- */}
     <Section title={t("During a workout")} footer={wakeOK ? t("The screen stays on while a workout is running, so you don't have to unlock your phone between sets.") : null}>
@@ -144,7 +152,9 @@ export default function Settings() {
       </Row>
     </Section>
 
-    {(user || MOBILE) && <NotificationsCard S={S} update={update} toast={toast} />}
+    <div data-tuto="settings-reminders"><HealthRemindersCard S={S} update={update} /></div>
+
+    {(user || MOBILE) && <div data-tuto="settings-notifications"><NotificationsCard S={S} update={update} toast={toast} /></div>}
 
     {/* ---------- experience ---------- */}
     <Section title={t("Experience")} footer={S.simpleMode ? t("Beginner mode on — progression settings and effort tracking are hidden. Toggle off to access all features.") : t("Turn on beginner mode to simplify the interface and focus on the essentials.")}>
@@ -153,6 +163,9 @@ export default function Settings() {
         <Switch checked={!!S.simpleMode} onChange={v => update(s => { s.simpleMode = v })} />
       </Row>
     </Section>
+
+    {/* ---------- equipment ---------- */}
+    <EquipmentSection S={S} update={update} />
 
     {/* ---------- appearance ---------- */}
     <Section title={t("Appearance")} footer={DEMO || MOBILE ? undefined : t("synced with your profile")}>
@@ -185,6 +198,7 @@ export default function Settings() {
     </Section>
 
     {/* ---------- data: fill it, bring things over, back it up, wipe it ---------- */}
+    <div data-tuto="settings-data">
     <Section title={t("Data")}>
       <Row icon="sparkles" iconTint="var(--acc)" title={t("Load starter plan (PPL)")} accessory="chevron" onClick={loadStarterPlan} />
       <Row icon="shuffle" iconTint="var(--teal)" title={t("Import from another app")}
@@ -209,6 +223,7 @@ export default function Settings() {
       />
       <Row icon="trash" iconTint="var(--red)" title={t("Reset everything")} danger onClick={() => confirmSheet({ title: t("Reset everything?"), message: t("Deletes your plan, workouts and body weight on this device. This cannot be undone."), confirmText: t("Delete everything"), danger: true, onConfirm: () => { replaceState(JSON.parse(JSON.stringify(DEF)), true); nav('/home'); toast(t("All data reset")) } })} />
     </Section>
+    </div>
     <input ref={fileRef} type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={doImport} />
     {/* Reset after reading so picking the same file twice still fires onChange. */}
     <input ref={importRef} type="file" accept=".csv,.xml,text/csv,text/xml" style={{ display: 'none' }}
@@ -262,6 +277,67 @@ function effortHelpSheet() {
     </div>
     <div style={{ height: 8 }} />
   </>)
+}
+
+/* ── Health reminders (BW + measurements) — available to all users ─── */
+function HealthRemindersCard({ S, update }) {
+  const DEF_BW   = { on: true,  hour: 7, minute: 0, every: 1 }
+  const DEF_MEAS = { on: false, hour: 8, minute: 0, every: 14 }
+  const bw   = { ...DEF_BW,   ...(S.reminderBW   || {}) }
+  const meas = { ...DEF_MEAS, ...(S.reminderMeas || {}) }
+
+  const fmtTime  = (h, m) => String(h ?? 7).padStart(2, '0') + ':' + String(m ?? 0).padStart(2, '0')
+  const parseTime = s => { const [h, m] = (s || '07:00').split(':').map(Number); return { hour: h || 0, minute: m || 0 } }
+
+  const setBW   = patch => update(s => { s.reminderBW   = { ...DEF_BW,   ...(s.reminderBW   || {}), ...patch } })
+  const setMeas = patch => update(s => { s.reminderMeas = { ...DEF_MEAS, ...(s.reminderMeas || {}), ...patch } })
+
+  const freqOptsBW = [
+    { value: 1, label: t('Daily') },
+    { value: 2, label: t('Every 2 d') },
+    { value: 3, label: t('Every 3 d') },
+    { value: 7, label: t('Weekly') },
+  ]
+  const freqOptsMeas = [
+    { value: 7,  label: t('Weekly') },
+    { value: 14, label: t('Every 2 wk') },
+    { value: 30, label: t('Monthly') },
+  ]
+
+  return (
+    <Section title={t('Health reminders')}
+      footer={t('Shown in the app when you open it. The more regular the tracking, the more accurate the data.')}>
+      {/* Body weight */}
+      <Row icon="scale" iconTint="var(--blue)" title={t('Body weight')}
+        subtitle={bw.on ? t('Weigh fasted, after using the toilet.') : null}>
+        <Switch checked={!!bw.on} onChange={v => setBW({ on: v })} />
+      </Row>
+      {bw.on && <>
+        <Row icon="clock" iconTint="var(--purple)" title={t('Reminder time')}>
+          <input type="time" className="timef" value={fmtTime(bw.hour, bw.minute)}
+            onChange={e => setBW(parseTime(e.target.value))} />
+        </Row>
+        <SelectRow icon="repeat" iconTint="var(--teal)" title={t('Frequency')}
+          value={bw.every} onChange={v => setBW({ every: v })}
+          options={freqOptsBW} />
+      </>}
+
+      {/* Measurements */}
+      <Row icon="ruler" iconTint="var(--teal)" title={t('Measurements')}
+        subtitle={meas.on ? t('Track changes in your body shape over time.') : null}>
+        <Switch checked={!!meas.on} onChange={v => setMeas({ on: v })} />
+      </Row>
+      {meas.on && <>
+        <Row icon="clock" iconTint="var(--purple)" title={t('Reminder time')}>
+          <input type="time" className="timef" value={fmtTime(meas.hour, meas.minute)}
+            onChange={e => setMeas(parseTime(e.target.value))} />
+        </Row>
+        <SelectRow icon="repeat" iconTint="var(--teal)" title={t('Frequency')}
+          value={meas.every} onChange={v => setMeas({ every: v })}
+          options={freqOptsMeas} />
+      </>}
+    </Section>
+  )
 }
 
 function NotificationsCard({ S, update, toast }) {
@@ -352,6 +428,58 @@ function PushCard({ S, update, toast }) {
     </Section>
     {on && <div style={{ marginTop: -12, marginBottom: 22 }}><Button size="sm" icon="bell" onClick={test}>{t("Send test notification")}</Button></div>}
   </>
+}
+
+/* ── Equipment section ────────────────────────────────────────────── */
+function EquipmentSection({ S, update }) {
+  const equipment = S.equipment || []
+  const allSelected = ALL_EQ.every(k => equipment.includes(k))
+
+  const toggle = key => {
+    update(s => {
+      const curr = s.equipment || []
+      s.equipment = curr.includes(key) ? curr.filter(k => k !== key) : [...curr, key]
+    })
+  }
+
+  const toggleAll = () => {
+    update(s => { s.equipment = allSelected ? [] : [...ALL_EQ] })
+  }
+
+  return (
+    <Section title={t('Équipement disponible')} footer={t('Sera utilisé pour personnaliser les suggestions de programme.')}>
+      <div style={{ padding: '4px 16px 12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+          <button
+            className="chip on"
+            style={{
+              fontSize: 12, padding: '5px 12px', borderRadius: 8,
+              background: allSelected ? 'var(--sep)' : 'var(--acc)',
+              color: allSelected ? 'var(--label-2)' : '#fff', border: 'none',
+            }}
+            onClick={toggleAll}
+          >
+            {allSelected ? t('Tout décocher') : t('Tout cocher')}
+          </button>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {EQUIPMENT_OPTIONS.map(eq => {
+            const on = equipment.includes(eq.key)
+            return (
+              <button
+                key={eq.key}
+                onClick={() => toggle(eq.key)}
+                className={'chip' + (on ? ' on' : '')}
+                style={{ fontSize: 13, padding: '7px 14px', borderRadius: 10 }}
+              >
+                {t(eq.label)}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </Section>
+  )
 }
 
 // The same registration as the sign-in screen's, reached from Settings instead. It asks for

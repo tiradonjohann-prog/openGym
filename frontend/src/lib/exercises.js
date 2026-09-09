@@ -50,3 +50,22 @@ export const isBodyweightEq = idOrEx =>
 // down on the first `ex.n`.
 export const exOr = id => EXIDX[id] ||
   { id, n: t('Unknown exercise'), bp: '', tg: '', eq: '', sm: [], st: [], missing: true }
+
+// SmartWorkout enrichment — loaded once at startup, non-blocking.
+// Provides per-exercise local video URLs and muscle activation rates (0–100%).
+let _sw = {}
+
+export async function loadSwEnrichment() {
+  try {
+    const r = await fetch('./data/sw-enrichment.json')
+    if (r.ok) _sw = await r.json()
+  } catch {}
+}
+
+export const swDataFor = id => _sw[id] ?? null
+
+export const swVideoSrc = id => {
+  const d = _sw[id]
+  if (!d || d.no_video) return null
+  return `/sw-video/${encodeURIComponent(d.sw_name)}.mp4`
+}
