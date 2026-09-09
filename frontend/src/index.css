@@ -123,6 +123,7 @@ a{color:var(--acc);text-decoration:none}
 :focus-visible{outline:2.5px solid var(--acc);outline-offset:2px;border-radius:inherit}
 button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp button,.sld
 {-webkit-user-select:none;user-select:none}
+input,textarea,select{-webkit-user-select:text;user-select:text}
 
 /* icons inherit colour and optical size from their context */
 .icn{
