@@ -110,7 +110,7 @@ body{
   background:var(--bg);color:var(--label);
   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Segoe UI',Roboto,system-ui,sans-serif;
   font-size:17px;line-height:1.29;letter-spacing:-.01em;
-  min-height:100vh;overscroll-behavior-y:none;overflow-x:clip;
+  min-height:100dvh;overscroll-behavior-y:none;overflow-x:clip;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   touch-action:manipulation;
   font-variant-numeric:tabular-nums;
@@ -1098,9 +1098,11 @@ input.num::-webkit-inner-spin-button{display:none}
 /* Nutrition sub-navigation */
 .nut-nav{
   display:flex;gap:0;padding:0 16px 16px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
 }
+.nut-nav::-webkit-scrollbar{display:none}
 .nut-nav button{
-  flex:1;padding:7px 4px;font-size:14px;font-weight:500;
+  flex:0 0 auto;padding:7px 10px;font-size:14px;font-weight:500;white-space:nowrap;
   color:var(--label-2);border-bottom:2px solid var(--sep);
   transition:color var(--fast),border-color var(--fast);
 }
