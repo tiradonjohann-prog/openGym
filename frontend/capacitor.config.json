@@ -3,6 +3,10 @@
   "appName": "openGym",
   "webDir": "dist",
   "backgroundColor": "#0c0e12",
+  "server": {
+    "url": "https://open-gym-ebon.vercel.app",
+    "cleartext": false
+  },
   "android": {
     "allowMixedContent": false
   }
