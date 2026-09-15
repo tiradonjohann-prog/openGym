@@ -97,10 +97,18 @@ export function ManualEntry({ onAdd, onCancel }) {
   }
 
   const Field = ({ label, value, onChange, unit }) => (
-    <div className="lrow" style={{ background: 'var(--surface)', borderRadius: 'var(--r)', padding: '10px 14px', marginBottom: 6 }}>
-      <span className="lrow-m"><span className="lrow-t">{label}</span></span>
-      <NumberField value={value} nullable onChange={onChange} style={{ width: 72, textAlign: 'right' }} placeholder="—" />
-      <span style={{ fontSize: 13, color: 'var(--label-3)', marginLeft: 6, minWidth: 28 }}>{unit}</span>
+    <div style={{ background: 'var(--surface)', borderRadius: 'var(--r)', padding: '10px 14px', marginBottom: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--label-1)' }}>{label}</span>
+        <span style={{ fontSize: 13, color: 'var(--label-3)' }}>{unit}</span>
+      </div>
+      <NumberField
+        value={value}
+        nullable
+        onChange={onChange}
+        placeholder="—"
+        style={{ width: '100%', textAlign: 'right', fontSize: 18, fontWeight: 600, padding: '8px 12px', borderRadius: 10, boxSizing: 'border-box' }}
+      />
     </div>
   )
 
