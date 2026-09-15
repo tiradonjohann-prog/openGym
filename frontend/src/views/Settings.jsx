@@ -34,7 +34,8 @@ export default function Settings() {
     const name = 'opengym-backup-' + todayISO() + '.json'
     // WKWebView can't download blob URLs — the native build hands the file to the share sheet.
     if (MOBILE) {
-      try { await shareExport(json, name); toast(t("Backup exported")) } catch (e) { /* share sheet dismissed */ }
+      toast(t('Choisissez "Enregistrer dans Fichiers" pour conserver votre sauvegarde'))
+      try { await shareExport(json, name) } catch (e) { /* share sheet dismissed */ }
       return
     }
     const blob = new Blob([json], { type: 'application/json' })
