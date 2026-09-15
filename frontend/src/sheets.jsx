@@ -928,9 +928,19 @@ function ImportProgram({ result, close }) {
 
   const apply = () => {
     if (routines.length === 0) { close(); return }
-    update(s => { routines.forEach(r => s.routines.push(r)) })
+    update(s => {
+      routines.forEach(r => s.routines.push(r))
+      if (!s.programmes) s.programmes = []
+      s.programmes.push({
+        id: uid(),
+        name: programName || t('Imported program'),
+        routineIds: routines.map(r => r.id),
+        totalWeeks: 1,
+        currentWeek: 1,
+      })
+    })
     close()
-    toast(t('Added {0} routines from "{1}"', routines.length, programName))
+    toast(t('Programme "{0}" importé — {1} séances', programName, routines.length))
     nav('/plan')
   }
 
