@@ -61,7 +61,7 @@ export default function Plan() {
           ...(isCardio ? { blocks: defaultCardioBlocks(sport) } : { ex: [] }),
         }
         update(s => { s.routines.push(r) })
-        nav('/plan/r/' + r.id)
+        nav('/plan/r/' + r.id, { state: { isNew: true } })
       }} />
     ))
   }

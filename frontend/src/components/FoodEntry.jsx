@@ -75,6 +75,24 @@ export function FoodQty({ item, onAdd, onCancel }) {
   )
 }
 
+function MacroField({ label, value, onChange, unit }) {
+  return (
+    <div style={{ background: 'var(--surface)', borderRadius: 'var(--r)', padding: '10px 14px', marginBottom: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--label-1)' }}>{label}</span>
+        <span style={{ fontSize: 13, color: 'var(--label-3)' }}>{unit}</span>
+      </div>
+      <NumberField
+        value={value}
+        nullable
+        onChange={onChange}
+        placeholder="—"
+        style={{ width: '100%', textAlign: 'right', fontSize: 18, fontWeight: 600, padding: '8px 12px', borderRadius: 10, boxSizing: 'border-box' }}
+      />
+    </div>
+  )
+}
+
 // Manual food entry form — for items not in Open Food Facts
 export function ManualEntry({ onAdd, onCancel }) {
   const [name,  setName]  = useState('')
@@ -96,22 +114,6 @@ export function ManualEntry({ onAdd, onCancel }) {
     onAdd(item)
   }
 
-  const Field = ({ label, value, onChange, unit }) => (
-    <div style={{ background: 'var(--surface)', borderRadius: 'var(--r)', padding: '10px 14px', marginBottom: 6 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--label-1)' }}>{label}</span>
-        <span style={{ fontSize: 13, color: 'var(--label-3)' }}>{unit}</span>
-      </div>
-      <NumberField
-        value={value}
-        nullable
-        onChange={onChange}
-        placeholder="—"
-        style={{ width: '100%', textAlign: 'right', fontSize: 18, fontWeight: 600, padding: '8px 12px', borderRadius: 10, boxSizing: 'border-box' }}
-      />
-    </div>
-  )
-
   return (
     <div style={{ padding: '0 16px 16px' }}>
       <div className="lrow" style={{ background: 'var(--surface)', borderRadius: 'var(--r)', padding: '10px 14px', marginBottom: 6 }}>
@@ -124,11 +126,11 @@ export function ManualEntry({ onAdd, onCancel }) {
           style={{ width: 140, textAlign: 'right' }}
         />
       </div>
-      <Field label={t('Calories')}      value={kcal}  onChange={setKcal}  unit="kcal" />
-      <Field label={t('Protein')}       value={prot}  onChange={setProt}  unit="g" />
-      <Field label={t('Carbohydrates')} value={carbs} onChange={setCarbs} unit="g" />
-      <Field label={t('Fat')}           value={fat}   onChange={setFat}   unit="g" />
-      <Field label={t('Fiber')}         value={fiber} onChange={setFiber} unit="g" />
+      <MacroField label={t('Calories')}      value={kcal}  onChange={setKcal}  unit="kcal" />
+      <MacroField label={t('Protein')}       value={prot}  onChange={setProt}  unit="g" />
+      <MacroField label={t('Carbohydrates')} value={carbs} onChange={setCarbs} unit="g" />
+      <MacroField label={t('Fat')}           value={fat}   onChange={setFat}   unit="g" />
+      <MacroField label={t('Fiber')}         value={fiber} onChange={setFiber} unit="g" />
       <p className="sect-f" style={{ marginBottom: 16 }}>
         {t('Values per 100 g. Only calories are required.')}
       </p>

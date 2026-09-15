@@ -172,21 +172,15 @@ export async function downloadExcelTemplate() {
   })
 
   // ── 5. Data validation: Muscle Group (E2:E2000) ───────────────────────
-  // Identical formula for every row → ExcelJS consolidates into one sqref entry
   const bpListFormula = '"' + BODY_PARTS.join(',') + '"'
-  const bpDv = { type: 'list', allowBlank: true, formulae: [bpListFormula], showErrorMessage: false }
-  for (let row = 2; row <= 2000; row++) ws.getCell(row, 5).dataValidation = bpDv
+  ws.dataValidations.add('E2:E2000', { type: 'list', allowBlank: true, formulae: [bpListFormula], showErrorMessage: false })
 
   // ── 6. Data validation: Exercise (F2:F2000) — cascading via INDIRECT ─
-  // Formula uses E2 as anchor; Excel adjusts relative reference per row.
-  // All cells share the same formula string → consolidated into one sqref.
-  const exDv = {
-    type: 'list',
-    allowBlank: true,
-    formulae: ['INDIRECT(SUBSTITUTE(E2," ","_"))'],
-    showErrorMessage: false,
-  }
-  for (let row = 2; row <= 2000; row++) ws.getCell(row, 6).dataValidation = exDv
+  // Single range → one <dataValidation sqref="F2:F2000"> entry in the XML.
+  // Excel resolves E2 as a relative reference per row: F10 reads E10, etc.
+  // Cell-by-cell loops produce multiple overlapping sqref entries whose
+  // relative anchors break (F10 reads E2 instead of E10).
+  ws.dataValidations.add('F2:F2000', { type: 'list', allowBlank: true, formulae: ['INDIRECT(SUBSTITUTE(E2," ","_"))'], showErrorMessage: false })
 
   // Alternate row shading for user-added rows (after examples)
   for (let row = examples.length + 2; row <= 2000; row++) {

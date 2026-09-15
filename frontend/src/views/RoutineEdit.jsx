@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
@@ -187,6 +187,8 @@ function CardioEditor({ r, id, update }) {
 export default function RoutineEdit() {
   const nav = useNavigate()
   const { id } = useParams()
+  const location = useLocation()
+  const isNew = !!(location.state?.isNew)
   const S = useStore(s => s.S)
   const update = useStore(s => s.update)
   const r = S.routines.find(x => x.id === id)
@@ -194,6 +196,28 @@ export default function RoutineEdit() {
   if (!r) return null
 
   const isCardio = isCardioSport(r.sport)
+
+  const handleBack = () => {
+    if (isNew) {
+      confirmSheet({
+        title: t('Sauvegarder cette séance ?'),
+        message: t('Si vous ne sauvegardez pas, la séance sera définitivement supprimée.'),
+        confirmText: t('Sauvegarder'),
+        cancelText: t('Supprimer'),
+        onConfirm: () => nav('/plan', { replace: true }),
+        onCancel: () => {
+          update(s => {
+            s.routines = s.routines.filter(x => x.id !== id)
+            Object.keys(s.week).forEach(k => { if (s.week[k] === id) delete s.week[k] })
+            Object.keys(s.dayPlan || {}).forEach(k => { if (s.dayPlan[k] === id) delete s.dayPlan[k] })
+          })
+          nav('/plan', { replace: true })
+        },
+      })
+      return
+    }
+    window.history.state?.idx > 0 ? nav(-1) : nav('/plan', { replace: true })
+  }
 
   const edit = fn => update(s => { fn(s.routines.find(x => x.id === id).ex) })
   const move = (i, dir) => edit(ex => { const j = i + dir; if (j < 0 || j >= ex.length) return;[ex[i], ex[j]] = [ex[j], ex[i]]; cleanupSg(ex) })
@@ -217,7 +241,7 @@ export default function RoutineEdit() {
 
   return <div className="narrow">
     <div className="hdr">
-      <button className="iconbtn" onClick={() => window.history.state?.idx > 0 ? nav(-1) : nav('/plan', { replace: true })} aria-label={t('Plan')}><Icon name="chevronLeft" /></button>
+      <button className="iconbtn" onClick={handleBack} aria-label={t('Plan')}><Icon name="chevronLeft" /></button>
       <div style={{ flex: 1, margin: '0 12px' }}>
         <input className="input" defaultValue={r.name} style={{ fontWeight: 600, fontSize: 20, letterSpacing: '-.021em' }}
           onChange={e => update(s => { s.routines.find(x => x.id === id).name = e.target.value.trim() || t('Routine') })} />

@@ -1,10 +1,23 @@
+import { CIQUAL } from './ciqual-data.js'
+
+const _norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+
+export function searchCiqual(query) {
+  const words = _norm(query.trim()).split(/\s+/).filter(w => w.length >= 2)
+  if (!words.length) return []
+  return CIQUAL.filter(item => {
+    const n = _norm(item.name)
+    return words.every(w => n.includes(w))
+  }).slice(0, 12)
+}
+
 // Open Food Facts API wrapper.
 // API docs: https://wiki.openfoodfacts.org/API
 //
 // Macros are returned as-is from the API — null means the data is absent,
 // never 0-filled. The UI shows "Incomplete data" rather than a false zero.
 
-const OFF_API = 'https://world.openfoodfacts.org/cgi/search.pl'
+const OFF_API = 'https://fr.openfoodfacts.org/cgi/search.pl'
 const TIMEOUT_MS = 8000
 
 function normalize(product) {

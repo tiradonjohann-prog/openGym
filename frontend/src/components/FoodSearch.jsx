@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { searchFood } from '../lib/foodSearch.js'
+import { searchFood, searchCiqual } from '../lib/foodSearch.js'
 import { t } from '../lib/i18n.js'
 import Icon from './Icon.jsx'
 import { SearchField } from './ui.jsx'
@@ -9,31 +9,45 @@ export default function FoodSearch({ onSelect }) {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
-  const abortRef = useRef(null)
-  const tmRef    = useRef(null)
+  const tmRef = useRef(null)
 
   useEffect(() => {
     clearTimeout(tmRef.current)
-    if (query.trim().length < 2) { setResults([]); setError(null); return }
+
+    if (query.trim().length < 2) {
+      setResults([])
+      setError(null)
+      setLoading(false)
+      return
+    }
+
+    // CIQUAL: résultats locaux immédiats (pas de réseau)
+    const local = searchCiqual(query)
+    setResults(local)
+    setError(null)
+
+    // OFF: résultats réseau en parallèle (après 400 ms de debounce)
+    const controller = new AbortController()
+    setLoading(true)
 
     tmRef.current = setTimeout(async () => {
-      abortRef.current?.abort()
-      abortRef.current = new AbortController()
-      setLoading(true)
-      setError(null)
       try {
-        const items = await searchFood(query, abortRef.current.signal)
-        setResults(items)
+        const remote = await searchFood(query, controller.signal)
+        if (!controller.signal.aborted) {
+          const localNames = new Set(local.map(r => r.name.toLowerCase()))
+          const extra = remote.filter(r => !localNames.has(r.name.toLowerCase()))
+          setResults([...local, ...extra])
+        }
       } catch (e) {
         if (e.name !== 'AbortError') setError(t('Search unavailable — check your connection.'))
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       }
     }, 400)
 
     return () => {
       clearTimeout(tmRef.current)
-      abortRef.current?.abort()
+      controller.abort()
     }
   }, [query])
 
