@@ -1,0 +1,37 @@
+[
+  {
+    "id": "0050",
+    "name": "barbell incline shoulder raise",
+    "currentBp": "chest",
+    "tg": "serratus anterior",
+    "expectedBp": "waist"
+  },
+  {
+    "id": "0328",
+    "name": "dumbbell incline shoulder raise",
+    "currentBp": "chest",
+    "tg": "serratus anterior",
+    "expectedBp": "waist"
+  },
+  {
+    "id": "3011",
+    "name": "incline scapula push up",
+    "currentBp": "chest",
+    "tg": "serratus anterior",
+    "expectedBp": "waist"
+  },
+  {
+    "id": "3021",
+    "name": "scapula push-up",
+    "currentBp": "chest",
+    "tg": "serratus anterior",
+    "expectedBp": "waist"
+  },
+  {
+    "id": "0759",
+    "name": "smith incline shoulder raises",
+    "currentBp": "chest",
+    "tg": "serratus anterior",
+    "expectedBp": "waist"
+  }
+]
