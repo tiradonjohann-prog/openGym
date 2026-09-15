@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useStore } from '../store/useStore.js'
+import { useState, useRef } from 'react'
+import { useStore, DEF } from '../store/useStore.js'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Stepper } from '../components/ui.jsx'
@@ -27,7 +27,7 @@ export const EQUIPMENT_OPTIONS = [
 
 /* ── Progress dots (étapes 1-3) ───────────────────────────────────── */
 function ProgressDots({ step }) {
-  if (step === 0) return null
+  if (step <= 0) return null
   return (
     <div style={{ display: 'flex', justifyContent: 'center', gap: 6, paddingTop: 16, paddingBottom: 4 }}>
       {[1, 2, 3].map(i => (
@@ -111,7 +111,9 @@ const GOAL_COLOR     = { maintain: 'var(--teal)', cut: 'var(--blue)', bulk: 'var
 /* ══════════════════════════════════════════════════════════════════ */
 export default function Onboarding() {
   const update = useStore(s => s.update)
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(-1)
+  const backupRef = useRef(null)
+  const { replaceState } = useStore()
 
   // Étape 0
   const [name, setName] = useState('')
@@ -129,6 +131,23 @@ export default function Onboarding() {
   const [goalDelta, setGoalDelta]             = useState(0)
 
   /* ── Handlers ─────────────────────────────────────────────────── */
+
+  const handleBackupImport = ev => {
+    const f = ev.target.files[0]
+    if (!f) return
+    const rd = new FileReader()
+    rd.onload = () => {
+      try {
+        const data = JSON.parse(rd.result)
+        if (!data.workouts || !data.routines) throw new Error('Fichier invalide')
+        replaceState(Object.assign(JSON.parse(JSON.stringify(DEF)), data), false)
+        update(s => { s.onboardingDone = true })
+      } catch (e) {
+        alert('Import échoué : ' + e.message)
+      }
+    }
+    rd.readAsText(f)
+  }
 
   const handleGoalChange = g => {
     setGoal(g)
@@ -199,6 +218,12 @@ export default function Onboarding() {
   /* ── Rendu ────────────────────────────────────────────────────── */
   const renderStep = () => {
     switch (step) {
+      case -1: return (
+        <StepMinus1
+          onNew={() => setStep(0)}
+          onImport={() => backupRef.current?.click()}
+        />
+      )
       case 0: return <Step0 name={name} setName={setName} onNext={next} />
       case 1: return (
         <Step1
@@ -227,6 +252,95 @@ export default function Onboarding() {
       <ProgressDots step={step} />
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px', paddingBottom: 140 }}>
         {renderStep()}
+      </div>
+      <input
+        ref={backupRef}
+        type="file"
+        accept=".json,application/json"
+        style={{ display: 'none' }}
+        onChange={handleBackupImport}
+      />
+    </div>
+  )
+}
+
+/* ══ STEP -1 — Déjà utilisé l'app ? ══════════════════════════════ */
+function StepMinus1({ onNew, onImport }) {
+  return (
+    <div style={{ paddingTop: 60, maxWidth: 560, margin: '0 auto' }}>
+      <div style={{
+        position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+        width: 320, height: 320, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse at center, color-mix(in srgb,var(--acc) 12%,transparent) 0%, transparent 72%)',
+      }} />
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 40, animation: 'badgePop .45s var(--ease)' }}>
+        <SasoianLockup markSize={68} fontSize={34} showTagline />
+      </div>
+
+      <div style={{ marginBottom: 12, textAlign: 'center' }}>
+        <h2 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-.025em', lineHeight: 1.15, marginBottom: 8 }}>
+          {"Vous avez déjà utilisé openGym ?"}
+        </h2>
+        <p style={{ fontSize: 14, color: 'var(--label-3)', lineHeight: 1.5 }}>
+          {"Si vous avez une sauvegarde, importez-la pour retrouver toutes vos données."}
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 32 }}>
+        <button
+          onClick={onImport}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+            padding: '16px 18px', borderRadius: 16, textAlign: 'left', cursor: 'pointer',
+            background: 'color-mix(in srgb,var(--acc) 10%,var(--surface))',
+            border: '1.5px solid color-mix(in srgb,var(--acc) 35%,transparent)',
+          }}
+        >
+          <div style={{
+            width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+            background: 'color-mix(in srgb,var(--acc) 18%,var(--surface-2))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--acc)', fontSize: 20,
+          }}>
+            <Icon name="upload" />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--acc)' }}>
+              {"Oui — Importer ma sauvegarde"}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--label-3)', marginTop: 3 }}>
+              {"Fichier .json exporté depuis l'app"}
+            </div>
+          </div>
+        </button>
+
+        <button
+          onClick={onNew}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+            padding: '16px 18px', borderRadius: 16, textAlign: 'left', cursor: 'pointer',
+            background: 'var(--surface)',
+            border: '1.5px solid var(--sep)',
+          }}
+        >
+          <div style={{
+            width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+            background: 'var(--surface-2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--label-2)', fontSize: 20,
+          }}>
+            <Icon name="plus" />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--label-1)' }}>
+              {"Non — Créer mon profil"}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--label-3)', marginTop: 3 }}>
+              {"Première utilisation"}
+            </div>
+          </div>
+        </button>
       </div>
     </div>
   )
