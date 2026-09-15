@@ -246,7 +246,10 @@ export default function RoutineEdit() {
         <input className="input" defaultValue={r.name} style={{ fontWeight: 600, fontSize: 20, letterSpacing: '-.021em' }}
           onChange={e => update(s => { s.routines.find(x => x.id === id).name = e.target.value.trim() || t('Routine') })} />
       </div>
-      <button className="iconbtn" aria-label={t('Pick an icon')} onClick={() => glyphPicker(r.emoji, g => update(s => { s.routines.find(x => x.id === id).emoji = g }))}><Icon name={glyphOf(r.emoji)} /></button>
+      {!isCardio && <button className="iconbtn" aria-label={t('Pick an icon')} onClick={() => glyphPicker(r.emoji, g => update(s => { s.routines.find(x => x.id === id).emoji = g }))}><Icon name={glyphOf(r.emoji)} /></button>}
+      <button className="iconbtn" onClick={handleBack} aria-label={t('Done')} style={{ color: 'var(--acc)', fontWeight: 700 }}>
+        <Icon name="checkmark" />
+      </button>
     </div>
 
     {/* Cardio: block editor only */}

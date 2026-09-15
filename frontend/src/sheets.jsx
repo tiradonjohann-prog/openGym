@@ -22,7 +22,7 @@ import { buildPlanBundle, parsePlan, mergePlan, printPlan } from './lib/plan-sha
 import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS } from './lib/progression.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
-import { isCardioSport, SPORTS } from './lib/sports.js'
+import { isCardioSport, SPORTS, defaultCardioBlocks } from './lib/sports.js'
 import { sessionStates, isWeekComplete, isProgrammeComplete } from './lib/programme.js'
 import { CardioForm } from './views/nutrition/CardioEntry.jsx'
 
@@ -1396,6 +1396,38 @@ function ProgrammeEditor({ initial, close }) {
     return next
   })
 
+  const createAndAddSession = () => {
+    ui().openSheet(close => (
+      <>
+        <h3>{t('Type of routine')}</h3>
+        <div className="list">
+          {Object.entries(SPORTS).map(([key, sp]) => (
+            <div key={key} className="item" onClick={() => {
+              close()
+              const isCardio = isCardioSport(key)
+              const r = {
+                id: uid(), name: t('New routine'), emoji: DEFAULT_GLYPH,
+                sport: key,
+                ...(isCardio ? { blocks: defaultCardioBlocks(key) } : { ex: [] }),
+              }
+              update(s => { s.routines.push(r) })
+              addSession(r.id)
+            }}>
+              <span className="lrow-i" style={{ background: sp.cardio ? 'var(--teal)' : 'var(--acc)', opacity: 0.85 }}>
+                <Icon name={sp.icon} />
+              </span>
+              <div className="grow">
+                <div className="tt">{t(sp.label)}</div>
+                <div className="ss">{sp.cardio ? t('Cardio — timer-based blocks') : t('Strength — sets & reps')}</div>
+              </div>
+              <Icon name="chevronRight" className="chev" />
+            </div>
+          ))}
+        </div>
+      </>
+    ))
+  }
+
   const save = () => {
     const trimmed = name.trim()
     if (!trimmed) { toast(t('Enter a programme name')); return }
@@ -1470,21 +1502,29 @@ function ProgrammeEditor({ initial, close }) {
       </div>
     ))}
 
-    <div className="small muted" style={{ marginTop: 16, marginBottom: 8 }}>{t('Add session')}</div>
-    <div className="list">
-      {routines.map(r => (
-        <div key={r.id} className="item" onClick={() => addSession(r.id)} style={{ cursor: 'pointer' }}>
-          <span className="lrow-i" style={isCardioSport(r.sport) ? { background: 'var(--teal)' } : undefined}>
-            <Icon name={isCardioSport(r.sport) ? (SPORTS[r.sport]?.icon || 'bolt') : glyphOf(r.emoji)} />
-          </span>
-          <div className="grow"><div className="tt">{r.name}</div></div>
-          <Icon name="plus" style={{ color: 'var(--acc)' }} />
-        </div>
-      ))}
+    <div style={{ marginTop: 16, marginBottom: 8 }}>
+      <Button variant="tinted" icon="plus" style={{ width: '100%' }} onClick={createAndAddSession}>
+        {t('Créer une nouvelle séance')}
+      </Button>
     </div>
 
+    {routines.length > 0 && <>
+      <div className="small muted" style={{ marginBottom: 8 }}>{t('Ajouter une séance existante')}</div>
+      <div className="list">
+        {routines.map(r => (
+          <div key={r.id} className="item" onClick={() => addSession(r.id)} style={{ cursor: 'pointer' }}>
+            <span className="lrow-i" style={isCardioSport(r.sport) ? { background: 'var(--teal)' } : undefined}>
+              <Icon name={isCardioSport(r.sport) ? (SPORTS[r.sport]?.icon || 'bolt') : glyphOf(r.emoji)} />
+            </span>
+            <div className="grow"><div className="tt">{r.name}</div></div>
+            <Icon name="plus" style={{ color: 'var(--acc)' }} />
+          </div>
+        ))}
+      </div>
+    </>}
+
     <div style={{ height: 16 }} />
-    <Button variant="primary" style={{ width: '100%' }} onClick={save}>{t('Save')}</Button>
+    <Button variant="primary" style={{ width: '100%', opacity: (!sessions.length || !name.trim()) ? 0.45 : 1 }} onClick={save} disabled={!sessions.length || !name.trim()}>{t('Save')}</Button>
   </>
 }
 

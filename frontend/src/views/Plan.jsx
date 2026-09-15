@@ -80,14 +80,14 @@ export default function Plan() {
     <div data-tuto="plan-programmes" style={{ marginBottom: 24 }}>
       <div className="row between" style={{ marginBottom: 10 }}>
         <h4 className="sec" style={{ margin: 0 }}>{t('Programmes')}</h4>
-        <Button size="sm" variant="tinted" icon="plus" onClick={programmeCreateSheet}>{t('New')}</Button>
+        <Button size="sm" variant="tinted" icon="plus" onClick={programmeCreateSheet}>{t('Créer programme')}</Button>
       </div>
       {programmes.length === 0 ? (
         <div className="empty" style={{ padding: '14px 0' }}>
           <div className="ico"><Icon name="clipboard" /></div>
           {t('No programmes yet.')}
           <br />
-          <span className="small muted">{t('Group your routines into a multi-week training plan.')}</span>
+          <span className="small muted">{t('Regroupez vos séances en plan d\'entraînement multi-semaines.')}</span>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -201,8 +201,8 @@ export default function Plan() {
     {/* ── Routines list ── */}
     <div data-tuto="plan-routines">
       <div className="row between" style={{ marginBottom: 10 }}>
-        <h4 className="sec" style={{ margin: 0 }}>{t('Routines')}</h4>
-        <Button size="sm" variant="tinted" icon="plus" onClick={addRoutine}>{t('New')}</Button>
+        <h4 className="sec" style={{ margin: 0 }}>{t('Entrainements / Séances')}</h4>
+        <Button size="sm" variant="tinted" icon="plus" onClick={addRoutine}>{t('Créer séance')}</Button>
       </div>
       {S.routines.length ? (
         <div className="list">
@@ -229,7 +229,7 @@ export default function Plan() {
         </div>
       ) : (
         <>
-          <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('No routines yet.')}<br />{t('Create one or load the starter plan.')}</div>
+          <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('Aucun entrainement pour l\'instant.')}<br />{t('Créez-en un ou chargez le plan de démarrage.')}</div>
           <Button icon="sparkles" onClick={loadStarterPlan}>{t('Load starter plan (Push / Pull / Legs)')}</Button>
         </>
       )}

@@ -214,21 +214,6 @@ export default function Settings() {
         accessory="chevron" onClick={() => importRef.current.click()} />
       <Row icon="upload" iconTint="var(--blue)" title={t("Import backup")} accessory="chevron" onClick={() => fileRef.current.click()} />
       <Row icon="download" iconTint="var(--blue)" title={t("Export backup (JSON)")} accessory="chevron" onClick={doExport} />
-      <Row icon="reset" iconTint="var(--purple)" title={t("Load 3-month demo data")}
-        subtitle={t("PPL programme · cut goal · fictitious data for demo purposes")}
-        accessory="chevron"
-        onClick={() => confirmSheet({
-          title: t("Load demo data?"),
-          message: t("Replaces all current data with 3 months of fictitious workouts, nutrition and cardio. Export a backup first if you want to keep your data."),
-          confirmText: t("Load demo"),
-          onConfirm: async () => {
-            const { buildDemoState } = await import('../lib/demoSeed.js')
-            replaceState(Object.assign(JSON.parse(JSON.stringify(DEF)), buildDemoState()), true)
-            nav('/home')
-            toast(t("Demo data loaded"))
-          }
-        })}
-      />
       <Row icon="trash" iconTint="var(--red)" title={t("Reset everything")} danger onClick={() => confirmSheet({ title: t("Reset everything?"), message: t("Deletes your plan, workouts and body weight on this device. This cannot be undone."), confirmText: t("Delete everything"), danger: true, onConfirm: () => { replaceState(JSON.parse(JSON.stringify(DEF)), true); nav('/home'); toast(t("All data reset")) } })} />
     </Section>
     </div>
