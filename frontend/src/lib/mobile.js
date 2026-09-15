@@ -96,3 +96,23 @@ export async function shareExport(json, filename) {
   const w = await Filesystem.writeFile({ path: filename, directory: Directory.Cache, data: json, encoding: Encoding.UTF8 })
   await Share.share({ title: filename, url: w.uri })
 }
+
+// Partage un ArrayBuffer (ex: fichier Excel) via la share sheet native.
+// Utilise Directory.Cache car Share.share exige une URI de fichier local.
+export async function shareMobileFile(buffer, filename, mimeType) {
+  const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem')
+  const { Share } = await import('@capacitor/share')
+
+  // Convertir ArrayBuffer en base64
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  bytes.forEach(b => { binary += String.fromCharCode(b) })
+  const base64 = btoa(binary)
+
+  const w = await Filesystem.writeFile({
+    path: filename,
+    directory: Directory.Cache,
+    data: base64,
+  })
+  await Share.share({ title: filename, url: w.uri })
+}

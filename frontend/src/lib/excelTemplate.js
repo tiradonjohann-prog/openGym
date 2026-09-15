@@ -16,6 +16,7 @@
 // is changed.
 
 import { EXDB } from './exercises.js'
+import { MOBILE, shareMobileFile } from './mobile.js'
 
 // Sorted list of all body parts present in the exercise database
 const BODY_PARTS = [...new Set(EXDB.map(e => e.bp))].sort()
@@ -195,7 +196,17 @@ export async function downloadExcelTemplate() {
   }
 
   // ── 7. Download ────────────────────────────────────────────────────────
-  const buf  = await wb.xlsx.writeBuffer()
+  const buf = await wb.xlsx.writeBuffer()
+
+  if (MOBILE) {
+    await shareMobileFile(
+      buf,
+      'opengym-programme-template.xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    return
+  }
+
   const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
