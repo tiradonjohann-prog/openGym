@@ -67,40 +67,31 @@ function Sheet({ sheet }) {
 export default function Modals() {
   const sheets = useUI(s => s.sheets)
   const sheetCount = useRef(0)
-  const closedByPop = useRef(false)
-  const popByUs = useRef(0)
 
-  // Intercept Android back gesture / browser back button when sheets are open.
-  // Push a history sentinel on each new sheet so the back button closes it
-  // instead of navigating away from the page.
+  // Push one history sentinel per new sheet so Android back closes the sheet
+  // instead of navigating the page. When sheets close via UI (swipe / backdrop /
+  // Done button), we intentionally leave the sentinel in place — calling
+  // history.go() here fires asynchronously and conflicts with any React Router
+  // navigation that happened in the same tick (e.g. SportPicker → nav('/plan/r/id')),
+  // causing the route change to be undone. Orphaned sentinels share the current URL
+  // so they are transparent: a back press just re-renders the same page and the
+  // next back press navigates normally.
   useEffect(() => {
     const cur = sheets.length
     const prev = sheetCount.current
     sheetCount.current = cur
-
     if (cur > prev) {
       for (let i = 0; i < cur - prev; i++) {
         window.history.pushState({ _sheet: true }, '')
       }
-    } else if (cur < prev && !closedByPop.current) {
-      // Sheet closed by UI (swipe / backdrop): consume orphaned sentinel entries.
-      const n = prev - cur
-      popByUs.current += n
-      window.history.go(-n)
     }
-    closedByPop.current = false
   }, [sheets.length])
 
   useEffect(() => {
     const onPop = () => {
-      if (popByUs.current > 0) {
-        popByUs.current--
-        return
-      }
       const state = useUI.getState()
       const top = state.sheets[state.sheets.length - 1]
       if (top && !top.locked) {
-        closedByPop.current = true
         state.closeSheet(top.id)
       }
     }

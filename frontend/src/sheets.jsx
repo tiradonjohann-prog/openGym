@@ -1406,7 +1406,7 @@ function ProgrammeEditor({ initial, close }) {
               close()
               const isCardio = isCardioSport(key)
               const r = {
-                id: uid(), name: t('New routine'), emoji: DEFAULT_GLYPH,
+                id: uid(), name: t('Nouvelle séance'), emoji: DEFAULT_GLYPH,
                 sport: key,
                 ...(isCardio ? { blocks: defaultCardioBlocks(key) } : { ex: [] }),
               }
@@ -1524,7 +1524,7 @@ function ProgrammeEditor({ initial, close }) {
     </>}
 
     <div style={{ height: 16 }} />
-    <Button variant="primary" style={{ width: '100%', opacity: (!sessions.length || !name.trim()) ? 0.45 : 1 }} onClick={save} disabled={!sessions.length || !name.trim()}>{t('Save')}</Button>
+    <Button variant="primary" style={{ width: '100%' }} onClick={save} disabled={!sessions.length || !name.trim()}>{t('Save')}</Button>
   </>
 }
 
