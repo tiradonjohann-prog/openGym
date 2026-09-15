@@ -39,11 +39,18 @@ export default function Settings() {
       return
     }
     const blob = new Blob([json], { type: 'application/json' })
+    // Android PWA standalone mode: a.click() downloads are silently blocked — use Web Share API.
+    const file = new File([blob], name, { type: 'application/json' })
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: name }); toast(t("Backup exported")); return } catch (e) { if (e.name === 'AbortError') return }
+    }
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href)
     toast(t("Backup exported"))
   }
   const doImport = ev => {
-    const f = ev.target.files[0]; if (!f) return
+    const f = ev.target.files[0]
+    ev.target.value = ''
+    if (!f) return
     const rd = new FileReader()
     rd.onload = () => {
       try {
