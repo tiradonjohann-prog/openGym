@@ -102,6 +102,27 @@ export const useStore = create((set, get) => {
     }
   })
 
+  // Capacitor émet appStateChange quand l'app passe en arrière-plan sur iOS/Android.
+  // Plus fiable que visibilitychange lors d'un force-kill depuis l'app switcher.
+  // Le pattern if(saveTm) est idempotent : si visibilitychange a déjà flushed, saveTm est null.
+  if (MOBILE) {
+    import('@capacitor/app').then(({ App }) => {
+      App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) return
+        if (saveTm) {
+          clearTimeout(saveTm)
+          saveTm = null
+          nativeSave(get().S)
+        }
+        if (pushTm) {
+          clearTimeout(pushTm)
+          pushTm = null
+          get().pushState()
+        }
+      })
+    }).catch(() => { /* plugin absent en dev web — ignoré */ })
+  }
+
   // Everything a sign-out leaves behind on this device, whichever way it was triggered.
   const clearLocalSession = () => {
     get().setUser(null)
