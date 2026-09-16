@@ -260,13 +260,17 @@ function ProgrammeHome({ S, user, nav }) {
       <div style={{ marginBottom: 8 }}>
         <div className="small" style={{
           textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700,
-          marginBottom: 12, color: 'var(--acc)', fontSize: 11,
+          marginBottom: 10, color: 'var(--acc)', fontSize: 11,
         }}>
           {t('My programmes')}
         </div>
-        {programmes.map(prog => (
-          <ProgrammeCard key={prog.id} prog={prog} />
-        ))}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
+          {programmes.map(prog => (
+            <div key={prog.id} style={{ width: 'calc(50% - 5px)', flexShrink: 0 }}>
+              <ProgrammeCard prog={prog} />
+            </div>
+          ))}
+        </div>
       </div>
 
       <SmartNudge S={S} />

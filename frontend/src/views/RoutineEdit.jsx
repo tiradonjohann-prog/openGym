@@ -9,6 +9,7 @@ import { supersetUnits, cleanupSg, exLine } from '../lib/history.js'
 import { SPORTS, BLOCK_TYPES, INTENSITIES, isCardioSport, blockSummary, blockDurationMin, routineTotalDuration, isHybrid, hybridExItems } from '../lib/sports.js'
 import { Thumb } from '../components/Media.jsx'
 import { glyphPicker, exercisePicker, exConfigSheet, confirmSheet, swapExerciseSheet } from '../sheets.jsx'
+import { pickImage, isUserImage } from '../lib/imageUtils.js'
 import Icon from '../components/Icon.jsx'
 import { glyphOf } from '../lib/glyphs.js'
 import { Button, SelectRow, Switch } from '../components/ui.jsx'
@@ -417,6 +418,44 @@ export default function RoutineEdit() {
       <div style={{ color: 'var(--red)', fontSize: 12, margin: '4px 2px 12px', padding: '7px 10px', background: 'rgba(220,38,38,0.08)', borderRadius: 8, lineHeight: 1.5 }}>
         {t('Donnez un nom à cette séance avant de sauvegarder.')}
       </div>
+    )}
+
+    {/* ── cover image ── */}
+    {r.imageUrl ? (
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 16 }}>
+        <div style={{ position: 'relative', width: 120, height: 120, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)' }}>
+          <img src={r.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', padding: 6, boxSizing: 'border-box' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.68) 100%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: 7, left: 7, right: 7, fontSize: 10, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-.01em', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+            {r.name}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 2 }}>
+          <button
+            onClick={async () => { const url = await pickImage(); if (url) update(s => { s.routines.find(x => x.id === id).imageUrl = url }) }}
+            style={{ background: 'var(--surface-3)', border: 'none', borderRadius: 8, padding: '8px 14px', color: 'var(--label)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >{t('Changer')}</button>
+          {isUserImage(r.imageUrl) && (
+            <button
+              onClick={() => update(s => { s.routines.find(x => x.id === id).imageUrl = null })}
+              style={{ background: 'rgba(220,38,38,0.1)', border: 'none', borderRadius: 8, padding: '8px 14px', color: 'var(--red)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >{t('Supprimer')}</button>
+          )}
+        </div>
+      </div>
+    ) : (
+      <button
+        onClick={async () => { const url = await pickImage(); if (url) update(s => { s.routines.find(x => x.id === id).imageUrl = url }) }}
+        style={{
+          width: 120, height: 120, marginBottom: 16, borderRadius: 12,
+          border: '1.5px dashed var(--sep)', background: 'var(--surface-2)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+          color: 'var(--label-3)', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+        }}
+      >
+        <Icon name="photo" style={{ fontSize: 22 }} />
+        {t('Ajouter photo')}
+      </button>
     )}
 
     {/* Cardio: block editor — also shows "Add exercise" to convert to hybrid */}

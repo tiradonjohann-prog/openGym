@@ -22,6 +22,7 @@ import { buildPlanBundle, parsePlan, mergePlan, printPlan } from './lib/plan-sha
 import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS } from './lib/progression.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
+import { pickImage, isUserImage } from './lib/imageUtils.js'
 import { isCardioSport, isHybrid, SPORTS, BLOCK_TYPES, blockSummary, estimateBlockKcal, defaultCardioBlocks } from './lib/sports.js'
 import { sessionStates, isWeekComplete, isProgrammeComplete } from './lib/programme.js'
 import { CardioForm } from './views/nutrition/CardioEntry.jsx'
@@ -54,6 +55,7 @@ export function loadStarterPlan() {
     id: uid(), name: 'Push / Pull / Legs',
     routineIds: [push.id, pull.id, legs.id],
     totalWeeks: 8, currentWeek: 1, weekProgress: {},
+    imageUrl: '/assets/covers/ppl.svg',
   }
   update(st => {
     st.routines.push(push, pull, legs)
@@ -984,7 +986,7 @@ function PlanImport({ bundle, close }) {
 
 /* ============================ import program from CSV ============================ */
 function ImportProgram({ result, close }) {
-  const { programName, routines, warnings } = result
+  const { programName, routines, warnings, programImageUrl } = result
 
   const apply = () => {
     if (routines.length === 0) { close(); return }
@@ -998,6 +1000,7 @@ function ImportProgram({ result, close }) {
         totalWeeks: 1,
         currentWeek: 1,
         weekProgress: {},
+        ...(programImageUrl ? { imageUrl: programImageUrl } : {}),
       })
     })
     close()
@@ -1519,6 +1522,7 @@ function ProgrammeEditor({ initial, close }) {
   const routines = st.routines
   const [name, setName] = useState(initial ? initial.name : '')
   const [totalWeeks, setTotalWeeks] = useState(initial ? initial.totalWeeks : 8)
+  const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? null)
   const [showProgNameError, setShowProgNameError] = useState(false)
   const [expandedSession, setExpandedSession] = useState(null)
   // sessions: ordered list of { routineId, key }
@@ -1531,11 +1535,13 @@ function ProgrammeEditor({ initial, close }) {
     name: initial.name,
     routineIds: initial.routineIds,
     totalWeeks: initial.totalWeeks,
+    imageUrl: initial.imageUrl ?? null,
   }) : null)
   const hasProgChanges = !initial || JSON.stringify({
     name: name.trim(),
     routineIds: sessions.map(s => s.routineId),
     totalWeeks,
+    imageUrl,
   }) !== initProgSnap
 
   const addSession = rid => setSessions(prev => [...prev, { routineId: rid, key: uid() }])
@@ -1572,9 +1578,9 @@ function ProgrammeEditor({ initial, close }) {
                   if (!st.programmes) st.programmes = []
                   if (initial) {
                     const idx = st.programmes.findIndex(p => p.id === initial.id)
-                    if (idx >= 0) st.programmes[idx] = { ...st.programmes[idx], name: trimmed, routineIds: updatedIds, totalWeeks }
+                    if (idx >= 0) st.programmes[idx] = { ...st.programmes[idx], name: trimmed, routineIds: updatedIds, totalWeeks, imageUrl }
                   } else {
-                    st.programmes.push({ id: uid(), name: trimmed, routineIds: updatedIds, totalWeeks, currentWeek: 1, weekProgress: {} })
+                    st.programmes.push({ id: uid(), name: trimmed, routineIds: updatedIds, totalWeeks, currentWeek: 1, weekProgress: {}, imageUrl })
                   }
                 })
               }
@@ -1619,13 +1625,13 @@ function ProgrammeEditor({ initial, close }) {
         const idx = st.programmes.findIndex(p => p.id === initial.id)
         if (idx >= 0) {
           st.programmes[idx] = {
-            ...st.programmes[idx], name: trimmed, routineIds, totalWeeks,
+            ...st.programmes[idx], name: trimmed, routineIds, totalWeeks, imageUrl,
           }
         }
       } else {
         st.programmes.push({
           id: uid(), name: trimmed, routineIds, totalWeeks,
-          currentWeek: 1, weekProgress: {},
+          currentWeek: 1, weekProgress: {}, imageUrl,
         })
       }
     })
@@ -1697,6 +1703,44 @@ function ProgrammeEditor({ initial, close }) {
 
   return <>
     <h3>{initial ? t('Edit programme') : t('New programme')}</h3>
+
+    {/* ── cover image picker ── */}
+    {imageUrl ? (
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 16 }}>
+        <div style={{ position: 'relative', width: 120, height: 120, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: 'var(--surface-3)' }}>
+          <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', padding: 6, boxSizing: 'border-box' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.68) 100%)' }} />
+          <div style={{ position: 'absolute', bottom: 7, left: 7, right: 7, fontSize: 10, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-.01em' }}>
+            {name || t('Programme name')}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 2 }}>
+          <button
+            onClick={async () => { const url = await pickImage(); if (url) setImageUrl(url) }}
+            style={{ background: 'var(--surface-3)', border: 'none', borderRadius: 8, padding: '8px 14px', color: 'var(--label)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >{t('Changer')}</button>
+          {isUserImage(imageUrl) && (
+            <button
+              onClick={() => setImageUrl(null)}
+              style={{ background: 'rgba(220,38,38,0.1)', border: 'none', borderRadius: 8, padding: '8px 14px', color: 'var(--red)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >{t('Supprimer')}</button>
+          )}
+        </div>
+      </div>
+    ) : (
+      <button
+        onClick={async () => { const url = await pickImage(); if (url) setImageUrl(url) }}
+        style={{
+          width: 120, height: 120, marginBottom: 16, borderRadius: 12,
+          border: '1.5px dashed var(--sep)', background: 'var(--surface-2)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+          color: 'var(--label-3)', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+        }}
+      >
+        <Icon name="photo" style={{ fontSize: 22 }} />
+        {t('Ajouter photo')}
+      </button>
+    )}
 
     <div className="small muted" style={{ marginBottom: 4 }}>{t('Programme name')}</div>
     <input

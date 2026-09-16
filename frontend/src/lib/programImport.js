@@ -91,8 +91,10 @@ function parseRows(rows, exercises = EXDB) {
   let tempoCol = 6, setsCol = 7, repsCol = 8, weightCol = 9, restCol = 10
   let cardioTypeCol = -1, cardioSportCol = -1, cardioDurCol = -1, cardioDistCol = -1
   let cardioIntCol = -1, cardioRepCol = -1, cardioWorkCol = -1, cardioRestCol = -1
+  let imageUrlCol = -1
 
   let programName = 'Imported program'
+  let programImageUrl = null
   let dataStartRow = 0
 
   if (headerRow) {
@@ -125,6 +127,7 @@ function parseRows(rows, exercises = EXDB) {
     cardioRepCol   = colOf('intervalles')
     cardioWorkCol  = colOf('travail s', 'travail')
     cardioRestCol  = colOf('recup s', 'recup', 'recuperation s')
+    imageUrlCol    = colOf('image url', 'image programme', 'image', 'cover')
 
     // Fall back to positional if detection fails
     if (progCol    < 0) progCol    = 0
@@ -167,6 +170,10 @@ function parseRows(rows, exercises = EXDB) {
     if (i === dataStartRow && !program && !cardioType) continue  // skip if looks like a header
 
     if (program && !programName.includes('Imported')) programName = program
+    if (!programImageUrl && imageUrlCol >= 0) {
+      const v = String(cells[imageUrlCol] || '').trim()
+      if (v) programImageUrl = v
+    }
 
     if (!workoutMap.has(session)) {
       workoutMap.set(session, [])
@@ -253,7 +260,7 @@ function parseRows(rows, exercises = EXDB) {
     return { id: uid(), name: sessionName, emoji: null, ex, prog: 'linear' }
   })
 
-  return { programName: programName || 'Imported program', routines, warnings }
+  return { programName: programName || 'Imported program', routines, warnings, programImageUrl }
 }
 
 // ──────────────────────────────────────────────────────────────────────────
