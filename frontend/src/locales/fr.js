@@ -530,7 +530,7 @@ export default {
   'Effort': 'Effort',
   'how close to failure': 'à quel point près de l’échec',
   'by hard sets': 'par séries dures',
-  'Hard': 'Dures',
+  'Hard': 'Difficile',
   'no hard sets': 'aucune série dure',
   'No hard sets in this period': 'Aucune série dure sur cette période',
   'Every muscle group got at least one hard set in this period.': 'Chaque groupe musculaire a eu au moins une série dure sur cette période.',
@@ -1277,6 +1277,8 @@ export default {
   'Warm-up': 'Échauffement',
   'Steady pace': 'Allure constante',
   'Cooldown': 'Retour au calme',
+  'Cool-down': 'Retour au calme',
+  'rest': 'récup.',
 
   // --- sports ---
   'Strength training': 'Musculation',

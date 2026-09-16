@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { exOr } from '../lib/exercises.js'
 import { effectiveRoutine, lastEntryFor, bestWeightFor, buildSets, setsDoneActive, supersetUnits, unitOf, setLabel, modeOf, isBw, isPerSide, sideReps, repStep, EFFORT, effortOf, stepEffort, capEffort } from '../lib/history.js'
+import { SPORTS, BLOCK_TYPES, INTENSITIES, blockSummary, estimateBlockKcal } from '../lib/sports.js'
 import { fmtNum, fmtDate, todayISO, exCount, DAYN } from '../lib/format.js'
 import { beep, vibrate } from '../lib/sound.js'
 import { t } from '../lib/i18n.js'
@@ -32,14 +33,169 @@ const BP_COLOR = {
 }
 const bpColorOf = ex => BP_COLOR[ex.bp] || 'var(--label-3)'
 
+function fmtSec(sec) {
+  const s = Math.max(0, Math.round(sec))
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+}
+
+/* ---------- cardio block data collection sheet ---------- */
+function CardioBlockDoneSheet({ entry, bw, close, onSave }) {
+  const [distKm, setDistKm] = useState(entry.distKm != null ? String(entry.distKm) : '')
+  const [kcalInput, setKcalInput] = useState(entry.kcal != null ? String(entry.kcal) : '')
+  const [notes, setNotes] = useState(entry.notes || '')
+  const sportInfo = SPORTS[entry.sport] || {}
+  const bt = BLOCK_TYPES[entry.type] || {}
+  const estimated = bw ? (estimateBlockKcal(entry, entry.sport, bw) || 0) : 0
+  return <>
+    <h3>{t(sportInfo.label || entry.sport)}</h3>
+    <div className="dim small" style={{ marginBottom: 16 }}>{t(bt.label || entry.type)} · {blockSummary(entry)}</div>
+    {sportInfo.hasDistance && (
+      <div style={{ marginBottom: 14 }}>
+        <div className="small dim" style={{ marginBottom: 6 }}>{t('Distance (km)')}</div>
+        <input className="input" type="number" inputMode="decimal" min="0" step="0.1" placeholder="0.0" value={distKm} onChange={e => setDistKm(e.target.value)} />
+      </div>
+    )}
+    <div style={{ marginBottom: 14 }}>
+      <div className="small dim" style={{ marginBottom: 6 }}>
+        {t('Calories')}
+        {estimated > 0 && <span className="muted"> (~{estimated} kcal)</span>}
+      </div>
+      <input className="input" type="number" inputMode="numeric" min="0" placeholder={estimated > 0 ? String(estimated) : '0'} value={kcalInput} onChange={e => setKcalInput(e.target.value)} />
+    </div>
+    <div style={{ marginBottom: 20 }}>
+      <div className="small dim" style={{ marginBottom: 6 }}>{t('Notes (optionnel)')}</div>
+      <input className="input" type="text" placeholder={t('Comment c\'était ?')} value={notes} onChange={e => setNotes(e.target.value)} />
+    </div>
+    <Button variant="primary" style={{ width: '100%' }} onClick={() => {
+      onSave({ distKm: parseFloat(distKm) || null, kcal: parseInt(kcalInput) || estimated || null, notes: notes.trim() || null })
+      close()
+    }}>{t('OK')}</Button>
+  </>
+}
+
+/* ---------- cardio block step (within hybrid workout) ---------- */
+function CardioStepBlock({ entryIdx }) {
+  const S = useStore(s => s.S)
+  const update = useStore(s => s.update)
+  const { openSheet } = useUI()
+  const entry = S.active.entries[entryIdx]
+  const bw = S.active.bw
+  const sportInfo = SPORTS[entry.sport] || {}
+  const bt = BLOCK_TYPES[entry.type] || {}
+  const totalSec = (entry.type === 'interval' ? (entry.workSec || 60) : (entry.duration || 0) * 60)
+
+  const [timerState, setTimerState] = useState('idle')
+  const [displaySec, setDisplaySec] = useState(totalSec)
+  const timerRef = useRef(null)
+  const currentSecRef = useRef(totalSec)
+
+  useEffect(() => () => clearInterval(timerRef.current), [])
+
+  const openDataSheet = () => {
+    openSheet(close => (
+      <CardioBlockDoneSheet
+        entry={S.active.entries[entryIdx]}
+        bw={bw}
+        close={close}
+        onSave={data => update(s => {
+          const e = s.active.entries[entryIdx]
+          e.done = true
+          e.distKm = data.distKm
+          e.kcal = data.kcal
+          e.notes = data.notes
+        })}
+      />
+    ))
+  }
+
+  const startTimer = () => {
+    currentSecRef.current = totalSec
+    setDisplaySec(totalSec)
+    setTimerState('running')
+    timerRef.current = setInterval(() => {
+      currentSecRef.current -= 1
+      setDisplaySec(currentSecRef.current)
+      if (currentSecRef.current <= 0) {
+        clearInterval(timerRef.current)
+        setTimerState('done')
+        openDataSheet()
+      }
+    }, 1000)
+  }
+
+  const stopEarly = () => {
+    clearInterval(timerRef.current)
+    setTimerState('done')
+    openDataSheet()
+  }
+
+  const skip = () => {
+    clearInterval(timerRef.current)
+    setTimerState('done')
+    update(s => { s.active.entries[entryIdx].done = true })
+    openDataSheet()
+  }
+
+  if (entry.done) {
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: '24px 16px' }}>
+        <Icon name="checkCircle" style={{ fontSize: 44, color: 'var(--teal)', marginBottom: 10 }} />
+        <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 4 }}>{t(sportInfo.label || entry.sport)}</div>
+        <div className="dim small" style={{ marginBottom: 10 }}>{blockSummary(entry)}</div>
+        {entry.distKm && <div className="dim small">{entry.distKm} km</div>}
+        {entry.kcal && <div className="dim small">{entry.kcal} kcal</div>}
+        {entry.notes && <div className="dim small" style={{ fontStyle: 'italic' }}>{entry.notes}</div>}
+        <button className="btn ghost dim" style={{ marginTop: 14, fontSize: 13 }} onClick={openDataSheet}>{t('Modifier')}</button>
+      </div>
+    )
+  }
+
+  const progress = totalSec > 0 ? 1 - displaySec / totalSec : 1
+  const blockColor = bt.color || 'var(--teal)'
+
+  return (
+    <div>
+      <div className="card" style={{ textAlign: 'center', padding: '24px 16px', marginBottom: 0 }}>
+        <span style={{ width: 56, height: 56, borderRadius: 16, background: blockColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: '#fff', margin: '0 auto 12px' }}>
+          <Icon name={sportInfo.icon || 'bolt'} />
+        </span>
+        <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-.02em', marginBottom: 2 }}>{t(sportInfo.label || entry.sport)}</div>
+        <div className="dim small" style={{ marginBottom: 20 }}>{blockSummary(entry)}</div>
+
+        {timerState === 'running' ? <>
+          <div style={{ fontSize: 'clamp(56px, 16vw, 80px)', fontWeight: 800, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', lineHeight: 1, marginBottom: 12 }}>
+            {fmtSec(displaySec)}
+          </div>
+          <div style={{ width: '80%', height: 5, background: 'var(--surface-3)', borderRadius: 3, overflow: 'hidden', margin: '0 auto 20px' }}>
+            <div style={{ width: `${Math.max(0, Math.min(100, progress * 100))}%`, height: '100%', background: blockColor, borderRadius: 3, transition: 'width 1s linear' }} />
+          </div>
+          <div className="row" style={{ gap: 8 }}>
+            <Button variant="primary" style={{ flex: 1 }} onClick={stopEarly}>{t('Terminer')}</Button>
+            <Button style={{ flex: 1 }} onClick={skip}>{t('Passer')}</Button>
+          </div>
+        </> : <>
+          <div style={{ fontSize: 'clamp(40px, 12vw, 60px)', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--label-3)', marginBottom: 20 }}>
+            {fmtSec(totalSec)}
+          </div>
+          <div className="row" style={{ gap: 8 }}>
+            <Button variant="primary" style={{ flex: 1 }} icon="play" onClick={startTimer}>{t('Lancer')}</Button>
+            <Button style={{ flex: 1 }} onClick={skip}>{t('Passer')}</Button>
+          </div>
+        </>}
+      </div>
+    </div>
+  )
+}
+
 /* ---------- start chooser (no active workout) ---------- */
 function StartChooser() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
   const todayRaw = effectiveRoutine(S, todayISO())
-  const todayR = todayRaw && ((todayRaw.ex?.length ?? 0) > 0 || (todayRaw.blocks?.length ?? 0) > 0) ? todayRaw : null
+  const hasContent = r => (r.ex?.length ?? 0) > 0 || (r.blocks?.length ?? 0) > 0 || (r.items?.length ?? 0) > 0
+  const todayR = todayRaw && hasContent(todayRaw) ? todayRaw : null
   const todayOvr = S.dayPlan[todayISO()] !== undefined
-  const others = S.routines.filter(r => r !== todayRaw && ((r.ex?.length ?? 0) > 0 || (r.blocks?.length ?? 0) > 0))
+  const others = S.routines.filter(r => r !== todayRaw && hasContent(r))
   return <div className="narrow">
     <div className="hdr">
       <div><h1>{t("Start workout")}</h1><div className="sub">{t(DAYN[new Date().getDay()])} — {todayR ? t("today is {0}", todayR.name) : t("rest day, but no one's stopping you")}</div></div>
@@ -95,7 +251,7 @@ function StartChooser() {
         </div>
       )
     })()}
-    {others.length > 0 && <><h4 className="sec">{t('Other routines')}</h4>
+    {others.length > 0 && <><h4 className="sec">{t('Autres séances')}</h4>
       <div className="list">{others.map(r => {
         const isCardio = r.sport && r.sport !== 'strength'
         const col = isCardio ? 'var(--teal)' : 'var(--acc)'
@@ -247,7 +403,7 @@ function ActiveWorkout() {
   const unitIdx = units.findIndex(u => u === unit)
   const isSuperset = unit.length > 1
 
-  const total = A.entries.reduce((n, e) => n + e.sets.length, 0)
+  const total = A.entries.reduce((n, e) => n + (e.sets?.length ?? 0), 0)
   const done = setsDoneActive(A)
 
   const mutEntry = (idx, fn) => update(s => { fn(s.active.entries[idx]) }, true)
@@ -338,7 +494,7 @@ function ActiveWorkout() {
       const u = supersetUnits(A2.entries)
       const c = Math.min(A2.cur, Math.max(0, A2.entries.length - 1))
       const ui = u.findIndex(x => x.includes(c))
-      const tot = A2.entries.reduce((n, e) => n + e.sets.length, 0)
+      const tot = A2.entries.reduce((n, e) => n + (e.sets?.length ?? 0), 0)
       api('/api/activity', { method: 'POST', body: JSON.stringify({
         active, name: A2.name, exIdx: ui + 1, exTotal: u.length,
         setsDone: setsDoneActive(A2), setsTotal: tot, startedAt: A2.start
@@ -355,8 +511,8 @@ function ActiveWorkout() {
   }, [])
 
   const volume = A.entries.reduce((vol, e) => {
-    if (modeOf({ ...(e.target || {}), id: e.id }) !== 'reps') return vol
-    return vol + e.sets.filter(s => s.done && s.w > 0 && s.r > 0).reduce((sv, s) => sv + s.w * s.r, 0)
+    if (e.kind === 'block' || modeOf({ ...(e.target || {}), id: e.id }) !== 'reps') return vol
+    return vol + (e.sets || []).filter(s => s.done && s.w > 0 && s.r > 0).reduce((sv, s) => sv + s.w * s.r, 0)
   }, 0)
 
   return <div className="narrow">
@@ -376,7 +532,10 @@ function ActiveWorkout() {
       {/* Exercise position chips — labeled with number+letter so supersets are unambiguous */}
       <div style={{ display: 'flex', overflowX: 'auto', gap: 5, marginBottom: 10, scrollbarWidth: 'none', WebkitScrollbarWidth: 'none', paddingBottom: 2 }}>
         {units.map((u, i) => {
-          const isDone = u.every(idx => A.entries[idx].sets.every(s => s.done))
+          const isDone = u.every(idx => {
+            const e = A.entries[idx]
+            return e.kind === 'block' ? !!e.done : (e.sets || []).every(s => s.done)
+          })
           const isCur = i === unitIdx
           const isSS = u.length > 1
           const goTo = () => update(s => { s.active.cur = units[i][0] })
@@ -453,6 +612,8 @@ function ActiveWorkout() {
             </div>)}
           </div>
         </div>
+      ) : A.entries[cur]?.kind === 'block' ? (
+        <CardioStepBlock entryIdx={cur} />
       ) : (
         <ExerciseBlock key={A.entries[cur]?.id} entryIdx={cur} onToggle={i => toggle(cur, i)} onField={(i, f, v) => setField(cur, i, f, v)} onAddSet={() => addSet(cur)} onRemoveSet={() => removeSet(cur)} onStartTimed={i => startTimed(cur, i)}
           onSwap={newEx => update(s => { s.active.entries[cur].id = newEx.id })} />
@@ -463,8 +624,14 @@ function ActiveWorkout() {
     {/* "Next up" preview — shown when there's a next unit */}
     {unitIdx >= 0 && unitIdx < units.length - 1 && (() => {
       const nextUnit = units[unitIdx + 1]
-      const nextNames = nextUnit.map(idx => exOr(A.entries[idx].id).n)
-      const allCurDone = unit.every(idx => A.entries[idx].sets.every(s => s.done))
+      const nextEntry = A.entries[nextUnit[0]]
+      const nextNames = nextEntry?.kind === 'block'
+        ? [t(SPORTS[nextEntry.sport]?.label || nextEntry.sport)]
+        : nextUnit.map(idx => exOr(A.entries[idx].id).n)
+      const allCurDone = unit.every(idx => {
+        const e = A.entries[idx]
+        return e.kind === 'block' ? !!e.done : (e.sets || []).every(s => s.done)
+      })
       return (
         <div style={{
           padding: '7px 10px', marginBottom: 4,
@@ -483,7 +650,10 @@ function ActiveWorkout() {
       )
     })()}
     {(() => {
-      const allCurDone = unit.length > 0 && unit.every(idx => A.entries[idx].sets.every(s => s.done))
+      const allCurDone = unit.length > 0 && unit.every(idx => {
+        const e = A.entries[idx]
+        return e.kind === 'block' ? !!e.done : (e.sets || []).every(s => s.done)
+      })
       const hasNext = unitIdx >= 0 && unitIdx < units.length - 1
       return (
         <div className="row">
@@ -507,7 +677,10 @@ function ActiveWorkout() {
     }), null, S.routines.find(r => r.id === A.routineId), true))} icon="plus">{t('Add exercise')}</Button>
     <div style={{ height: 10 }} />
     {(() => {
-      const exDone = A.entries.filter(e => e.sets.length && e.sets.every(s => s.done)).length
+      const exDone = A.entries.filter(e => {
+        if (e.kind === 'block') return !!e.done
+        return (e.sets?.length ?? 0) > 0 && (e.sets || []).every(s => s.done)
+      }).length
       const allDone = A.entries.length > 0 && exDone === A.entries.length
       return <button key={allDone ? 'done' : 'early'} className={allDone ? 'btn primary finish-cta' : 'btn ghost dim'} onClick={finishWorkout}>
         {allDone ? t('Finish workout') : t('Finish workout early · {0} exercises', exDone + '/' + A.entries.length)}

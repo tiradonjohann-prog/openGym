@@ -9,7 +9,7 @@ import { pushSupported, enablePush, disablePush, sendTestPush } from '../lib/pus
 import { wakeLockSupported } from '../lib/wakelock.js'
 import { t, LANGS, INSTR_LANGS } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
-import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
+import { MOBILE, STATIC, shareExport, syncReminder } from '../lib/mobile.js'
 import { loadStarterPlan, confirmSheet, importFromApp } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
@@ -103,14 +103,16 @@ export default function Settings() {
         {user.admin && <Row icon="wrench" iconTint="var(--indigo)" title={t("Admin dashboard")} accessory="chevron" onClick={() => nav('/admin')} />}
         <Row icon="signOut" iconTint="var(--red)" title={t("Sign out")} danger onClick={() => confirmSheet({ title: t("Sign out?"), message: t("Your data is synced to your profile first, then cleared from this device."), confirmText: t("Sign out"), danger: true, onConfirm: () => { signOut(); nav('/home') } })} />
         <Row icon="shield" iconTint="var(--red)" title={t("Sign out everywhere")} subtitle={t("Ends this profile's sessions on all your devices.")} danger onClick={signOutEverywhere} />
-      </> : webauthnOK() ? <>
+      </> : STATIC ? (
+        <Row icon="lock" iconTint="var(--teal)" title={t("Données stockées localement sur cet appareil")} subtitle={t("No account, no cloud — back it up anytime with Export below.")} />
+      ) : webauthnOK() ? <>
         <Row icon="sparkles" iconTint="var(--acc)" title={t("Create passkey profile")} subtitle={t("Keeps your data safe and separate per person.")} accessory="chevron" onClick={registerHere} />
         <Row icon="person" iconTint="var(--blue)" title={t("Sign in with passkey")} accessory="chevron" onClick={signInHere} />
       </> : (
         <Row icon="lock" iconTint="var(--grey)" title={t("Passkeys not supported in this browser.")} />
       )}
     </Section>
-    {!user && !DEMO && !MOBILE && <p className="sect-f" style={{ marginTop: -18, marginBottom: 22 }}>{t("Guest mode — data lives only in this browser.")}</p>}
+    {!user && !DEMO && !MOBILE && !STATIC && <p className="sect-f" style={{ marginTop: -18, marginBottom: 22 }}>{t("Guest mode — data lives only in this browser.")}</p>}
 
     {/* ---------- general ---------- */}
     <div data-tuto="settings-profile">

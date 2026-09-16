@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { DAYN, uid, exCount } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { SPORTS, isCardioSport, defaultCardioBlocks, routineTotalDuration } from '../lib/sports.js'
+import { SPORTS, isCardioSport, defaultCardioBlocks, routineTotalDuration, isHybrid } from '../lib/sports.js'
 import { isProgrammeComplete, completedWeekCount } from '../lib/programme.js'
 import { dayAssignSheet, loadStarterPlan, planToolsSheet, programmeCreateSheet, programmeEditSheet, deleteProgramme } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
@@ -12,11 +12,11 @@ import { TutorialButton } from '../components/TutorialOverlay.jsx'
 import { PLAN_STEPS } from '../lib/tutorials.js'
 import { glyphOf, DEFAULT_GLYPH } from '../lib/glyphs.js'
 
-const DAYN_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+const DAYN_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 
 function SportPicker({ close, onCreate }) {
   return <>
-    <h3>{t('Type of routine')}</h3>
+    <h3>{t('Type de séance')}</h3>
     <div className="list">
       {Object.entries(SPORTS).map(([key, sp]) => (
         <div key={key} className="item" onClick={() => { close(); onCreate(key) }}>
@@ -40,6 +40,11 @@ function routineSubtitle(r) {
     const sportLabel = t(SPORTS[r.sport]?.label || r.sport)
     return min ? `${sportLabel} \xB7 ${min} min` : sportLabel
   }
+  if (isHybrid(r)) {
+    const nEx = (r.items || []).filter(x => x.kind === 'ex').length
+    const nBlocks = (r.items || []).filter(x => x.kind === 'block').length
+    return `${exCount(nEx)} + ${nBlocks} bloc${nBlocks > 1 ? 's' : ''} cardio`
+  }
   return exCount(r.ex?.length ?? 0)
 }
 
@@ -56,7 +61,7 @@ export default function Plan() {
       <SportPicker close={close} onCreate={sport => {
         const isCardio = isCardioSport(sport)
         const r = {
-          id: uid(), name: t('New routine'), emoji: DEFAULT_GLYPH,
+          id: uid(), name: t('Nouvelle séance'), emoji: DEFAULT_GLYPH,
           sport,
           ...(isCardio ? { blocks: defaultCardioBlocks(sport) } : { ex: [] }),
         }
@@ -68,7 +73,7 @@ export default function Plan() {
 
   return <>
     <div className="hdr">
-      <div><h1>{t('Plan')}</h1><div className="sub">{t('Your weekly routine')}</div></div>
+      <div><h1>{t('Plan')}</h1><div className="sub">{t('Votre planning hebdomadaire')}</div></div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <TutorialButton steps={PLAN_STEPS} />
         <button className="iconbtn" onClick={planToolsSheet} aria-label={t('Share your plan')} title={t('Share your plan')}><Icon name="upload" /></button>

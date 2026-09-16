@@ -3,6 +3,7 @@
 // Formula: kcal = MET × weightKg × durationHours
 
 import { uid } from './format.js'
+import { t } from './i18n.js'
 
 export const SPORTS = {
   strength: { label: 'Strength training', icon: 'dumbbell',  cardio: false },
@@ -75,12 +76,15 @@ export function estimateBlockKcal(block, sport, weightKg) {
 
 export function blockSummary(block) {
   switch (block.type) {
-    case 'warmup':   return `${block.duration ?? 0} min · ${INTENSITIES[0].label}`
-    case 'cooldown': return `${block.duration ?? 0} min · ${INTENSITIES[0].label}`
+    case 'warmup':
+    case 'cooldown': {
+      const intLabel = t(INTENSITIES[(block.intensity || 1) - 1]?.label || 'Very easy')
+      return `${block.duration ?? 0} min · ${intLabel}`
+    }
     case 'steady': {
       const parts = [`${block.duration ?? 0} min`]
       if (block.distKm) parts.push(block.distKm + ' km')
-      if (block.intensity) parts.push(INTENSITIES[(block.intensity || 3) - 1]?.label || '')
+      if (block.intensity) parts.push(t(INTENSITIES[(block.intensity || 3) - 1]?.label || ''))
       return parts.filter(Boolean).join(' · ')
     }
     case 'interval': {
@@ -90,7 +94,7 @@ export function blockSummary(block) {
       const restLabel = (block.restSec || 90) >= 60
         ? (block.restSec / 60) + ' min'
         : (block.restSec || 90) + ' s'
-      return `${block.repeat || 1}× ${workLabel} / ${restLabel} rest`
+      return `${block.repeat || 1}× ${workLabel} / ${restLabel} ${t('rest')}`
     }
     default: return ''
   }
@@ -109,4 +113,12 @@ export function defaultCardioBlocks(sport) {
     { id: uid(), type: 'steady',   duration: 20, intensity: 3, distKm: null, targetPace: null },
     { id: uid(), type: 'cooldown', duration: 5,  intensity: 1 },
   ]
+}
+
+export function isHybrid(r) {
+  return Array.isArray(r?.items)
+}
+
+export function hybridExItems(r) {
+  return (r.items || []).filter(x => x.kind === 'ex')
 }

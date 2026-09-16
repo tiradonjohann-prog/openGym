@@ -64,6 +64,17 @@ function parseExNum(raw) {
 // Row parser (shared between CSV and Excel paths)
 // ──────────────────────────────────────────────────────────────────────────
 
+function normSport(s) {
+  const m = {
+    run: 'run', course: 'run', running: 'run', jogging: 'run',
+    walk: 'walk', marche: 'walk', walking: 'walk',
+    bike: 'bike', velo: 'bike', cycling: 'bike', cycle: 'bike',
+    swim: 'swim', natation: 'swim', swimming: 'swim',
+    aqua: 'aqua', aquagym: 'aqua', aquabike: 'aqua',
+  }
+  return m[s] || s || 'run'
+}
+
 function parseRows(rows, exercises = EXDB) {
   // Strip accents, lowercase, collapse non-alphanumeric runs to one space.
   // This makes "N° Exercice" → "n exercice" and "Exercice" → "exercice",
@@ -78,6 +89,8 @@ function parseRows(rows, exercises = EXDB) {
 
   let progCol = 0, sessionCol = 1, sesNumCol = 2, exNumCol = 3, bpCol = 4, exCol = 5
   let tempoCol = 6, setsCol = 7, repsCol = 8, weightCol = 9, restCol = 10
+  let cardioTypeCol = -1, cardioSportCol = -1, cardioDurCol = -1, cardioDistCol = -1
+  let cardioIntCol = -1, cardioRepCol = -1, cardioWorkCol = -1, cardioRestCol = -1
 
   let programName = 'Imported program'
   let dataStartRow = 0
@@ -103,7 +116,15 @@ function parseRows(rows, exercises = EXDB) {
     setsCol    = colOf('séries', 'series', 'sets')
     repsCol    = colOf('répétitions', 'repetitions', 'reps')
     weightCol  = colOf('poids', 'weight')
-    restCol    = colOf('repos', 'rest')
+    restCol      = colOf('repos', 'rest')
+    cardioTypeCol  = colOf('type cardio', 'cardio type', 'type bloc')
+    cardioSportCol = colOf('sport cardio', 'sport')
+    cardioDurCol   = colOf('duree min', 'duree', 'duration')
+    cardioDistCol  = colOf('distance km', 'distance')
+    cardioIntCol   = colOf('intensite 1 5', 'intensite', 'intensity')
+    cardioRepCol   = colOf('intervalles')
+    cardioWorkCol  = colOf('travail s', 'travail')
+    cardioRestCol  = colOf('recup s', 'recup', 'recuperation s')
 
     // Fall back to positional if detection fails
     if (progCol    < 0) progCol    = 0
@@ -139,14 +160,37 @@ function parseRows(rows, exercises = EXDB) {
     const reps     = parseInt(cells[repsCol],  10) || 10
     const rest     = parseInt(cells[restCol],  10) || 90
 
-    if (!session || !exName) continue
-    if (i === dataStartRow && !program) continue  // skip if looks like a header
+    const cardioType = cardioTypeCol >= 0 ? String(cells[cardioTypeCol] || '').trim().toLowerCase() : ''
+
+    if (!session) continue
+    if (!exName && !cardioType) continue
+    if (i === dataStartRow && !program && !cardioType) continue  // skip if looks like a header
 
     if (program && !programName.includes('Imported')) programName = program
 
     if (!workoutMap.has(session)) {
       workoutMap.set(session, [])
       workoutOrder.push(session)
+    }
+
+    if (cardioType) {
+      const sport     = normSport(cardioSportCol >= 0 ? String(cells[cardioSportCol] || '').trim().toLowerCase() : 'run')
+      const duration  = cardioDurCol  >= 0 ? (parseInt(cells[cardioDurCol],  10) || 10) : 10
+      const distKm    = cardioDistCol >= 0 ? (parseFloat(cells[cardioDistCol]) || null) : null
+      const rawInt    = cardioIntCol  >= 0 ? String(cells[cardioIntCol] || '').trim() : '3'
+      const intensity = parseInt(rawInt, 10) || 3
+      let blockData
+      if (cardioType === 'interval') {
+        const repeat  = cardioRepCol  >= 0 ? (parseInt(cells[cardioRepCol],  10) || 6)  : 6
+        const workSec = cardioWorkCol >= 0 ? (parseInt(cells[cardioWorkCol], 10) || 60) : 60
+        const restSec = cardioRestCol >= 0 ? (parseInt(cells[cardioRestCol], 10) || 90) : 90
+        blockData = { kind: 'block', sport, type: 'interval', repeat, workSec, restSec, workIntensity: intensity, restIntensity: Math.max(1, intensity - 2) }
+      } else {
+        blockData = { kind: 'block', sport, type: cardioType, duration, intensity }
+        if (distKm) blockData.distKm = distKm
+      }
+      workoutMap.get(session).push(blockData)
+      continue
     }
 
     const { num: exNum, suffix } = parseExNum(exNumRaw)
@@ -188,7 +232,20 @@ function parseRows(rows, exercises = EXDB) {
   const getSg  = key => { if (!sgIds.has(key)) sgIds.set(key, 'sg' + uid()); return sgIds.get(key) }
 
   const routines = workoutOrder.map(sessionName => {
-    const ex = workoutMap.get(sessionName).map(e => {
+    const entries = workoutMap.get(sessionName)
+    const hasBlocks = entries.some(e => e.kind === 'block')
+
+    if (hasBlocks) {
+      const items = entries.map(e => {
+        if (e.kind === 'block') return { ...e, id: uid() }
+        const { _sgKey, ...rest } = e
+        if (_sgKey) rest.sg = getSg(_sgKey)
+        return { kind: 'ex', ...rest }
+      })
+      return { id: uid(), name: sessionName, emoji: null, items, prog: 'linear' }
+    }
+
+    const ex = entries.map(e => {
       const { _sgKey, ...rest } = e
       if (_sgKey) rest.sg = getSg(_sgKey)
       return rest

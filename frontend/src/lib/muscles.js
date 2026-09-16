@@ -111,8 +111,12 @@ export const loadOfWorkouts = (workouts, pick) =>
     (w.entries || []).map(e => ({ id: e.id, sets: (e.sets || []).filter(s => s.done && (!pick || pick(s))).length }))))
 
 /** Load a routine *would* produce, from its planned set counts. */
-export const loadOfRoutine = routine =>
-  loadOf((routine?.ex || []).map(c => ({ id: c.id, sets: c.sets || 1 })))
+export const loadOfRoutine = routine => {
+  const exList = routine?.items
+    ? routine.items.filter(x => x.kind === 'ex')
+    : (routine?.ex || [])
+  return loadOf(exList.map(c => ({ id: c.id, sets: c.sets || 1 })))
+}
 
 /** Load for a workout still in progress — the sets ticked so far. */
 export const loadOfActive = active =>

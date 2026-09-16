@@ -6,12 +6,12 @@ import { exOr } from '../lib/exercises.js'
 import { uid } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { supersetUnits, cleanupSg, exLine } from '../lib/history.js'
-import { SPORTS, BLOCK_TYPES, INTENSITIES, isCardioSport, blockSummary, blockDurationMin, routineTotalDuration, defaultCardioBlocks } from '../lib/sports.js'
+import { SPORTS, BLOCK_TYPES, INTENSITIES, isCardioSport, blockSummary, blockDurationMin, routineTotalDuration, isHybrid, hybridExItems } from '../lib/sports.js'
 import { Thumb } from '../components/Media.jsx'
 import { glyphPicker, exercisePicker, exConfigSheet, confirmSheet, swapExerciseSheet } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { glyphOf } from '../lib/glyphs.js'
-import { Button, SelectRow } from '../components/ui.jsx'
+import { Button, SelectRow, Switch } from '../components/ui.jsx'
 import { POLICIES_FOR, POLICY_NAME, POLICY_DESC } from '../lib/progression.js'
 import BodyMap from '../components/BodyMap.jsx'
 import { loadOfRoutine, rankOf, MUSCLE_NAME } from '../lib/muscles.js'
@@ -93,23 +93,124 @@ function BlockConfigSheet({ block, close, onSave }) {
   </>
 }
 
-function BlockTypePicker({ close, onPick }) {
+
+/* ─── multi-block cardio picker ─── */
+const BLOCK_DEFAULTS = {
+  warmup:   { type: 'warmup',   duration: 10, intensity: 1 },
+  steady:   { type: 'steady',   duration: 20, intensity: 3 },
+  interval: { type: 'interval', repeat: 6, workSec: 60, restSec: 90, workIntensity: 4, restIntensity: 2 },
+  cooldown: { type: 'cooldown', duration: 5,  intensity: 1 },
+}
+
+// fixedSport: set for pure-cardio sessions (blocks go to r.blocks, sport already on routine)
+// null: hybrid mode (sport picker shown first, blocks go to r.items with sport per block)
+function CardioBlocksPickerSheet({ routineId, close, fixedSport = null }) {
+  const updateStore = useStore(s => s.update)
+  const { openSheet } = useUI()
+  const [sport, setSport] = useState(fixedSport)
+  // Pure cardio: nothing pre-selected, user must choose at least one
+  // Hybrid: warmup + steady + cooldown pre-selected as sensible defaults
+  const [selected, setSelected] = useState(
+    fixedSport
+      ? { warmup: false, steady: false, interval: false, cooldown: false }
+      : { warmup: true, steady: true, interval: false, cooldown: true }
+  )
+
+  const toggle = key => setSelected(prev => ({ ...prev, [key]: !prev[key] }))
+  const anySelected = Object.values(selected).some(Boolean)
+
+  const confirm = () => {
+    const selectedTypes = Object.entries(BLOCK_TYPES)
+      .filter(([key]) => selected[key])
+      .map(([type]) => type)
+
+    const configured = []
+
+    const configureNext = idx => {
+      if (idx >= selectedTypes.length) {
+        updateStore(s => {
+          const rt = s.routines.find(x => x.id === routineId)
+          if (fixedSport) {
+            if (!rt.blocks) rt.blocks = []
+            rt.blocks.push(...configured)
+          } else {
+            if (!rt.items) { rt.items = (rt.ex || []).map(e => ({ kind: 'ex', ...e })); delete rt.ex }
+            rt.items.push(...configured.map(b => ({ kind: 'block', sport, ...b })))
+          }
+        })
+        return
+      }
+      const type = selectedTypes[idx]
+      const draft = { id: uid(), ...BLOCK_DEFAULTS[type] }
+      openSheet(sheetClose => (
+        <BlockConfigSheet
+          block={draft}
+          close={sheetClose}
+          onSave={cfg => {
+            configured.push({ ...cfg, id: uid() })
+            configureNext(idx + 1)
+          }}
+        />
+      ))
+    }
+
+    close()
+    configureNext(0)
+  }
+
+  if (!sport) {
+    const cardioSports = Object.entries(SPORTS).filter(([, sp]) => sp.cardio)
+    return <>
+      <h3>{t('Ajouter blocs cardio')}</h3>
+      <div className="small muted" style={{ marginBottom: 12 }}>{t('Choisissez un sport')}</div>
+      <div className="list">
+        {cardioSports.map(([key, sp]) => (
+          <div key={key} className="item" onClick={() => setSport(key)}>
+            <span className="lrow-i" style={{ background: 'var(--teal)' }}><Icon name={sp.icon} /></span>
+            <div className="grow"><div className="tt">{t(sp.label)}</div></div>
+            <Icon name="chevronRight" className="chev" />
+          </div>
+        ))}
+      </div>
+      <div style={{ height: 8 }} />
+      <Button onClick={close}>{t('Annuler')}</Button>
+    </>
+  }
+
+  const sp = SPORTS[sport]
   return <>
-    <h3>{t('Add block')}</h3>
-    <div className="list">
+    <h3>{t('Blocs cardio')}</h3>
+    {!fixedSport && sp && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid var(--sep)' }}>
+        <span style={{ width: 34, height: 34, borderRadius: 9, background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon name={sp.icon} style={{ color: '#fff' }} />
+        </span>
+        <div style={{ flex: 1, fontWeight: 500 }}>{t(sp.label)}</div>
+        <button className="iconbtn" onClick={() => setSport(null)} aria-label={t('Change sport')}><Icon name="shuffle" /></button>
+      </div>
+    )}
+    <div className="small muted" style={{ marginBottom: 8 }}>{t('Sélectionnez les blocs à ajouter')}</div>
+    <div className="list" style={{ marginBottom: 16 }}>
       {Object.entries(BLOCK_TYPES).map(([key, bt]) => (
-        <div key={key} className="item" onClick={() => { close(); onPick(key) }}>
-          <span className="lrow-i" style={{ background: bt.color }}><Icon name={bt.icon} /></span>
+        <div key={key} className="item" onClick={() => toggle(key)} style={{ cursor: 'pointer' }}>
+          <span className="lrow-i" style={{ background: selected[key] ? bt.color : 'var(--surface-3)', transition: 'background .2s' }}>
+            <Icon name={bt.icon} />
+          </span>
           <div className="grow"><div className="tt">{t(bt.label)}</div></div>
-          <Icon name="chevronRight" className="chev" />
+          <span onClick={e => e.stopPropagation()}>
+            <Switch checked={!!selected[key]} onChange={() => toggle(key)} />
+          </span>
         </div>
       ))}
     </div>
+    <Button variant="primary" disabled={!anySelected} onClick={confirm} icon="plus">{t('Ajouter')}</Button>
+    <div style={{ height: 8 }} />
+    <Button onClick={close}>{t('Annuler')}</Button>
   </>
 }
 
 /* ─── cardio block editor ─── */
-function CardioEditor({ r, id, update }) {
+function CardioEditor({ r, id, update, onAddExercise }) {
   const { openSheet } = useUI()
   const blocks = r.blocks || []
 
@@ -125,17 +226,7 @@ function CardioEditor({ r, id, update }) {
   }
 
   const openBlockTypePicker = () => {
-    openSheet(close => (
-      <BlockTypePicker close={close} onPick={type => {
-        const defaults = {
-          warmup:   { type: 'warmup',   duration: 10, intensity: 1 },
-          steady:   { type: 'steady',   duration: 20, intensity: 3, distKm: null },
-          interval: { type: 'interval', repeat: 6, workSec: 60, restSec: 90, workIntensity: 4, restIntensity: 2 },
-          cooldown: { type: 'cooldown', duration: 5,  intensity: 1 },
-        }
-        editBlocks(bl => { bl.push({ id: uid(), ...defaults[type] }) })
-      }} />
-    ))
+    openSheet(close => <CardioBlocksPickerSheet routineId={id} close={close} fixedSport={r.sport} />)
   }
 
   const totalMin = routineTotalDuration(blocks)
@@ -179,7 +270,12 @@ function CardioEditor({ r, id, update }) {
     )}
 
     <div style={{ height: 10 }} />
-    <Button variant="primary" icon="plus" onClick={openBlockTypePicker}>{t('Add block')}</Button>
+    <div style={{ display: 'flex', gap: 8 }}>
+      <Button variant="primary" style={{ flex: 1 }} icon="plus" onClick={openBlockTypePicker}>{t('Add block')}</Button>
+      {onAddExercise && (
+        <Button style={{ flex: 1 }} icon="dumbbell" onClick={onAddExercise}>{t('Add exercise')}</Button>
+      )}
+    </div>
   </>
 }
 
@@ -192,31 +288,92 @@ export default function RoutineEdit() {
   const S = useStore(s => s.S)
   const update = useStore(s => s.update)
   const r = S.routines.find(x => x.id === id)
+  const [initSnap] = useState(() => r ? JSON.stringify(r) : null)
+  const [showNameError, setShowNameError] = useState(false)
   useEffect(() => { if (!r) nav('/plan') }, [!!r])
   if (!r) return null
+  const isDirty = JSON.stringify(r) !== initSnap
 
   const isCardio = isCardioSport(r.sport)
+  const hybrid = isHybrid(r)
+  const { openSheet } = useUI()
+
+  const deleteSession = () => {
+    update(s => {
+      s.routines = s.routines.filter(x => x.id !== id);
+      (s.programmes || []).forEach(p => { p.routineIds = (p.routineIds || []).filter(rid => rid !== id) });
+      Object.keys(s.week).forEach(k => { if (s.week[k] === id) delete s.week[k] });
+      Object.keys(s.dayPlan || {}).forEach(k => { if (s.dayPlan[k] === id) delete s.dayPlan[k] });
+    })
+    nav('/plan', { replace: true })
+  }
+
+  const moveItem = (i, dir) => update(s => {
+    const items = s.routines.find(x => x.id === id).items
+    const j = i + dir
+    if (j < 0 || j >= items.length) return
+    ;[items[i], items[j]] = [items[j], items[i]]
+  })
+
+  const addCardioBlock = () => {
+    openSheet(close => <CardioBlocksPickerSheet routineId={id} close={close} />)
+  }
+
+  const addExerciseToCardioSession = () => {
+    update(s => {
+      const rt = s.routines.find(x => x.id === id)
+      const sportKey = rt.sport
+      rt.items = (rt.blocks || []).map(b => ({ kind: 'block', id: b.id || uid(), sport: sportKey, ...b }))
+      delete rt.blocks
+      rt.sport = null
+    })
+    exercisePicker(ex => exConfigSheet(ex, null, cfg => update(s => {
+      s.routines.find(x => x.id === id).items.push({ kind: 'ex', id: ex.id, ...cfg })
+    }), null, r))
+  }
 
   const handleBack = () => {
     if (isNew) {
+      const isEmpty = !isCardio && (r.ex || []).length === 0 && !(r.items || []).length
+      if (isEmpty) { deleteSession(); return }
       confirmSheet({
         title: t('Sauvegarder cette séance ?'),
         message: t('Si vous ne sauvegardez pas, la séance sera définitivement supprimée.'),
         confirmText: t('Sauvegarder'),
         cancelText: t('Supprimer'),
         onConfirm: () => nav('/plan', { replace: true }),
-        onCancel: () => {
-          update(s => {
-            s.routines = s.routines.filter(x => x.id !== id)
-            Object.keys(s.week).forEach(k => { if (s.week[k] === id) delete s.week[k] })
-            Object.keys(s.dayPlan || {}).forEach(k => { if (s.dayPlan[k] === id) delete s.dayPlan[k] })
-          })
-          nav('/plan', { replace: true })
-        },
+        onCancel: deleteSession,
       })
       return
     }
     window.history.state?.idx > 0 ? nav(-1) : nav('/plan', { replace: true })
+  }
+
+  const isNameOk = r.name && r.name.trim() && r.name !== t('Nouvelle séance')
+  const canSave = isNew ? (isCardio || (r.ex || []).length > 0 || (r.items || []).length > 0) : isDirty
+
+  const handleSave = () => {
+    if (isNew && !isNameOk) {
+      setShowNameError(true)
+      useUI.getState().openSheet(errClose => (
+        <div style={{ textAlign: 'center', padding: '8px 4px' }}>
+          <Icon name="info" style={{ fontSize: 52, color: 'var(--yellow)', marginBottom: 14 }} />
+          <h3 style={{ marginBottom: 6 }}>{t('Nommez votre séance')}</h3>
+          <p className="muted small" style={{ marginBottom: 20 }}>{t('Donnez un nom à cette séance avant de pouvoir la sauvegarder.')}</p>
+          <Button variant="primary" style={{ width: '100%' }} onClick={errClose}>{t('OK')}</Button>
+        </div>
+      ), { kind: 'center' })
+      return
+    }
+    const savedName = r.name
+    useUI.getState().openSheet(successClose => (
+      <div style={{ textAlign: 'center', padding: '8px 4px' }}>
+        <Icon name="checkCircle" style={{ fontSize: 52, color: 'var(--teal)', marginBottom: 14 }} />
+        <h3 style={{ marginBottom: 6 }}>{t('Séance sauvegardée !')}</h3>
+        <p className="muted small" style={{ marginBottom: 20 }}>{savedName}</p>
+        <Button variant="primary" style={{ width: '100%' }} onClick={() => { successClose(); nav('/plan', { replace: true }) }}>{t('OK')}</Button>
+      </div>
+    ), { kind: 'center' })
   }
 
   const edit = fn => update(s => { fn(s.routines.find(x => x.id === id).ex) })
@@ -243,18 +400,28 @@ export default function RoutineEdit() {
     <div className="hdr">
       <button className="iconbtn" onClick={handleBack} aria-label={t('Plan')}><Icon name="chevronLeft" /></button>
       <div style={{ flex: 1, margin: '0 12px' }}>
-        <input className="input" defaultValue={r.name} style={{ fontWeight: 600, fontSize: 20, letterSpacing: '-.021em' }}
-          onChange={e => update(s => { s.routines.find(x => x.id === id).name = e.target.value.trim() || t('Routine') })} />
+        <input className="input" defaultValue={r.name}
+          style={{ fontWeight: 600, fontSize: 20, letterSpacing: '-.021em', ...(showNameError ? { outline: '2px solid var(--red)', borderRadius: 6 } : {}) }}
+          onChange={e => {
+            const val = e.target.value.trim() || t('Séance')
+            update(s => { s.routines.find(x => x.id === id).name = val })
+            if (showNameError && val !== t('Nouvelle séance')) setShowNameError(false)
+          }} />
       </div>
       {!isCardio && <button className="iconbtn" aria-label={t('Pick an icon')} onClick={() => glyphPicker(r.emoji, g => update(s => { s.routines.find(x => x.id === id).emoji = g }))}><Icon name={glyphOf(r.emoji)} /></button>}
       <button className="iconbtn" onClick={handleBack} aria-label={t('Done')} style={{ color: 'var(--acc)', fontWeight: 700 }}>
         <Icon name="checkmark" />
       </button>
     </div>
+    {showNameError && isNew && (
+      <div style={{ color: 'var(--red)', fontSize: 12, margin: '4px 2px 12px', padding: '7px 10px', background: 'rgba(220,38,38,0.08)', borderRadius: 8, lineHeight: 1.5 }}>
+        {t('Donnez un nom à cette séance avant de sauvegarder.')}
+      </div>
+    )}
 
-    {/* Cardio: block editor only */}
+    {/* Cardio: block editor — also shows "Add exercise" to convert to hybrid */}
     {isCardio ? (
-      <CardioEditor r={r} id={id} update={update} />
+      <CardioEditor r={r} id={id} update={update} onAddExercise={addExerciseToCardioSession} />
     ) : (
       <>
         <div className="sect-b" style={{ marginBottom: 16 }}>
@@ -263,40 +430,106 @@ export default function RoutineEdit() {
             options={POLICIES_FOR.reps.map(p => ({ value: p, label: t(POLICY_NAME[p]), subtitle: t(POLICY_DESC[p]) }))} />
         </div>
         <div className="small dim" style={{ margin: '-10px 2px 16px' }}>
-          {t('Applies to every exercise in this routine that does not set its own rule.')}
+          {t('S\'applique à chaque exercice de cette séance qui ne définit pas sa propre règle.')}
         </div>
 
-        {(r.ex || []).length ? <div className="list">{(r.ex || []).map((e, i) => {
-          const ex = exOr(e.id)
-          const linkedPrev = i > 0 && e.sg && r.ex[i - 1].sg === e.sg
-          return <div key={i}>
-            {unitFirst.has(i) && <div className="ss-label"><Icon name="link" />{t('Superset')}</div>}
-            <div className={'item' + (inSS.has(i) ? ' in-ss' : '')} onClick={() => {
-              exConfigSheet(ex, e, cfg => edit(x => { x[i] = { id: x[i].id, sg: x[i].sg, ...cfg } }), () => edit(x => { x.splice(i, 1); cleanupSg(x) }), r)
-            }}>
-              {(() => {
-                const ord = exOrder[i]
-                if (!ord) return null
-                const label = ord.letter ? `${ord.num}${ord.letter}` : `${ord.num}`
-                return <span style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, background: ord.letter ? 'var(--acc)' : 'var(--surface-3)', color: ord.letter ? 'var(--on-acc)' : 'var(--label-2)' }}>{label}</span>
-              })()}
-              <Thumb ex={ex} />
-              <div className="grow"><div className="tt capitalize">{ex.n}</div><div className="ss">{exLine(e, S.unit)}</div></div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 'none', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: 2 }}>
-                  <button className="iconbtn" aria-label={t('Switch exercise')} title={t('Switch exercise')} style={{ width: 28, height: 28, borderRadius: 8, fontSize: 14 }} onClick={ev => { ev.stopPropagation(); swapExerciseSheet(e.id, newEx => edit(x => { x[i] = { ...x[i], id: newEx.id } })) }}><Icon name="shuffle" /></button>
-                  {i > 0 && <button className={'iconbtn' + (linkedPrev ? ' on-ss' : '')} title={t('Superset with exercise above')} style={{ width: 28, height: 28, borderRadius: 8, fontSize: 15 }} onClick={ev => { ev.stopPropagation(); toggleLink(i) }}><Icon name="link" /></button>}
-                </div>
-                <div style={{ display: 'flex', gap: 2 }}>
-                  <button className="iconbtn" aria-label={t('Move up')} style={{ width: 28, height: 24, borderRadius: 7, fontSize: 12 }} onClick={ev => { ev.stopPropagation(); move(i, -1) }}><Icon name="chevronUp" /></button>
-                  <button className="iconbtn" aria-label={t('Move down')} style={{ width: 28, height: 24, borderRadius: 7, fontSize: 12 }} onClick={ev => { ev.stopPropagation(); move(i, 1) }}><Icon name="chevronDown" /></button>
+        {hybrid ? (
+          /* ── Hybrid list: exercises + cardio blocks interleaved ── */
+          (r.items || []).length ? (
+            <div className="list">
+              {(r.items || []).map((item, i) => {
+                const numBadge = <span style={{ minWidth: 30, height: 30, borderRadius: 8, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', fontSize: 13, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', background: item.kind === 'block' ? 'color-mix(in srgb, var(--teal) 15%, var(--surface-2))' : 'var(--surface-2)', color: item.kind === 'block' ? 'var(--teal)' : 'var(--label-2)', border: '1.5px solid var(--sep)' }}>{i + 1}</span>
+                if (item.kind === 'block') {
+                  const bt = BLOCK_TYPES[item.type] || {}
+                  const sp = SPORTS[item.sport] || {}
+                  return (
+                    <div key={item.id || i} className="item" style={{ borderLeft: '3px solid var(--teal)' }}
+                      onClick={() => openSheet(close => (
+                        <BlockConfigSheet block={item} close={close} onSave={configured => {
+                          update(s => {
+                            const rt = s.routines.find(x => x.id === id)
+                            rt.items[i] = { kind: 'block', id: item.id, sport: item.sport, ...configured }
+                          })
+                        }} />
+                      ))}>
+                      {numBadge}
+                      <span className="lrow-i" style={{ background: 'var(--teal)' }}><Icon name={sp.icon || 'bolt'} /></span>
+                      <div className="grow">
+                        <div className="tt">{t(sp.label || item.sport)} <span className="dim" style={{ fontSize: 12 }}>· {t(bt.label || item.type)}</span></div>
+                        <div className="ss">{blockSummary(item)}</div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 'none', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 2 }}>
+                          <button className="iconbtn" style={{ width: 28, height: 24, borderRadius: 7, fontSize: 12 }} onClick={ev => { ev.stopPropagation(); moveItem(i, -1) }}><Icon name="chevronUp" /></button>
+                          <button className="iconbtn" style={{ width: 28, height: 24, borderRadius: 7, fontSize: 12 }} onClick={ev => { ev.stopPropagation(); moveItem(i, 1) }}><Icon name="chevronDown" /></button>
+                        </div>
+                        <button className="iconbtn" style={{ width: 28, height: 24, fontSize: 13, color: 'var(--red)' }} onClick={ev => { ev.stopPropagation(); update(s => { s.routines.find(x => x.id === id).items.splice(i, 1) }) }}><Icon name="trash" /></button>
+                      </div>
+                    </div>
+                  )
+                }
+                const ex = exOr(item.id)
+                return (
+                  <div key={item.id || i} className="item"
+                    onClick={() => exConfigSheet(ex, item, cfg => update(s => {
+                      const rt = s.routines.find(x => x.id === id)
+                      rt.items[i] = { kind: 'ex', id: item.id, ...cfg }
+                    }), () => update(s => { s.routines.find(x => x.id === id).items.splice(i, 1) }), r)}>
+                    {numBadge}
+                    <Thumb ex={ex} />
+                    <div className="grow"><div className="tt capitalize">{ex.n}</div><div className="ss">{exLine(item, S.unit)}</div></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 'none', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 2 }}>
+                        <button className="iconbtn" aria-label={t('Switch exercise')} style={{ width: 28, height: 28, borderRadius: 8, fontSize: 14 }} onClick={ev => { ev.stopPropagation(); swapExerciseSheet(item.id, newEx => update(s => { s.routines.find(x => x.id === id).items[i] = { ...s.routines.find(x => x.id === id).items[i], id: newEx.id } })) }}><Icon name="shuffle" /></button>
+                      </div>
+                      <div style={{ display: 'flex', gap: 2 }}>
+                        <button className="iconbtn" style={{ width: 28, height: 24, borderRadius: 7, fontSize: 12 }} onClick={ev => { ev.stopPropagation(); moveItem(i, -1) }}><Icon name="chevronUp" /></button>
+                        <button className="iconbtn" style={{ width: 28, height: 24, borderRadius: 7, fontSize: 12 }} onClick={ev => { ev.stopPropagation(); moveItem(i, 1) }}><Icon name="chevronDown" /></button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="empty"><div className="ico"><Icon name="dumbbell" /></div>{t('No exercises yet — add your first one.')}</div>
+          )
+        ) : (
+          /* ── Pure strength list ── */
+          (r.ex || []).length ? <div className="list">{(r.ex || []).map((e, i) => {
+            const ex = exOr(e.id)
+            const linkedPrev = i > 0 && e.sg && r.ex[i - 1].sg === e.sg
+            return <div key={i}>
+              {unitFirst.has(i) && <div className="ss-label"><Icon name="link" />{t('Superset')}</div>}
+              <div className={'item' + (inSS.has(i) ? ' in-ss' : '')} onClick={() => {
+                exConfigSheet(ex, e, cfg => edit(x => { x[i] = { id: x[i].id, sg: x[i].sg, ...cfg } }), () => edit(x => { x.splice(i, 1); cleanupSg(x) }), r)
+              }}>
+                {(() => {
+                  const ord = exOrder[i]
+                  if (!ord) return null
+                  const label = ord.letter ? `${ord.num}${ord.letter}` : `${ord.num}`
+                  return <span style={{ minWidth: 30, height: 30, borderRadius: 8, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', fontSize: 13, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', background: ord.letter ? 'var(--acc)' : 'var(--surface-2)', color: ord.letter ? 'var(--on-acc)' : 'var(--label-2)', border: `1.5px solid ${ord.letter ? 'transparent' : 'var(--sep)'}` }}>{label}</span>
+                })()}
+                <Thumb ex={ex} />
+                <div className="grow"><div className="tt capitalize">{ex.n}</div><div className="ss">{exLine(e, S.unit)}</div></div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 'none', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 2 }}>
+                    <button className="iconbtn" aria-label={t('Switch exercise')} title={t('Switch exercise')} style={{ width: 28, height: 28, borderRadius: 8, fontSize: 14 }} onClick={ev => { ev.stopPropagation(); swapExerciseSheet(e.id, newEx => edit(x => { x[i] = { ...x[i], id: newEx.id } })) }}><Icon name="shuffle" /></button>
+                    {i > 0 && <button className={'iconbtn' + (linkedPrev ? ' on-ss' : '')} title={t('Superset with exercise above')} style={{ width: 28, height: 28, borderRadius: 8, fontSize: 15 }} onClick={ev => { ev.stopPropagation(); toggleLink(i) }}><Icon name="link" /></button>}
+                  </div>
+                  <div style={{ display: 'flex', gap: 2 }}>
+                    <button className="iconbtn" aria-label={t('Move up')} style={{ width: 28, height: 24, borderRadius: 7, fontSize: 12 }} onClick={ev => { ev.stopPropagation(); move(i, -1) }}><Icon name="chevronUp" /></button>
+                    <button className="iconbtn" aria-label={t('Move down')} style={{ width: 28, height: 24, borderRadius: 7, fontSize: 12 }} onClick={ev => { ev.stopPropagation(); move(i, 1) }}><Icon name="chevronDown" /></button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        })}</div> : <div className="empty"><div className="ico"><Icon name="dumbbell" /></div>{t('No exercises yet — add your first one.')}</div>}
+          })}</div> : <div className="empty"><div className="ico"><Icon name="dumbbell" /></div>{t('No exercises yet — add your first one.')}</div>
+        )}
 
-        {(r.ex || []).length > 0 && (() => {
+        {(() => {
+          const exList = hybrid ? hybridExItems(r) : (r.ex || [])
+          if (!exList.length) return null
           const load = loadOfRoutine(r)
           const { worked } = rankOf(load)
           return <div className="card" style={{ marginTop: 12 }}>
@@ -308,14 +541,30 @@ export default function RoutineEdit() {
           </div>
         })()}
 
-        <div className="small dim row" style={{ margin: '10px 2px', gap: 5 }}><Icon name="link" style={{ fontSize: 13 }} />{t("Tap the link button on an exercise to superset it with the one above — you'll do them back-to-back.")}</div>
-        <Button variant="primary" onClick={() => exercisePicker(ex => exConfigSheet(ex, null, cfg => edit(x => { x.push({ id: ex.id, ...cfg }) }), null, r))} icon="plus">{t('Add exercise')}</Button>
+        {!hybrid && <div className="small dim row" style={{ margin: '10px 2px', gap: 5 }}><Icon name="link" style={{ fontSize: 13 }} />{t("Tap the link button on an exercise to superset it with the one above — you'll do them back-to-back.")}</div>}
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+          <Button variant="primary" style={{ flex: 1 }} onClick={() => {
+            if (hybrid) {
+              exercisePicker(ex => exConfigSheet(ex, null, cfg => update(s => {
+                s.routines.find(x => x.id === id).items.push({ kind: 'ex', id: ex.id, ...cfg })
+              }), null, r))
+            } else {
+              exercisePicker(ex => exConfigSheet(ex, null, cfg => edit(x => { x.push({ id: ex.id, ...cfg }) }), null, r))
+            }
+          }} icon="plus">{t('Add exercise')}</Button>
+          <Button style={{ flex: 1 }} onClick={addCardioBlock} icon="bolt">{t('+ Cardio')}</Button>
+        </div>
       </>
     )}
 
     <div style={{ height: 10 }} />
+    <Button variant="primary" onClick={handleSave} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.45 }}>
+      {t('Sauvegarder')}
+    </Button>
+    <div style={{ height: 10 }} />
     <Button variant="danger" onClick={() => confirmSheet({
-      title: t('Delete routine?'), message: t('"{0}" will be removed. Your workout history is preserved.', r.name), confirmText: t('Delete'), danger: true,
+      title: t('Supprimer la séance ?'), message: t('"{0}" will be removed. Your workout history is preserved.', r.name), confirmText: t('Delete'), danger: true,
       onConfirm: () => {
         update(s => {
           s.routines = s.routines.filter(x => x.id !== id)
@@ -324,6 +573,6 @@ export default function RoutineEdit() {
         })
         nav('/plan')
       }
-    })}>{t('Delete routine')}</Button>
+    })}>{t('Supprimer la séance')}</Button>
   </div>
 }
