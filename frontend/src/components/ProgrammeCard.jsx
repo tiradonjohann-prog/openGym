@@ -5,10 +5,17 @@ import Icon from './Icon.jsx'
 
 export default function ProgrammeCard({ prog }) {
   const complete = isProgrammeComplete(prog)
+  const paused = !complete && !!prog.paused
   const doneWeeks = completedWeekCount(prog)
   const progressPct = prog.totalWeeks > 0 ? doneWeeks / prog.totalWeeks : 0
   const sessionCount = prog.routineIds.length
   const hasImg = !!prog.imageUrl
+
+  const borderColor = complete
+    ? 'var(--sep)'
+    : paused
+      ? 'rgba(140,140,140,0.45)'
+      : 'color-mix(in srgb,var(--acc) 60%,transparent)'
 
   return (
     <div
@@ -19,13 +26,13 @@ export default function ProgrammeCard({ prog }) {
         borderRadius: 14,
         overflow: 'hidden',
         cursor: 'pointer',
-        border: !complete
-          ? '2px solid color-mix(in srgb,var(--acc) 60%,transparent)'
-          : '2px solid var(--sep)',
+        border: `2px solid ${borderColor}`,
         background: hasImg
           ? 'var(--surface-2)'
-          : 'linear-gradient(135deg, color-mix(in srgb,var(--acc) 20%,var(--surface-2)), var(--surface-3))',
-        opacity: complete ? 0.75 : 1,
+          : paused
+            ? 'linear-gradient(135deg, rgba(120,120,120,0.15), var(--surface-3))'
+            : 'linear-gradient(135deg, color-mix(in srgb,var(--acc) 20%,var(--surface-2)), var(--surface-3))',
+        opacity: (complete || paused) ? 0.72 : 1,
       }}
     >
       {hasImg && (
@@ -46,12 +53,12 @@ export default function ProgrammeCard({ prog }) {
       {/* Status badge */}
       <div style={{
         position: 'absolute', top: 8, left: 8,
-        background: !complete ? 'var(--acc)' : 'rgba(100,100,100,0.55)',
-        color: !complete ? 'var(--on-acc)' : '#fff',
+        background: complete ? 'rgba(100,100,100,0.55)' : paused ? 'rgba(120,120,120,0.6)' : 'var(--acc)',
+        color: (complete || paused) ? '#fff' : 'var(--on-acc)',
         fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.09em',
         padding: '3px 7px', borderRadius: 5, backdropFilter: 'blur(4px)',
       }}>
-        {complete ? t('Terminé') : t('Actif')}
+        {complete ? t('Terminé') : paused ? t('En pause') : t('Actif')}
       </div>
 
       {/* Delete button */}
@@ -87,7 +94,7 @@ export default function ProgrammeCard({ prog }) {
             : `S${prog.currentWeek}/${prog.totalWeeks}`
           }{' · '}{sessionCount} {t('séances')}
         </div>
-        {!complete && (
+        {!complete && !paused && (
           <div style={{ height: 3, background: 'rgba(255,255,255,.25)', borderRadius: 99, marginTop: 6, overflow: 'hidden' }}>
             <div style={{ height: '100%', background: 'var(--acc)', width: (Math.min(1, progressPct) * 100) + '%', borderRadius: 99 }} />
           </div>

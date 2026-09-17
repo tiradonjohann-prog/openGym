@@ -1523,6 +1523,7 @@ function ProgrammeEditor({ initial, close }) {
   const [name, setName] = useState(initial ? initial.name : '')
   const [totalWeeks, setTotalWeeks] = useState(initial ? initial.totalWeeks : 8)
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? null)
+  const [paused, setPaused] = useState(initial?.paused ?? false)
   const [showProgNameError, setShowProgNameError] = useState(false)
   const [expandedSession, setExpandedSession] = useState(null)
   // sessions: ordered list of { routineId, key }
@@ -1536,12 +1537,14 @@ function ProgrammeEditor({ initial, close }) {
     routineIds: initial.routineIds,
     totalWeeks: initial.totalWeeks,
     imageUrl: initial.imageUrl ?? null,
+    paused: initial.paused ?? false,
   }) : null)
   const hasProgChanges = !initial || JSON.stringify({
     name: name.trim(),
     routineIds: sessions.map(s => s.routineId),
     totalWeeks,
     imageUrl,
+    paused,
   }) !== initProgSnap
 
   const addSession = rid => setSessions(prev => [...prev, { routineId: rid, key: uid() }])
@@ -1578,9 +1581,9 @@ function ProgrammeEditor({ initial, close }) {
                   if (!st.programmes) st.programmes = []
                   if (initial) {
                     const idx = st.programmes.findIndex(p => p.id === initial.id)
-                    if (idx >= 0) st.programmes[idx] = { ...st.programmes[idx], name: trimmed, routineIds: updatedIds, totalWeeks, imageUrl }
+                    if (idx >= 0) st.programmes[idx] = { ...st.programmes[idx], name: trimmed, routineIds: updatedIds, totalWeeks, imageUrl, paused }
                   } else {
-                    st.programmes.push({ id: uid(), name: trimmed, routineIds: updatedIds, totalWeeks, currentWeek: 1, weekProgress: {}, imageUrl })
+                    st.programmes.push({ id: uid(), name: trimmed, routineIds: updatedIds, totalWeeks, currentWeek: 1, weekProgress: {}, imageUrl, paused: false })
                   }
                 })
               }
@@ -1625,13 +1628,13 @@ function ProgrammeEditor({ initial, close }) {
         const idx = st.programmes.findIndex(p => p.id === initial.id)
         if (idx >= 0) {
           st.programmes[idx] = {
-            ...st.programmes[idx], name: trimmed, routineIds, totalWeeks, imageUrl,
+            ...st.programmes[idx], name: trimmed, routineIds, totalWeeks, imageUrl, paused,
           }
         }
       } else {
         st.programmes.push({
           id: uid(), name: trimmed, routineIds, totalWeeks,
-          currentWeek: 1, weekProgress: {}, imageUrl,
+          currentWeek: 1, weekProgress: {}, imageUrl, paused: false,
         })
       }
     })
@@ -1872,6 +1875,22 @@ function ProgrammeEditor({ initial, close }) {
     </>}
 
     <div style={{ height: 16 }} />
+    {initial && (
+      <button
+        onClick={() => setPaused(p => !p)}
+        style={{
+          width: '100%', padding: '11px', marginBottom: 10, borderRadius: 10,
+          background: paused ? 'rgba(120,120,120,0.1)' : 'transparent',
+          border: `1.5px solid ${paused ? 'rgba(140,140,140,0.5)' : 'rgba(140,140,140,0.3)'}`,
+          color: 'var(--label-2)',
+          fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}
+      >
+        <Icon name={paused ? 'play' : 'pause'} style={{ fontSize: 14 }} />
+        {paused ? t('Réactiver le programme') : t('Mettre en pause')}
+      </button>
+    )}
     <Button variant="primary" style={{ width: '100%' }} onClick={save}
       disabled={!sessions.length || (initial ? !hasProgChanges : false)}>
       {t('Sauvegarder')}

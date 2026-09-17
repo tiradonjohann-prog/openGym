@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { DAYN, uid, exCount } from '../lib/format.js'
+import { DAYN, uid, exCount, isoOf } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { SPORTS, isCardioSport, defaultCardioBlocks, routineTotalDuration, isHybrid } from '../lib/sports.js'
 import { isProgrammeComplete, completedWeekCount } from '../lib/programme.js'
@@ -74,6 +74,12 @@ export default function Plan() {
     ))
   }
 
+  const now = new Date()
+  const todayDow = now.getDay()
+  const mondayOffset = todayDow === 0 ? -6 : 1 - todayDow
+  const monday = new Date(now)
+  monday.setDate(monday.getDate() + mondayOffset)
+
   return <>
     <div className="hdr">
       <div><h1>{t('Plan')}</h1><div className="sub">{t('Votre planning hebdomadaire')}</div></div>
@@ -116,8 +122,12 @@ export default function Plan() {
           const r = S.routines.find(x => x.id === S.week[d])
           const isCardio = r && isCardioSport(r.sport)
           const color = r ? (isCardio ? 'var(--teal)' : 'var(--acc)') : null
-          const today = new Date().getDay()
-          const isToday = d === today
+          const isToday = d === todayDow
+          const offset = d === 0 ? 6 : d - 1
+          const cellDate = new Date(monday)
+          cellDate.setDate(monday.getDate() + offset)
+          const isoDate = isoOf(cellDate)
+          const doneWorkouts = (S.workouts || []).filter(w => w.d === isoDate)
           return (
             <button key={d} onClick={() => dayAssignSheet(d)} style={{
               background: color
@@ -163,6 +173,24 @@ export default function Plan() {
               <span style={{ fontSize: 9, color: color || 'var(--label-4)', fontWeight: r ? 600 : 400, textAlign: 'center', lineHeight: 1.2, letterSpacing: '.01em', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 2px' }}>
                 {r ? r.name : t('Rest')}
               </span>
+              {doneWorkouts.length > 0 && (
+                <>
+                  {doneWorkouts.slice(0, 2).map(w => (
+                    <span key={w.id} style={{
+                      fontSize: 8, color: 'var(--teal)', fontWeight: 700,
+                      textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      padding: '1px 3px', maxWidth: '100%',
+                      background: 'color-mix(in srgb,var(--teal) 14%,transparent)',
+                      borderRadius: 3, lineHeight: 1.3,
+                    }}>
+                      ✓ {w.name}
+                    </span>
+                  ))}
+                  {doneWorkouts.length > 2 && (
+                    <span style={{ fontSize: 8, color: 'var(--teal)', fontWeight: 700, textAlign: 'center' }}>+{doneWorkouts.length - 2}</span>
+                  )}
+                </>
+              )}
             </button>
           )
         })}
