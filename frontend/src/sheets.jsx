@@ -11,7 +11,7 @@ import { starterRoutines } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
 import Stepper from './components/Stepper.jsx'
 import Icon from './components/Icon.jsx'
-import { Button, Slider, Switch, Segmented, SelectRow, Row, SearchField } from './components/ui.jsx'
+import { Button, Slider, Switch, Segmented, SelectRow, Row, SearchField, NumberField } from './components/ui.jsx'
 import { glyphOf, GLYPH_GROUPS, DEFAULT_GLYPH } from './lib/glyphs.js'
 import BodyMap from './components/BodyMap.jsx'
 import { loadOfWorkouts } from './lib/muscles.js'
@@ -25,6 +25,7 @@ import { MOBILE, shareExport } from './lib/mobile.js'
 import { pickImage, isUserImage } from './lib/imageUtils.js'
 import { isCardioSport, isHybrid, SPORTS, BLOCK_TYPES, blockSummary, estimateBlockKcal, defaultCardioBlocks } from './lib/sports.js'
 import { sessionStates, isWeekComplete, isProgrammeComplete } from './lib/programme.js'
+import { calcStrengthKcal } from './lib/cardio.js'
 import { CardioForm } from './views/nutrition/CardioEntry.jsx'
 
 const S = () => useStore.getState().S
@@ -1105,6 +1106,9 @@ function WorkoutDetail({ w, close }) {
       <div className="tile colored" style={{ '--card-color': 'var(--blue)' }}><div className="l">{t('Volume')}</div><div className="v">{fmtVol(w.vol, st.unit)}</div></div>
       <div className="tile colored" style={{ '--card-color': 'var(--purple)' }}><div className="l">{t('Sets')}</div><div className="v">{setsDone(w)}</div></div>
       <div className="tile colored" style={{ '--card-color': hasPRs ? 'var(--yellow)' : 'var(--label-3)' }}><div className="l">{t('PRs')}</div><div className="v">{hasPRs ? w.prs.length : '—'}</div></div>
+      {w.kcal != null && <div className="tile colored" style={{ '--card-color': 'var(--orange)', cursor: 'pointer' }} onClick={() => workoutKcalSheet(w)}>
+        <div className="l">{t('Calories')}</div><div className="v">~{fmtNum(w.kcal)}</div>
+      </div>}
     </div>
     {w.entries.map((e, i) => {
       const ex = EXIDX[e.id]
@@ -1122,6 +1126,26 @@ function WorkoutDetail({ w, close }) {
   </>
 }
 export const workoutDetailSheet = w => ui().openSheet(close => <WorkoutDetail w={w} close={close} />)
+
+// Calories are a science-based estimate (weight × duration × fixed MET) — editable so a
+// user with a fitness watch can enter the reading it gave them instead.
+function WorkoutKcal({ w, close }) {
+  const [v, setV] = useState(w.kcal ?? 0)
+  const save = () => {
+    const n = Math.round(v || 0)
+    update(s => { const x = s.workouts.find(x => x.id === w.id); if (x) x.kcal = n > 0 ? n : null })
+    close()
+  }
+  return <>
+    <h3>{t('Calories burned')}</h3>
+    <div className="muted small">{t('Estimated from your bodyweight and session duration. Enter your own reading (e.g. from a fitness watch) to override it.')}</div>
+    <div style={{ height: 10 }} />
+    <NumberField value={v} onChange={setV} style={{ width: '100%', textAlign: 'center', fontSize: 20, fontWeight: 600, padding: '10px 12px', borderRadius: 10, boxSizing: 'border-box' }} placeholder="kcal" />
+    <div style={{ height: 14 }} />
+    <Button variant="primary" onClick={save}>{t('Save')}</Button>
+  </>
+}
+export const workoutKcalSheet = w => ui().openSheet(close => <WorkoutKcal w={w} close={close} />, { kind: 'center' })
 
 /* ============================ calendar ============================ */
 function Calendar({ start, close }) {
@@ -1488,6 +1512,8 @@ function doFinishWorkout() {
     } : {}),
   }
   w.vol = workoutVolume(w)
+  const weightKg = w.bw ? (st.unit === 'lb' ? w.bw / 2.2046 : w.bw) : null
+  w.kcal = calcStrengthKcal((w.end - w.start) / 60000, weightKg)
   update(s => {
     w.entries.forEach(e => {
       const mx = Math.max(0, ...e.sets.filter(x => x.done).map(x => x.w || 0), e.topW || 0)

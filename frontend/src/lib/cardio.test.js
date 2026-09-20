@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calcCardioKcal, calcPace, dayCardioKcal } from './cardio.js'
+import { calcCardioKcal, calcPace, dayCardioKcal, calcStrengthKcal } from './cardio.js'
 
 describe('calcCardioKcal', () => {
   it('returns null when weightKg is missing', () => {
@@ -62,6 +62,31 @@ describe('calcPace', () => {
 
   it('returns null when distance is missing', () => {
     expect(calcPace(60, null)).toBeNull()
+  })
+})
+
+describe('calcStrengthKcal', () => {
+  it('returns null when weightKg is missing', () => {
+    expect(calcStrengthKcal(45, null)).toBeNull()
+  })
+
+  it('returns null when durationMin is missing', () => {
+    expect(calcStrengthKcal(null, 75)).toBeNull()
+  })
+
+  it('returns null when durationMin is 0', () => {
+    expect(calcStrengthKcal(0, 75)).toBeNull()
+  })
+
+  it('calculates kcal with fixed MET 5.0', () => {
+    // 5.0 × 75 × 1h = 375
+    expect(calcStrengthKcal(60, 75)).toBe(375)
+  })
+
+  it('scales linearly with duration', () => {
+    const half = calcStrengthKcal(30, 80)
+    const full = calcStrengthKcal(60, 80)
+    expect(full).toBe(half * 2)
   })
 })
 

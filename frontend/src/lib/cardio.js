@@ -36,6 +36,9 @@ const MET_WALK = 3.5
 const MET_SWIM = 7.0
 const MET_AQUA = 4.5
 
+// Resistance training, general — moderate-to-vigorous effort (Ainsworth 2011, code 02054)
+const MET_STRENGTH = 5.0
+
 function getMET(type, durationMin, distKm) {
   const speed = durationMin && distKm ? distKm / (durationMin / 60) : null
   if (type === 'run')  return speed ? metRun(speed)  : 8.5
@@ -51,6 +54,13 @@ export function calcCardioKcal(type, weightKg, durationMin, distKm) {
   const met = getMET(type, durationMin, distKm)
   if (met == null) return null
   return Math.round(met * weightKg * (durationMin / 60))
+}
+
+// Estimate for a strength-training session (no per-exercise MET data available,
+// so a single fixed value stands in for the whole session).
+export function calcStrengthKcal(durationMin, weightKg) {
+  if (!weightKg || !durationMin) return null
+  return Math.round(MET_STRENGTH * weightKg * (durationMin / 60))
 }
 
 // Returns speed in km/h (1 decimal), or null if inputs are missing/zero
