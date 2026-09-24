@@ -3,6 +3,7 @@
 import { isoOf, uid } from './format.js'
 import { starterRoutines } from './starter.js'
 import { modeOf } from './history.js'
+import { EXIDX, isBodyweightEq } from './exercises.js'
 
 // ─── Nutrition seed helpers ───────────────────────────────────────────────────
 
@@ -137,12 +138,15 @@ function buildNutritionLog(rnd, start, today, workoutSet) {
   return log
 }
 
-// Starting weight and weekly increment per exercise of the starter plan (kg).
-// Chest dips are body-weight only here, so they log reps at 0 added weight.
-const PROG = {
-  '0025': [60, 1.25], '0047': [45, 1], '0426': [20, 0.5], '0334': [10, 0.25], '0241': [25, 0.75], '0251': [0, 0],
-  '2330': [50, 1.25], '0027': [50, 1], '1323': [45, 1], '0031': [30, 0.5], '0313': [12, 0.3],
-  '0043': [70, 1.5], '0085': [60, 1.25], '0739': [120, 3], '0585': [45, 1], '0586': [40, 1], '0605': [60, 1.5]
+// Starting weight and weekly increment (kg), derived from what kind of lift each
+// exercise is rather than a table pinned to specific ids — a pinned-id table breaks the
+// moment the starter plan's exercise ids change (which they already have once, moving
+// from the pre-swap dataset's ids to SmartWorkout's), while `mechanics`/equipment are
+// stable properties of whichever exercise the starter plan ends up pointing at.
+function progFor(id) {
+  const ex = EXIDX[id]
+  if (!ex || isBodyweightEq(ex)) return [0, 0]   // bodyweight moves log reps at 0 added weight
+  return ex.mechanics === 'COMPOUND' ? [50, 1.25] : [20, 0.5]
 }
 const WEEKS = 12                       // how much history to fabricate
 const BW_FROM = 82.4, BW_TO = 78.3     // body-weight trend across those weeks
@@ -160,11 +164,14 @@ const weekTarget = wk =>
     : wk < DELOAD_WEEK ? 2.8 - wk * 0.3
       : 2.6 - (wk - DELOAD_WEEK - 1) * 0.26
 // Leg day is trained further from failure than the upper body — deliberate, so the muscle
-// map's "hard sets" mode shows a different picture from its all-sets mode.
-const EASY = new Set(['0043', '0085', '0739', '0585', '0586'])
+// map's "hard sets" mode shows a different picture from its all-sets mode. Keyed by routine
+// name rather than specific exercise ids so this keeps working whichever exercises the
+// starter plan's Leg Day ends up listing.
+const isLegDay = routine => routine?.name === 'Leg Day'
 // One exercise nobody ever rates: partial coverage is the normal case (rating is optional and
-// off by default), and it shows the per-exercise Effort toggle correctly staying away.
-const NEVER_RATED = '0605'
+// off by default), and it shows the per-exercise Effort toggle correctly staying away. Picked
+// as "the last exercise of leg day" rather than a pinned id, for the same reason as above.
+const isNeverRated = (routine, exIdx) => isLegDay(routine) && exIdx === routine.ex.length - 1
 const UNRATED = 0.1                    // …plus this share of the remaining sets, at random
 // The first weeks are logged in RPE, as if they came out of another app before the profile
 // switched to RIR. A set is never rewritten (see history.js), so the stats have to average a
@@ -228,13 +235,13 @@ export function buildDemoState() {
     const rir0 = weekTarget(blockWk)
     const scale = blockWk < RPE_UNTIL ? 'rpe' : 'rir'
     const entries = routine.ex.map((cfg, exIdx) => {
-      const [base, inc] = PROG[cfg.id] || [20, 0.5]
+      const [base, inc] = progFor(cfg.id)
       const step = base >= 40 ? 2.5 : 1.25
       // The deload pulls the weight back too — effort dropping on its own would look like the
       // same session suddenly got easy.
       const back = blockWk === DELOAD_WEEK ? 0.88 : 1
       const w = base ? Math.max(step, round((base + inc * weekIdx) * back, step)) : 0
-      const rateable = modeOf(cfg) === 'reps' && cfg.id !== NEVER_RATED
+      const rateable = modeOf(cfg) === 'reps' && !isNeverRated(routine, exIdx)
       const sets = []
       for (let i = 0; i < cfg.sets; i++) {
         // last set is where reps usually start slipping
@@ -243,7 +250,7 @@ export function buildDemoState() {
         const rir = clamp(round(rir0
           + (cfg.sets - 1 - i) * 0.6      // a first set sits further from failure than a last
           - exIdx * 0.12                  // …and fatigue accumulates across the session
-          + (EASY.has(cfg.id) ? 1.2 : 0)
+          + (isLegDay(routine) ? 1.2 : 0)
           - (drop ? 0.5 : 0)              // reps slipping is the set that ran out of room
           + (rnd() - 0.5), 0.5), 0, 6)
         if (rateable && rnd() > UNRATED) {
