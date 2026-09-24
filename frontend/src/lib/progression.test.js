@@ -5,9 +5,9 @@ import {
 } from './progression.js'
 import { EXDB } from './exercises.js'
 
-const LIFT = EXDB.find(e => e.bp !== 'cardio' && !['upper legs', 'lower legs', 'back', 'hips', 'glutes'].includes(e.bp)).id
-const HEAVY = EXDB.find(e => e.bp === 'upper legs').id
-const CARDIO = EXDB.find(e => e.bp === 'cardio').id
+const LIFT = EXDB.find(e => e.bp !== 'CARDIO' && !['LEGS', 'BACK', 'GLUTEUS'].includes(e.bp)).id
+const HEAVY = EXDB.find(e => e.bp === 'LEGS').id
+const CARDIO = EXDB.find(e => e.bp === 'CARDIO').id
 
 // Build a state whose history is a list of sessions given as [weight, ...repsPerSet].
 // A rep count of null means "the set was never checked off".

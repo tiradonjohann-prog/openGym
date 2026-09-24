@@ -49,7 +49,7 @@ export const DELOAD_AFTER = { linear: 3, greyskull: 1, double: 3, time: 3 }
 const DELOAD_FACTOR = 0.9
 
 // Body parts where a 5 kg jump is normal rather than brutal.
-const HEAVY_BP = ['upper legs', 'lower legs', 'back', 'hips', 'glutes']
+const HEAVY_BP = ['LEGS', 'BACK', 'GLUTEUS']
 
 // Default load step. Lower-body lifts take the bigger jump — that is the "lift-specific
 // increment" a linear program lives on; an exercise can override it with cfg.inc.
