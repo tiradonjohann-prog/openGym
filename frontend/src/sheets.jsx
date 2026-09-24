@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
-import { EXDB, EXIDX, BODYPARTS, isCardio, isBodyweightEq, allExercises, equipmentOf, swDataFor } from './lib/exercises.js'
+import { EXDB, EXIDX, BODYPARTS, isCardio, isBodyweightEq, allExercises, equipmentOf } from './lib/exercises.js'
 import { fmtDate, fmtNum, fmtVol, fmtDur, durPart, todayISO, uid, exCount, DAYN, MONTHS_LONG, ACCENTS } from './lib/format.js'
 import { lastEntryFor, bestWeightFor, buildSets, effectiveRoutineId, workoutVolume, setsDone, setsDoneActive, lastBW, supersetUnits, unitOf, setLabel, defaultConfig, cleanupSg, modeOf, effortOf, isBw, isPerSide, sideReps, exLine } from './lib/history.js'
 import { beep, vibrate } from './lib/sound.js'
 import { t, instrFor, getLang, INSTR_LANGS } from './lib/i18n.js'
+import { muscleLabel, bodyPartLabel, equipmentLabel } from './lib/exerciseLabels.js'
 import { nav } from './lib/nav.js'
 import { starterRoutines } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
@@ -403,27 +404,6 @@ function OneRM({ ex }) {
   </>
 }
 
-const SW_MUSCLE_LABELS = {
-  ABS_LOWER: 'Abdominaux inférieurs', ABS_OBLIQUES: 'Obliques', ABS_UPPER: 'Abdominaux supérieurs',
-  ADDUCTOR_LONGUS: 'Adducteur long', ADDUCTOR_MAGNUS: 'Grand adducteur',
-  BACK_INFRASPINATUS: 'Infra-épineux', BACK_LATS: 'Grand dorsal',
-  BACK_TERES_MAJOR: 'Grand rond', BACK_TERES_MINOR: 'Petit rond',
-  BACK_TRAPEZIUS_LOWER: 'Trapèze inférieur', BACK_TRAPEZIUS_MIDDLE: 'Trapèze moyen', BACK_TRAPEZIUS_UPPER: 'Trapèze supérieur',
-  BICEPS_FEMORIS: 'Biceps fémoral', BICEPS_LONG_HEAD: 'Biceps — longue portion', BICEPS_SHORT_HEAD: 'Biceps — courte portion',
-  BRACHIORADIALIS: 'Brachio-radial', CHEST_BIG_SWING_MUSCLE: 'Grand pectoral',
-  CHEST_LOWER: 'Pectoral inférieur', CHEST_MIDDLE: 'Pectoral moyen', CHEST_UPPER: 'Pectoral supérieur',
-  CLAVES_GASTROCNEMIUS: 'Gastrocnémien', CLAVES_SOLEUS_MUSCLE: 'Soléaire', CLAVES_TRIBIALIS: 'Tibial antérieur',
-  ERECTOR_SPINAE: 'Érecteurs du rachis',
-  FOREARM_EXTENSORS: 'Extenseurs avant-bras', FOREARM_FLEXORS: 'Fléchisseurs avant-bras',
-  GLUTEUS_MAXIMUS: 'Grand fessier', GLUTEUS_MEDIUS: 'Moyen fessier',
-  GRACILIS: 'Gracile', ILIOPSOAS: 'Ilio-psoas', PECTINEUS: 'Pectiné',
-  QUADRICEPS_RECTUS_FEMORIS: 'Droit fémoral', QUADRICEPS_VASTUS_INTERMEDIUS: 'Vaste intermédiaire',
-  QUADRICEPS_VASTUS_LATERALIS: 'Vaste latéral', QUADRICEPS_VASTUS_MEDIALIS: 'Vaste médial',
-  SARTORIUS: 'Sartorius', SEMIMEMBRANOSUS: 'Semi-membraneux', SEMITENDINOSUS: 'Semi-tendineux',
-  SHOULDERS_FRONT_PART: 'Deltoïde antérieur', SHOULDERS_MIDDLE_PART: 'Deltoïde latéral', SHOULDERS_REAR_PART: 'Deltoïde postérieur',
-  TRICEPS_LATERAL_HEAD: 'Triceps — faisceau latéral', TRICEPS_LONG_HEAD: 'Triceps — longue portion', TRICEPS_MEDIAL_HEAD: 'Triceps — faisceau médial',
-}
-
 function MuscleActivation({ muscles }) {
   const entries = Object.entries(muscles).sort(([, a], [, b]) => b - a)
   if (!entries.length) return null
@@ -435,10 +415,10 @@ function MuscleActivation({ muscles }) {
         return (
           <div key={key} style={{ marginBottom: 7 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3 }}>
-              <span style={{ color: 'var(--label-2)' }}>{SW_MUSCLE_LABELS[key] || key}</span>
+              <span style={{ color: 'var(--label-2)' }}>{muscleLabel(key)}</span>
               <span style={{ fontWeight: 700, color }}>{pct}%</span>
             </div>
-            <div style={{ height: 4, background: 'var(--surface-3)', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ height: 5, borderRadius: 3, overflow: 'hidden', background: 'var(--surface-3)' }}>
               <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2 }} />
             </div>
           </div>
@@ -452,19 +432,41 @@ function ExerciseDetail({ ex, close }) {
   const st = useStore(s => s.S)
   const last = lastEntryFor(st, ex.id)
   const best = bestWeightFor(st, ex.id)
-  const sw = swDataFor(ex.id)
+  const muscles = ex.exercise_muscles || {}
+  const description = ex.description_fr || ex.description
+  const instructions = ex.instructions?.fr?.length ? ex.instructions.fr : (ex.instructions?.en || [])
+  const tips = ex.tips?.fr?.length ? ex.tips.fr : (ex.tips?.en || [])
+  const mistakes = ex.common_mistakes?.fr?.length ? ex.common_mistakes.fr : (ex.common_mistakes?.en || [])
   return <>
     <h3 className="capitalize">{ex.n}</h3>
     <Media ex={ex} />
     <div className="row" style={{ gap: 6, flexWrap: 'wrap', margin: '10px 0' }}>
-      <span className="tag acc">{t(ex.bp)}</span>
-      {ex.tg && <span className="tag"><Icon name="target" />{t(ex.tg)}</span>}
-      <span className="tag"><Icon name="dumbbell" />{t(ex.eq)}</span>
+      <span className="tag acc">{bodyPartLabel(ex.bp)}</span>
+      {ex.tg && <span className="tag"><Icon name="target" />{muscleLabel(ex.tg)}</span>}
+      <span className="tag"><Icon name="dumbbell" />{equipmentLabel(ex.eq)}</span>
       {(ex.sm || []).slice(0, 3).map((s, i) => <span key={i} className="tag">{t(s)}</span>)}
     </div>
-    {ex.desc && <div className="exnote">{ex.desc}</div>}
-    {sw?.muscles && Object.keys(sw.muscles).length > 0 && <MuscleActivation muscles={sw.muscles} />}
-    {best > 0 && <div className="small row" style={{ marginBottom: 6, gap: 5 }}><Icon name="trophy" style={{ fontSize: 14, color: 'var(--yellow)' }} />{t('Best:')} <b className="accent">{fmtNum(best)} {st.unit}</b>{last ? ` · ${t('last')} ${fmtDate(last.d)}: ${last.sets.map(s => setLabel(ex.id, s, last.target)).join(', ')}` : ''}</div>}
+    {description && <div className="exnote">{description}</div>}
+    {Object.keys(muscles).length > 0 && <MuscleActivation muscles={muscles} />}
+    {instructions.length > 0 && <>
+      <h4 className="sec" style={{ marginTop: 14, marginBottom: 8 }}>{t('Instructions')}</h4>
+      <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13.5, lineHeight: 1.7 }}>
+        {instructions.map((step, i) => <li key={i}>{step}</li>)}
+      </ol>
+    </>}
+    {tips.length > 0 && <>
+      <h4 className="sec" style={{ marginTop: 14, marginBottom: 8 }}>{t('Tips')}</h4>
+      <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13.5, lineHeight: 1.7, color: 'var(--label-2)' }}>
+        {tips.map((tip, i) => <li key={i}>{tip}</li>)}
+      </ul>
+    </>}
+    {mistakes.length > 0 && <>
+      <h4 className="sec" style={{ marginTop: 14, marginBottom: 8 }}>{t('Common mistakes')}</h4>
+      <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13.5, lineHeight: 1.7, color: 'var(--label-2)' }}>
+        {mistakes.map((m, i) => <li key={i}>{m}</li>)}
+      </ul>
+    </>}
+    {best > 0 && <div className="small row" style={{ margin: '10px 0 6px', gap: 5 }}><Icon name="trophy" style={{ fontSize: 14, color: 'var(--yellow)' }} />{t('Best:')} <b className="accent">{fmtNum(best)} {st.unit}</b>{last ? ` · ${t('last')} ${fmtDate(last.d)}: ${last.sets.map(s => setLabel(ex.id, s, last.target)).join(', ')}` : ''}</div>}
     <Button variant="primary" icon="plus" style={{ margin: '10px 0 4px' }} onClick={() => addToRoutineSheet(ex)}>{t('Add to my plan')}</Button>
     {ex.custom && <div className="row" style={{ gap: 8, marginTop: 8 }}>
       <Button icon="pencil" style={{ flex: 1 }} onClick={() => { close(); customExSheet(ex) }}>{t('Edit')}</Button>
@@ -544,7 +546,7 @@ function CustomExForm({ existing, prefill, onDone, close }) {
     <div className="muted small" style={{ marginBottom: 12 }}>{t('Name it and pick a body part — it behaves like any other exercise, just without an animation.')}</div>
     <input className="input" placeholder={t('Exercise name')} value={n} onChange={e => setN(e.target.value)} />
     <div className="chips" style={{ margin: '12px 0' }}>
-      {BODYPARTS.map(b => <button key={b} className={'chip' + (bp === b ? ' on' : '')} onClick={() => setBp(b)}>{t(b)}</button>)}
+      {BODYPARTS.map(b => <button key={b} className={'chip' + (bp === b ? ' on' : '')} onClick={() => setBp(b)}>{bodyPartLabel(b)}</button>)}
     </div>
     {bp === 'cardio' && <div className="small dim row" style={{ marginBottom: 10, gap: 5 }}><Icon name="figureRun" style={{ fontSize: 13 }} />{t('Cardio exercises log time + speed instead of weight × reps.')}</div>}
     <textarea className="input" rows={4} maxLength={1000} placeholder={t('Description (optional) — setup, cues, anything you want to remember')}
@@ -614,11 +616,11 @@ function ExercisePicker({ onPick, close }) {
     <div className="chips" style={{ margin: eqOpts.length > 1 ? '10px 0 6px' : '10px 0' }}>
       {chosenCount > 0 && <button className={'chip' + (bp === '★' ? ' on' : '')} onClick={() => { setBp('★'); setEq(''); setShown(50) }}><Icon name="starFill" style={{ fontSize: 12, display: 'inline-block', marginRight: 4, verticalAlign: '-1px' }} />{t('Chosen')} ({chosenCount})</button>}
       <button className={'chip nocap' + (!bp ? ' on' : '')} onClick={() => { setBp(''); setEq(''); setShown(50) }}>{t('All')}</button>
-      {BODYPARTS.map(b => <button key={b} className={'chip' + (bp === b ? ' on' : '')} onClick={() => { setBp(b); setEq(''); setShown(50) }}>{t(b)}</button>)}
+      {BODYPARTS.map(b => <button key={b} className={'chip' + (bp === b ? ' on' : '')} onClick={() => { setBp(b); setEq(''); setShown(50) }}>{bodyPartLabel(b)}</button>)}
     </div>
     {eqOpts.length > 1 && <div className="chips" style={{ marginBottom: 10 }}>
       <button className={'chip nocap' + (!eqOn ? ' on' : '')} onClick={() => { setEq(''); setShown(50) }}>{t('Any equipment')}</button>
-      {eqOpts.map(x => <button key={x} className={'chip' + (eqOn === x ? ' on' : '')} onClick={() => { setEq(x); setShown(50) }}>{t(x)}</button>)}
+      {eqOpts.map(x => <button key={x} className={'chip' + (eqOn === x ? ' on' : '')} onClick={() => { setEq(x); setShown(50) }}>{equipmentLabel(x)}</button>)}
     </div>}
     <div className="list">
       {bp !== '★' && <div className="item" onClick={() => customExSheet(null, ex => { close(); onPick(ex) }, q.trim())}>
@@ -626,7 +628,7 @@ function ExercisePicker({ onPick, close }) {
         <div className="grow"><div className="tt">{t('Create your own exercise')}</div><div className="ss">{t('name + body part, no animation')}</div></div><Icon name="plus" className="chev" />
       </div>}
       {f.slice(0, shown).map(e => <div key={e.id} className="item" onClick={() => { close(); onPick(e) }}>
-        <Thumb ex={e} /><div className="grow"><div className="tt capitalize">{e.n}</div><div className="ss capitalize">{t(e.tg || e.bp)} · {t(e.eq)}</div></div>
+        <Thumb ex={e} /><div className="grow"><div className="tt capitalize">{e.n}</div><div className="ss capitalize">{e.tg ? muscleLabel(e.tg) : bodyPartLabel(e.bp)} · {equipmentLabel(e.eq)}</div></div>
         {usage[e.id] && <span className="tag acc"><Icon name="starFill" /></span>}<Icon name="plus" className="chev" />
       </div>)}
       {f.length === 0 && bp === '★' && <div className="empty">{t("Nothing chosen yet — add exercises and they'll show up here.")}</div>}
@@ -658,7 +660,7 @@ function SwapPicker({ currentExId, onSwap, close }) {
           <Thumb ex={e} />
           <div className="grow">
             <div className="tt capitalize">{e.n}</div>
-            <div className="ss capitalize">{t(e.tg || e.bp)} · {t(e.eq)}</div>
+            <div className="ss capitalize">{e.tg ? muscleLabel(e.tg) : bodyPartLabel(e.bp)} · {equipmentLabel(e.eq)}</div>
           </div>
           <Icon name="chevronRight" className="chev" />
         </div>
@@ -753,7 +755,7 @@ function ExConfig({ ex, existing, onSave, onDelete, close, routine, inWorkout })
     <Media ex={ex} />
     <div className="row" style={{ gap: 6, flexWrap: 'wrap', margin: '10px 0 14px' }}>
       {cardio && <span className="tag acc"><Icon name="figureRun" />{t('Cardio')}</span>}
-      <span className="tag">{t(ex.tg || ex.bp)}</span><span className="tag">{t(ex.eq)}</span>
+      <span className="tag">{ex.tg ? muscleLabel(ex.tg) : bodyPartLabel(ex.bp)}</span><span className="tag">{equipmentLabel(ex.eq)}</span>
     </div>
     {ex.desc && <div className="exnote">{ex.desc}</div>}
     {!cardio && bw && <div style={{ marginBottom: 14 }}>
