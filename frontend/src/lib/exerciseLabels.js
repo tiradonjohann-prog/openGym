@@ -71,5 +71,12 @@ export const muscleLabel = key => MUSCLE_LABELS_FR[key] || prettify(key)
 export const equipmentLabel = code => {
   if (!code) return '—'
   if (code === 'body weight') return t(code) // legacy sentinel, kept on the old t() path
-  return EQUIPMENT_LABELS_FR[code] || prettify(code)
+  const knownLabel = EQUIPMENT_LABELS_FR[code]
+  if (knownLabel) return knownLabel
+  // Old dataset equipment codes (lowercase with spaces) have translations in t()
+  // Try t() first before prettifying uppercase enum codes
+  const legacyLabel = t(code)
+  if (legacyLabel !== code) return legacyLabel // t() found a translation
+  // Unknown code: prettify (e.g., 'SOME_UNKNOWN_CODE' → 'Some Unknown Code')
+  return prettify(code)
 }
