@@ -219,18 +219,15 @@ export function matchExercise(name) {
 }
 
 // Categories the exporters use -> the dataset's body parts, for exercises we invent.
-// Every value here is the OLD lowercase body-part taxonomy on purpose — muscles.js's
-// BY_BODYPART fallback (used for exactly these hand-made custom exercises) is still keyed
-// on that vocabulary. 'CARDIO' is the one exception: isCardio() in exercises.js checks
-// `.bp === 'CARDIO'` against the new uppercase catalog convention, so a cardio custom
-// exercise has to use that spelling to be recognised as cardio (modeOf(), OneRM display, …)
-// the same way a real catalog cardio exercise is.
+// Uses the new uppercase SmartWorkout taxonomy, matching what CustomExForm (sheets.jsx)
+// writes. muscles.js's BY_BODYPART fallback supports all 10 new codes, so there's no
+// remaining reason to write the old lowercase taxonomy here.
 const CATEGORY_BP = {
-  chest: 'chest', back: 'back', lats: 'back', shoulders: 'shoulders', delts: 'shoulders',
-  legs: 'upper legs', quads: 'upper legs', hamstrings: 'upper legs', glutes: 'upper legs',
-  calves: 'lower legs', abs: 'waist', core: 'waist', obliques: 'waist',
-  arms: 'upper arms', biceps: 'upper arms', triceps: 'upper arms', forearms: 'lower arms',
-  cardio: 'CARDIO', 'full body': 'upper legs', olympic: 'upper legs', neck: 'neck',
+  chest: 'CHEST', back: 'BACK', lats: 'BACK', shoulders: 'SHOULDERS', delts: 'SHOULDERS',
+  legs: 'LEGS', quads: 'LEGS', hamstrings: 'LEGS', glutes: 'GLUTEUS',
+  calves: 'LEGS', abs: 'ABS', core: 'ABS', obliques: 'ABS',
+  arms: 'BICEPS', biceps: 'BICEPS', triceps: 'TRICEPS', forearms: 'FOREARMS',
+  cardio: 'CARDIO', 'full body': 'LEGS', olympic: 'LEGS', neck: 'BACK',
 }
 
 /* ----------------------------------------------------------- conversion --- */
@@ -351,7 +348,7 @@ export function parseWorkoutCSV(text, { unit = 'kg' } = {}) {
       if (!c) {
         c = {
           id: 'im' + uid(), n: name.toLowerCase(), custom: true, eq: 'custom', tg: '', desc: '',
-          bp: CATEGORY_BP[cell(r, 'category').toLowerCase()] || (km || (mins && !reps) ? 'CARDIO' : 'upper legs'),
+          bp: CATEGORY_BP[cell(r, 'category').toLowerCase()] || (km || (mins && !reps) ? 'CARDIO' : 'LEGS'),
         }
         created.set(key, c)
         unmatched.add(name)
