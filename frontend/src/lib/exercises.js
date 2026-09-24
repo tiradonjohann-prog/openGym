@@ -1,3 +1,4 @@
+// frontend/src/lib/exercises.js
 import { EXDB } from './exercises-data.js'
 import { t } from './i18n.js'
 
@@ -26,21 +27,44 @@ export function registerCustom(list) {
 // Full searchable catalogue — customs first so your own exercises are easy to find.
 export const allExercises = st => [...(st.customEx || []), ...EXDB]
 
-// Media normally sits next to the app (img/ and gif/, mounted into the web container).
-// A build can point them somewhere else — the demo build pulls them off a CDN instead of
-// shipping ~140 MB of images into the deployment.
+// Legacy media (residual cardio exercises only) — img/ and gif/, mounted next to the app.
 const IMG_BASE = import.meta.env.VITE_IMG_BASE || 'img/'
 const GIF_BASE = import.meta.env.VITE_GIF_BASE || 'gif/'
 export const imgSrc = ex => IMG_BASE + ex.img
 export const gifSrc = ex => GIF_BASE + ex.gif
 
-// Cardio exercises log time + speed instead of weight × reps.
-export const isCardio = idOrEx => (typeof idOrEx === 'string' ? EXIDX[idOrEx] : idOrEx)?.bp === 'cardio'
+// SmartWorkout video — CDN-first, with a local-hosting fallback that isn't populated
+// by default (drop .mp4 files into frontend/public/videos/ to activate it, no code change).
+export const videoSrc = ex => {
+  if (ex.video_dark_url) return ex.video_dark_url
+  if (ex.video_light_url) return ex.video_light_url
+  if (ex.local_video) return ex.local_video.replace(/^\/Videos\//i, '/videos/')
+  return null
+}
 
-// Exercises the dataset already knows carry no external load (issue #32) — a quarter of the
-// catalogue. This seeds the `bw` flag on a fresh config so a push-up never asks for a weight
-// nobody was going to enter. It is only the default: the flag lives on the config, so a dip
-// done with a belt can turn it off and a custom exercise can turn it on.
+// SmartWorkout static photo (exercises without a usable video fall back to this).
+export const photoSrc = ex => ex.image_url || null
+
+// Muscle activation (0-100%) from SmartWorkout's `exercise_muscles` — used by the
+// detail sheet and the muscle filter.
+export function musclesOf(ex) {
+  const m = ex.exercise_muscles
+  if (!m || typeof m !== 'object') return []
+  return Object.entries(m)
+    .filter(([, v]) => typeof v === 'number' && !isNaN(v))
+    .map(([key, value]) => ({ key, value }))
+}
+export function sortedMuscles(ex) {
+  return musclesOf(ex).sort((a, b) => b.value - a.value)
+}
+
+// Cardio exercises log time + speed instead of weight × reps.
+export const isCardio = idOrEx => (typeof idOrEx === 'string' ? EXIDX[idOrEx] : idOrEx)?.bp === 'CARDIO'
+
+// Exercises the dataset already knows carry no external load (issue #32) — seeds the
+// `bw` flag on a fresh config so a push-up never asks for a weight nobody was going to
+// enter. It is only the default: the flag lives on the config, so a dip done with a belt
+// can turn it off and a custom exercise can turn it on.
 export const isBodyweightEq = idOrEx =>
   (typeof idOrEx === 'string' ? EXIDX[idOrEx] : idOrEx)?.eq === 'body weight'
 
@@ -50,22 +74,3 @@ export const isBodyweightEq = idOrEx =>
 // down on the first `ex.n`.
 export const exOr = id => EXIDX[id] ||
   { id, n: t('Unknown exercise'), bp: '', tg: '', eq: '', sm: [], st: [], missing: true }
-
-// SmartWorkout enrichment — loaded once at startup, non-blocking.
-// Provides per-exercise local video URLs and muscle activation rates (0–100%).
-let _sw = {}
-
-export async function loadSwEnrichment() {
-  try {
-    const r = await fetch('./data/sw-enrichment.json')
-    if (r.ok) _sw = await r.json()
-  } catch {}
-}
-
-export const swDataFor = id => _sw[id] ?? null
-
-export const swVideoSrc = id => {
-  const d = _sw[id]
-  if (!d || d.no_video) return null
-  return `/sw-video/${encodeURIComponent(d.sw_name)}.mp4`
-}
