@@ -1,13 +1,16 @@
 // Which muscles an exercise trains, and how hard — the data behind every muscle map.
 //
-// The exercise dataset names muscles in free text and is not consistent about it:
-// "shoulders", "deltoids" and "delts" are the same thing, so are "quads" and
-// "quadriceps", "lats" and "latissimus dorsi", "core" and "abdominals". Nineteen
-// primary and forty secondary spellings collapse onto the eighteen muscles the body
-// map can actually draw, via ALIAS below. Anything genuinely undrawable (hands,
-// ankles, "cardiovascular system") maps to null and is dropped rather than guessed at.
+// The SmartWorkout catalog names muscles with specific uppercase keys (`exercise_muscles`,
+// e.g. `GLUTEUS_MAXIMUS`, `CHEST_UPPER`) and gives a 0-100 activation per muscle. A
+// residual handful of legacy custom/imported exercises (created by the CSV importer or
+// carried over from the pre-swap dataset) instead carry only the old free-text `tg`/`sm`
+// fields ("shoulders", "deltoids", "delts", "quads", "quadriceps", "lats", "latissimus
+// dorsi", "core", "abdominals", …). Both vocabularies collapse onto the eighteen muscles
+// the body map can actually draw, via MUSCLE_KEY_ALIAS (new keys) and ALIAS (legacy free
+// text) below. Anything genuinely undrawable (hands, ankles, "cardiovascular system")
+// maps to null and is dropped rather than guessed at.
 
-import { EXIDX } from './exercises.js'
+import { EXIDX, musclesOf as activationsOf } from './exercises.js'
 
 // The muscles a map can shade, in head-to-toe order — also the order of any list
 // built from them, so "what am I neglecting" reads top-down like a body.
@@ -52,6 +55,29 @@ const ALIAS = {
   sternocleidomastoid: null,
 }
 
+// Every `exercise_muscles` key the SmartWorkout catalog uses, mapped onto the same
+// eighteen drawable muscles as ALIAS above. Lowercased at lookup time the same way ALIAS
+// is, so both tables share the one `add()` helper in musclesOf().
+const MUSCLE_KEY_ALIAS = {
+  abs_lower: 'abs', abs_upper: 'abs', abs_obliques: 'obliques',
+  back_lats: 'upper-back', back_trapezius_upper: 'trapezius', back_trapezius_middle: 'trapezius',
+  back_trapezius_lower: 'trapezius', back_infraspinatus: 'deltoids', back_teres_major: 'upper-back',
+  back_teres_minor: 'deltoids',
+  biceps_long_head: 'biceps', biceps_short_head: 'biceps', brachioradialis: 'forearm',
+  chest_upper: 'chest', chest_middle: 'chest', chest_lower: 'chest', chest_big_swing_muscle: 'chest',
+  gluteus_maximus: 'gluteal', gluteus_medius: 'gluteal',
+  shoulders_front_part: 'deltoids', shoulders_middle_part: 'deltoids', shoulders_rear_part: 'deltoids',
+  triceps_lateral_head: 'triceps', triceps_long_head: 'triceps', triceps_medial_head: 'triceps',
+  quadriceps_rectus_femoris: 'quadriceps', quadriceps_vastus_lateralis: 'quadriceps',
+  quadriceps_vastus_medialis: 'quadriceps', quadriceps_vastus_intermedius: 'quadriceps',
+  erector_spinae: 'lower-back',
+  claves_gastrocnemius: 'calves', claves_soleus_muscle: 'calves', claves_tribialis: 'tibialis',
+  biceps_femoris: 'hamstring', semimembranosus: 'hamstring', semitendinosus: 'hamstring',
+  adductor_longus: 'adductors', adductor_magnus: 'adductors',
+  forearm_extensors: 'forearm', forearm_flexors: 'forearm',
+  iliopsoas: 'hip-flexors', gracilis: 'adductors', pectineus: 'adductors', sartorius: 'hip-flexors',
+}
+
 // Custom exercises carry only a body part, so they fall back to it. Weights inside a
 // group sum to 1 — "upper legs" spreads over three muscles rather than counting triple.
 const BY_BODYPART = {
@@ -74,13 +100,23 @@ export function musclesOf(ex) {
   if (!ex) return {}
   const out = {}
   const add = (name, w) => {
-    const slug = ALIAS[String(name || '').toLowerCase().trim()]
+    const slug = MUSCLE_KEY_ALIAS[String(name || '').toLowerCase().trim()] ||
+      ALIAS[String(name || '').toLowerCase().trim()]
     if (slug) out[slug] = Math.max(out[slug] || 0, w)
   }
-  add(ex.tg, 1)
-  ;(ex.sm || []).forEach(m => add(m, SECONDARY))
+  const activations = activationsOf(ex)
+  if (activations.length) {
+    // SmartWorkout catalog exercise: weighted per-muscle activation (0-100%).
+    activations.forEach(({ key, value }) => add(key, value / 100))
+  } else {
+    // Legacy custom/imported exercise: only the old free-text tg/sm fields are set.
+    add(ex.tg, 1)
+    ;(ex.sm || []).forEach(m => add(m, SECONDARY))
+  }
   // Nothing recognised (custom exercises, or a target we don't draw) — use the body part.
-  if (!Object.keys(out).length) Object.assign(out, BY_BODYPART[ex.bp] || {})
+  if (!Object.keys(out).length) {
+    Object.assign(out, BY_BODYPART[ex.bp] || BY_BODYPART[String(ex.bp || '').toLowerCase()] || {})
+  }
   return out
 }
 
