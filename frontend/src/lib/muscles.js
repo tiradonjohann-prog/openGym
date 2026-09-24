@@ -80,6 +80,12 @@ const MUSCLE_KEY_ALIAS = {
 
 // Custom exercises carry only a body part, so they fall back to it. Weights inside a
 // group sum to 1 — "upper legs" spreads over three muscles rather than counting triple.
+//
+// The old lowercase entries stay for defensive backward-compatibility with any exercise
+// still carrying that legacy taxonomy. The uppercase entries below are the ones actually
+// hit today: CustomExForm (sheets.jsx) and import-csv.js both write bp using the new
+// SmartWorkout codes (from BODYPARTS in exercises.js), so every one of the 10 new codes
+// needs a sensible non-empty entry here.
 const BY_BODYPART = {
   chest: { chest: 1 },
   back: { 'upper-back': 0.75, 'lower-back': 0.25 },
@@ -91,6 +97,19 @@ const BY_BODYPART = {
   'lower legs': { calves: 0.8, tibialis: 0.2 },
   neck: { trapezius: 1 },
   cardio: {},
+  // New uppercase taxonomy (SmartWorkout codes) — each reuses the closest old entry's value.
+  CHEST: { chest: 1 },
+  BACK: { 'upper-back': 0.75, 'lower-back': 0.25 },
+  SHOULDERS: { deltoids: 1 },
+  BICEPS: { biceps: 1 },
+  TRICEPS: { triceps: 1 },
+  FOREARMS: { forearm: 1 },
+  ABS: { abs: 0.7, obliques: 0.3 },
+  // LEGS merges the old 'upper legs' and 'lower legs' groups into one, since the new
+  // taxonomy no longer distinguishes them.
+  LEGS: { quadriceps: 0.3, hamstring: 0.25, gluteal: 0.2, calves: 0.2, tibialis: 0.05 },
+  GLUTEUS: { gluteal: 1 },
+  CARDIO: {},
 }
 
 const SECONDARY = 0.4   // a supporting muscle counts this much against a primary
