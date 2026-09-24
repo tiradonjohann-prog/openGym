@@ -9,20 +9,25 @@ import { ACTIVITY_LEVELS, ACTIVITY_LABEL, ACTIVITY_DESC, calcBMR, calcTDEE } fro
 import { GOALS, GOAL_LABEL, GOAL_DESC, GOAL_DEFAULT_DELTA, calcTargetKcal } from '../lib/goals.js'
 import { calcMacros } from '../lib/macros.js'
 import { todayISO } from '../lib/format.js'
+import { equipmentLabel } from '../lib/exerciseLabels.js'
 
-/* ── Equipment catalogue (exporté pour Settings) ─────────────────── */
+/* ── Equipment catalogue (exporté pour Settings) ───────────────────
+ * 'Bodyweight' is the same empty-equipment sentinel Library.jsx's filter uses
+ * (an exercise with no `equipments` entries), not the literal 'body weight'
+ * equipment code — the other keys are SmartWorkout's uppercase equipment codes. */
 export const EQUIPMENT_OPTIONS = [
-  { key: 'body weight',       label: 'Poids de corps' },
-  { key: 'dumbbell',          label: 'Haltères' },
-  { key: 'barbell',           label: 'Barre + disques' },
-  { key: 'ez barbell',        label: 'Barre EZ' },
-  { key: 'kettlebell',        label: 'Kettlebell' },
-  { key: 'cable',             label: 'Câble / Poulie' },
-  { key: 'leverage machine',  label: 'Machines guidées' },
-  { key: 'smith machine',     label: 'Smith machine' },
-  { key: 'resistance band',   label: 'Élastiques' },
-  { key: 'medicine ball',     label: 'Médecine ball' },
-  { key: 'stationary bike',   label: 'Vélo stationnaire' },
+  { key: 'Bodyweight',           label: equipmentLabel('body weight') },
+  { key: 'DUMBBELL',             label: equipmentLabel('DUMBBELL') },
+  { key: 'BARBELL',              label: equipmentLabel('BARBELL') },
+  { key: 'EZ_BAR',               label: equipmentLabel('EZ_BAR') },
+  { key: 'KETTLEBELL',           label: equipmentLabel('KETTLEBELL') },
+  { key: 'CABLE_MACHINE',        label: equipmentLabel('CABLE_MACHINE') },
+  { key: 'SELECTORIZED_MACHINE', label: equipmentLabel('SELECTORIZED_MACHINE') },
+  { key: 'SMITH_MACHINE',        label: equipmentLabel('SMITH_MACHINE') },
+  { key: 'RESISTANCE_BAND',      label: equipmentLabel('RESISTANCE_BAND') },
+  { key: 'MEDICINE_BALL',        label: equipmentLabel('MEDICINE_BALL') },
+  { key: 'PULL_UP_BAR',          label: equipmentLabel('PULL_UP_BAR') },
+  { key: 'BENCH',                label: equipmentLabel('BENCH') },
 ]
 
 /* ── Progress dots (étapes 1-3) ───────────────────────────────────── */
