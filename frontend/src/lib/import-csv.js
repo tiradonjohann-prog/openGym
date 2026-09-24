@@ -219,12 +219,18 @@ export function matchExercise(name) {
 }
 
 // Categories the exporters use -> the dataset's body parts, for exercises we invent.
+// Every value here is the OLD lowercase body-part taxonomy on purpose — muscles.js's
+// BY_BODYPART fallback (used for exactly these hand-made custom exercises) is still keyed
+// on that vocabulary. 'CARDIO' is the one exception: isCardio() in exercises.js checks
+// `.bp === 'CARDIO'` against the new uppercase catalog convention, so a cardio custom
+// exercise has to use that spelling to be recognised as cardio (modeOf(), OneRM display, …)
+// the same way a real catalog cardio exercise is.
 const CATEGORY_BP = {
   chest: 'chest', back: 'back', lats: 'back', shoulders: 'shoulders', delts: 'shoulders',
   legs: 'upper legs', quads: 'upper legs', hamstrings: 'upper legs', glutes: 'upper legs',
   calves: 'lower legs', abs: 'waist', core: 'waist', obliques: 'waist',
   arms: 'upper arms', biceps: 'upper arms', triceps: 'upper arms', forearms: 'lower arms',
-  cardio: 'cardio', 'full body': 'upper legs', olympic: 'upper legs', neck: 'neck',
+  cardio: 'CARDIO', 'full body': 'upper legs', olympic: 'upper legs', neck: 'neck',
 }
 
 /* ----------------------------------------------------------- conversion --- */
@@ -345,7 +351,7 @@ export function parseWorkoutCSV(text, { unit = 'kg' } = {}) {
       if (!c) {
         c = {
           id: 'im' + uid(), n: name.toLowerCase(), custom: true, eq: 'custom', tg: '', desc: '',
-          bp: CATEGORY_BP[cell(r, 'category').toLowerCase()] || (km || (mins && !reps) ? 'cardio' : 'upper legs'),
+          bp: CATEGORY_BP[cell(r, 'category').toLowerCase()] || (km || (mins && !reps) ? 'CARDIO' : 'upper legs'),
         }
         created.set(key, c)
         unmatched.add(name)
