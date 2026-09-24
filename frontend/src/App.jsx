@@ -6,7 +6,6 @@ import { useUI } from './store/useUI.js'
 import { bindUI } from './components/ui.jsx'
 import { ACCENTS } from './lib/format.js'
 import { setLang, useLang } from './lib/i18n.js'
-import { loadSwEnrichment } from './lib/exercises.js'
 import { setNav } from './lib/nav.js'
 import { useWakeLock } from './lib/wakelock.js'
 import { startFlow } from './sheets.jsx'
@@ -101,7 +100,6 @@ function Shell() {
 export default function App() {
   const boot = useStore(s => s.boot)
   useEffect(() => { boot() }, [boot])
-  useEffect(() => { loadSwEnrichment() }, [])
   useEffect(() => {
     const handler = CapApp.addListener('backButton', ({ canGoBack }) => {
       if (canGoBack) {
