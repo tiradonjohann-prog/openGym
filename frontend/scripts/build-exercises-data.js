@@ -45,11 +45,51 @@ function dominantMuscleKey(muscles) {
   return Object.entries(muscles).sort((a, b) => b[1] - a[1])[0][0]
 }
 
+function loadSmartWorkoutRaw() {
+  let contents
+  try {
+    contents = readFileSync(smartworkoutPath, 'utf-8')
+  } catch (error) {
+    throw new Error(
+      `Vendored SmartWorkout snapshot not found at ${smartworkoutPath} — run Task 1's fetch step first. (${error.message})`
+    )
+  }
+
+  try {
+    return JSON.parse(contents)
+  } catch (error) {
+    throw new Error(
+      `Vendored SmartWorkout snapshot at ${smartworkoutPath} is not valid JSON — re-run Task 1's fetch step to regenerate it. (${error.message})`
+    )
+  }
+}
+
+async function loadResidualCardio() {
+  try {
+    const mod = await import('../src/lib/residual-cardio-data.js')
+    return mod.RESIDUAL_CARDIO
+  } catch (error) {
+    throw new Error(
+      `Failed to load RESIDUAL_CARDIO from ../src/lib/residual-cardio-data.js — ensure the file exists and exports RESIDUAL_CARDIO (see Task 2). (${error.message})`
+    )
+  }
+}
+
+function assertValidRawRecord(raw, index) {
+  const missing = ['id', 'name', 'body_part'].filter(field => !raw?.[field])
+  if (missing.length) {
+    throw new Error(
+      `SmartWorkout record at index ${index} (id: ${raw?.id ?? 'unknown'}, name: ${raw?.name ?? 'unknown'}) is missing required field(s): ${missing.join(', ')}`
+    )
+  }
+}
+
 async function main() {
-  const smartworkoutRaw = JSON.parse(readFileSync(smartworkoutPath, 'utf-8'))
+  const smartworkoutRaw = loadSmartWorkoutRaw()
+  smartworkoutRaw.forEach(assertValidRawRecord)
   const smartworkout = smartworkoutRaw.map(transformSmartWorkout)
 
-  const { RESIDUAL_CARDIO } = await import('../src/lib/residual-cardio-data.js')
+  const RESIDUAL_CARDIO = await loadResidualCardio()
 
   const all = [...smartworkout, ...RESIDUAL_CARDIO]
 
@@ -65,4 +105,7 @@ async function main() {
   console.log(`Wrote ${all.length} exercises to ${outPath}`)
 }
 
-main()
+main().catch(error => {
+  console.error(`[build-exercises-data] ${error.message}`)
+  process.exit(1)
+})
