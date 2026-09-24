@@ -8,6 +8,7 @@ import { SPORTS, BLOCK_TYPES, INTENSITIES, blockSummary, estimateBlockKcal } fro
 import { fmtNum, fmtDate, todayISO, exCount, DAYN } from '../lib/format.js'
 import { beep, vibrate } from '../lib/sound.js'
 import { t } from '../lib/i18n.js'
+import { bodyPartLabel, equipmentLabel, muscleLabel } from '../lib/exerciseLabels.js'
 import { api } from '../lib/api.js'
 import Media from '../components/Media.jsx'
 import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, swapExerciseSheet } from '../sheets.jsx'
@@ -18,18 +19,12 @@ import { historicalBests, prKindOf } from '../lib/prs.js'
 import { estimate1RM } from '../lib/onerm.js'
 import { glyphOf } from '../lib/glyphs.js'
 
-/* Muscle-group accent colors — drives card left-border + tag tint */
+/* Muscle-group accent colors — drives card left-border + tag tint
+   (kept identical to Library.jsx's BP_COLOR so both screens agree) */
 const BP_COLOR = {
-  chest:         'var(--acc)',
-  back:          'var(--blue)',
-  shoulders:     'var(--purple)',
-  'upper arms':  'var(--orange)',
-  'lower arms':  'var(--yellow)',
-  waist:         'var(--teal)',
-  'upper legs':  'var(--pink)',
-  'lower legs':  'var(--teal)',
-  neck:          'var(--label-3)',
-  cardio:        'var(--orange)',
+  ABS: 'var(--teal)', BACK: 'var(--blue)', BICEPS: 'var(--orange)', CHEST: 'var(--acc)',
+  FOREARMS: 'var(--yellow)', GLUTEUS: 'var(--pink, var(--red))', LEGS: 'var(--indigo, var(--blue))',
+  SHOULDERS: 'var(--purple)', TRICEPS: 'var(--orange)', CARDIO: 'var(--teal)',
 }
 const bpColorOf = ex => BP_COLOR[ex.bp] || 'var(--label-3)'
 
@@ -354,9 +349,9 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
           background: `color-mix(in srgb,${bpColor} 16%,var(--surface-2))`,
           color: bpColor,
           border: `1px solid color-mix(in srgb,${bpColor} 28%,transparent)`,
-        }}>{t(ex.tg || ex.bp)}</span>
+        }}>{ex.tg ? muscleLabel(ex.tg) : bodyPartLabel(ex.bp)}</span>
       )}
-      {ex.eq && <span className="tag">{t(ex.eq)}</span>}
+      {ex.eq && <span className="tag">{equipmentLabel(ex.eq)}</span>}
       {best > 0 && <span className="tag nocap pr-ref">{t('Best:')} {fmtNum(best)} {S.unit}</span>}
     </div>
     {last && <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 4, fontSize: 13, color: 'var(--label-3)' }}><Icon name="history" style={{ fontSize: 11, flexShrink: 0, color: 'var(--label-3)' }} /><span>{fmtDate(last.d)}: {last.sets.map(s => setLabel(entry.id, s, last.target)).join(', ')}</span></div>}
