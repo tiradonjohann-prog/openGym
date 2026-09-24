@@ -3,10 +3,10 @@ import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, wo
 import { EXDB } from './exercises.js'
 
 // Real ids out of the shipped catalogue, so the body-part fallback is exercised for real.
-const CARDIO = EXDB.find(e => e.bp === 'cardio').id
+const CARDIO = EXDB.find(e => e.bp === 'CARDIO').id
 // A *loaded* lift: the catalogue's first non-cardio entry is a sit-up, which since issue #32
 // defaults to bodyweight and would quietly send every label test down the other path.
-const LIFT = EXDB.find(e => e.bp !== 'cardio' && e.eq !== 'body weight').id
+const LIFT = EXDB.find(e => e.bp !== 'CARDIO' && e.eq !== 'body weight').id
 const BW = EXDB.find(e => e.eq === 'body weight').id
 
 describe('modeOf', () => {
@@ -254,12 +254,12 @@ describe('logging effort across a session', () => {
 
 describe('defaultConfig', () => {
   it('gives each mode a sensible starting point', () => {
-    expect(defaultConfig(LIFT)).toEqual({ sets: 3, reps: 10, weight: 0, mode: 'reps' })
+    expect(defaultConfig(LIFT)).toEqual({ sets: 3, reps: 10, repsPerSet: [10, 10, 10], weight: 0, mode: 'reps' })
     expect(defaultConfig(CARDIO)).toEqual({ sets: 1, min: 20, speed: 8 })
     expect(defaultConfig(LIFT, 'time')).toEqual({ sets: 3, sec: 45, weight: 0, mode: 'time' })
   })
   it('seeds the bodyweight flag from the catalogue, and only when it is true', () => {
-    expect(defaultConfig(BW)).toEqual({ sets: 3, reps: 10, weight: 0, mode: 'reps', bodyweight: true })
+    expect(defaultConfig(BW)).toEqual({ sets: 3, reps: 10, repsPerSet: [10, 10, 10], weight: 0, mode: 'reps', bodyweight: true })
     expect(defaultConfig(BW, 'time')).toEqual({ sets: 3, sec: 45, weight: 0, mode: 'time', bodyweight: true })
     expect('bodyweight' in defaultConfig(LIFT)).toBe(false)
   })
