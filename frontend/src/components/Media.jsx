@@ -1,22 +1,25 @@
+// frontend/src/components/Media.jsx
 import { useState, useRef } from 'react'
-import { imgSrc, gifSrc, swVideoSrc } from '../lib/exercises.js'
+import { imgSrc, gifSrc, videoSrc, photoSrc } from '../lib/exercises.js'
 import { useStore } from '../store/useStore.js'
 import { t } from '../lib/i18n.js'
 import Icon from './Icon.jsx'
 
-// Plays SmartWorkout MP4 or falls back to the GIF animation.
-// Tap toggles pause/play (video) or animation/still (GIF).
+// Plays a SmartWorkout video, or falls back to a static photo, or (residual cardio
+// exercises only) a GIF/still image. Tap toggles pause/play (video) or animation/still (GIF).
 // `compact` shrinks it for superset cards.
 // `minimizable` adds a persistent minimize/expand button (workout view, issue #12).
 export default function Media({ ex, id, compact, minimizable }) {
-  const videoUrl = swVideoSrc(ex.id)
+  const videoUrl = videoSrc(ex)
+  const photoUrl = photoSrc(ex)
   const [mode, setMode] = useState(videoUrl ? 'video' : 'gif')
   const [playing, setPlaying] = useState(true)
   const gifSize = useStore(s => s.S.gifSize)
   const update = useStore(s => s.update)
   const videoRef = useRef(null)
 
-  if (!ex.gif && !videoUrl) return null
+  const hasGif = !!ex.gif
+  if (!hasGif && !videoUrl && !photoUrl) return null
 
   const mini = minimizable && gifSize === 'mini'
   const toggleSize = e => { e.stopPropagation(); update(s => { s.gifSize = mini ? 'full' : 'mini' }) }
@@ -42,14 +45,16 @@ export default function Media({ ex, id, compact, minimizable }) {
           loop
           playsInline
           style={{ width: '100%', display: 'block', borderRadius: 'inherit' }}
-          onError={() => setMode('gif')}
+          onError={() => setMode(hasGif ? 'gif' : 'photo')}
         />
+      ) : mode === 'gif' && hasGif ? (
+        <img decoding="async" src={playing ? gifSrc(ex) : imgSrc(ex)} alt={ex.n} />
       ) : (
-        ex.gif && <img decoding="async" src={playing ? gifSrc(ex) : imgSrc(ex)} alt={ex.n} />
+        photoUrl && <img decoding="async" src={photoUrl} alt={ex.n} />
       )}
 
-      {/* GIF / VIDEO toggle — only shown when both are available */}
-      {videoUrl && ex.gif && !mini && (
+      {/* GIF / VIDEO toggle — only shown when both are available (residual cardio) */}
+      {videoUrl && hasGif && !mini && (
         <button
           className="giftoggle"
           onClick={e => { e.stopPropagation(); setMode(m => m === 'video' ? 'gif' : 'video') }}
@@ -65,12 +70,10 @@ export default function Media({ ex, id, compact, minimizable }) {
         </button>
       )}
 
-      {!mini && (
+      {!mini && mode !== 'photo' && (
         <span className="gifhint">
           <Icon name={playing ? 'pause' : 'play'} />
-          {mode === 'video'
-            ? (playing ? t('tap to pause') : t('tap to play'))
-            : (playing ? t('tap to pause') : t('tap to play'))}
+          {playing ? t('tap to pause') : t('tap to play')}
         </span>
       )}
     </div>
@@ -78,6 +81,8 @@ export default function Media({ ex, id, compact, minimizable }) {
 }
 
 export function Thumb({ ex }) {
-  if (!ex.img) return <div className="thumb thumb-x"><Icon name="dumbbell" /></div>
-  return <img className="thumb" loading="lazy" decoding="async" src={imgSrc(ex)} alt="" />
+  if (ex.img) return <img className="thumb" loading="lazy" decoding="async" src={imgSrc(ex)} alt="" />
+  const photo = photoSrc(ex)
+  if (photo) return <img className="thumb" loading="lazy" decoding="async" src={photo} alt="" />
+  return <div className="thumb thumb-x"><Icon name="dumbbell" /></div>
 }
