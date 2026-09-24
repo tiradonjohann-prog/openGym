@@ -47,4 +47,7 @@ describe('exerciseLabels', () => {
     expect(muscleLabel('CHEST_MIDDLE')).toBe('Pectoral moyen')
     expect(muscleLabel('UNKNOWN_MUSCLE')).toBe('Unknown Muscle')
   })
+  it('routes legacy muscle targets through t() when not in MUSCLE_LABELS_FR', () => {
+    expect(muscleLabel('cardiovascular system')).toBe('système cardiovasculaire')
+  })
 })

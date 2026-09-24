@@ -67,7 +67,18 @@ export const bodyPartLabel = code => BODY_PART_LABELS_FR[code] || prettify(code)
 export const mechanicsLabel = code => MECHANICS_LABELS_FR[code] || prettify(code)
 export const lateralityLabel = code => LATERALITY_LABELS_FR[code] || prettify(code)
 export const weightTypeLabel = code => WEIGHT_TYPE_LABELS_FR[code] || prettify(code)
-export const muscleLabel = key => MUSCLE_LABELS_FR[key] || prettify(key)
+export const muscleLabel = key => {
+  if (!key) return '—'
+  const knownLabel = MUSCLE_LABELS_FR[key]
+  if (knownLabel) return knownLabel
+  // Residual cardio exercises carry tg: 'cardiovascular system', which has a working
+  // translation in t() (frontend/src/locales/fr.js) but isn't a MUSCLE_LABELS_FR key.
+  // Try t() first before prettifying uppercase enum codes.
+  const legacyLabel = t(key)
+  if (legacyLabel !== key) return legacyLabel // t() found a translation
+  // Unknown key: prettify (e.g., 'SOME_UNKNOWN_MUSCLE' → 'Some Unknown Muscle')
+  return prettify(key)
+}
 export const equipmentLabel = code => {
   if (!code) return '—'
   if (code === 'body weight') return t(code) // legacy sentinel, kept on the old t() path
