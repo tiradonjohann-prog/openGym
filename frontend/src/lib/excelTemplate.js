@@ -6,21 +6,23 @@
 //   Sheet "Lists"     — hidden reference sheet; one column per muscle group
 //
 // Cascading dropdown mechanism:
-//   Column E = Muscle group    → standard list validation from all body parts
-//   Column F = Exercise        → INDIRECT(SUBSTITUTE(E2," ","_")) lookup
+//   Column E = Muscle group    → list validation shows French labels (bodyPartLabel)
+//   Column F = Exercise        → INDIRECT(VLOOKUP(E2, helper range, 2, FALSE)) lookup
 //
-// Each body part has a named range (e.g., "upper_legs") pointing to its
-// exercises column in the Lists sheet.  The SUBSTITUTE converts the display
-// name ("upper legs") to the named range name ("upper_legs") at runtime in
-// Excel, so the exercise list refreshes automatically when the muscle group
-// is changed.
+// Each body part has a named range (e.g., "CHEST") pointing to its
+// exercises column in the Lists sheet, keyed by the raw ASCII code (named ranges
+// can't safely contain spaces/accents). Since column E now displays French labels,
+// a hidden helper column on the Lists sheet maps French label → range name; column
+// F's VLOOKUP resolves the label back to the range name so the exercise list
+// refreshes automatically when the muscle group is changed.
 
 import { EXDB } from './exercises.js'
+import { bodyPartLabel } from './exerciseLabels.js'
 import { MOBILE, shareMobileFile } from './mobile.js'
 
 // Sorted list of all body parts present in the exercise database
 const BODY_PARTS = [...new Set(EXDB.map(e => e.bp))].sort()
-// ['back','cardio','chest','lower arms','lower legs','neck','shoulders','upper arms','upper legs','waist']
+// ['ABS','BACK','BICEPS','CARDIO','CHEST','FOREARMS','GLUTEUS','LEGS','SHOULDERS','TRICEPS']
 
 // Named range names must not contain spaces → replace with underscores
 const toRangeName = bp => bp.replace(/ /g, '_')
@@ -116,7 +118,7 @@ export async function downloadExcelTemplate() {
     ["  - Laisser L/M/N/O/P/Q/R/S vides sur les lignes exercice"],                                     // 39
     ["  Ligne 1 : Type Cardio=warmup | Sport=run | Duree=10 | Intensite=2"],                           // 40
     ["  Ligne 2 : N Exercice=1 | Exercice=Barbell Bench Press | Series=3 | Reps=10"],                  // 41
-    ["  Ligne 3 : N Exercice=2 | Exercice=Barbell Back Squat | Series=3 | Reps=8"],                    // 42
+    ["  Ligne 3 : N Exercice=2 | Exercice=Barbell Squat | Series=3 | Reps=8"],                          // 42
     ["  Ligne 4 : Type Cardio=interval | Sport=run | Intervalles=6 | Travail=60 | Recup=90 | Intensite=4"], // 43
     ["  Ligne 5 : Type Cardio=cooldown | Sport=run | Duree=5 | Intensite=1"],                          // 44
     [""],                                                                                                // 45
@@ -181,18 +183,18 @@ export async function downloadExcelTemplate() {
   const C = ''  // empty cell shorthand
   const examples = [
     // ── Upper A — pure strength with superset ──────────────────────────────
-    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 1,    bp: 'chest',      ex: 'Barbell Bench Press',    tempo: '4010', sets: 4, reps: 8,  weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2A', bp: 'shoulders',  ex: 'Barbell Overhead Press', tempo: '',     sets: 3, reps: 10, weight: C, rest: 0,   cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2B', bp: 'upper arms', ex: 'Triceps Pushdown',       tempo: '',     sets: 3, reps: 12, weight: C, rest: 60,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 3,    bp: 'back',       ex: 'Pull-up',                tempo: '3010', sets: 4, reps: 8,  weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 1,    bp: 'Pectoraux', ex: 'Barbell Bench Press',      tempo: '4010', sets: 4, reps: 8,  weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2A', bp: 'Épaules',   ex: 'Barbell Overhead Press',   tempo: '',     sets: 3, reps: 10, weight: C, rest: 0,   cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2B', bp: 'Triceps',   ex: 'Cable Triceps Pushdown',   tempo: '',     sets: 3, reps: 12, weight: C, rest: 60,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 3,    bp: 'Dos',       ex: 'Pull-Up',                  tempo: '3010', sets: 4, reps: 8,  weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
     // ── Lower A — pure strength ────────────────────────────────────────────
-    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 1,    bp: 'upper legs', ex: 'Barbell Back Squat',     tempo: '4010', sets: 4, reps: 6,  weight: C, rest: 120, cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 2,    bp: 'upper legs', ex: 'Romanian Deadlift',      tempo: '',     sets: 3, reps: 10, weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 3,    bp: 'lower legs', ex: 'Standing Calf Raise',    tempo: '',     sets: 4, reps: 15, weight: C, rest: 60,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 1,    bp: 'Jambes',    ex: 'Barbell Squat',            tempo: '4010', sets: 4, reps: 6,  weight: C, rest: 120, cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 2,    bp: 'Jambes',    ex: 'Dumbbell Romanian Deadlift', tempo: '',   sets: 3, reps: 10, weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 3,    bp: 'Jambes',    ex: 'Standing Calf Raise',      tempo: '',     sets: 4, reps: 15, weight: C, rest: 60,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
     // ── Full Body — hybride force + cardio ─────────────────────────────────
     { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: C, bp: C, ex: C, tempo: C, sets: C, reps: C, weight: C, rest: C, cardioType: 'warmup',   cardioSport: 'run', cardioDur: 10, cardioDist: C, cardioInt: '2 - Facile',    cardioRep: C, cardioWork: C,  cardioRest: C  },
-    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: 1,  bp: 'chest',      ex: 'Barbell Bench Press',   tempo: '4010', sets: 3, reps: 10, weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: 2,  bp: 'upper legs', ex: 'Barbell Back Squat',    tempo: '4010', sets: 3, reps: 8,  weight: C, rest: 120, cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: 1,  bp: 'Pectoraux', ex: 'Barbell Bench Press',      tempo: '4010', sets: 3, reps: 10, weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: 2,  bp: 'Jambes',    ex: 'Barbell Squat',            tempo: '4010', sets: 3, reps: 8,  weight: C, rest: 120, cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
     { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: C, bp: C, ex: C, tempo: C, sets: C, reps: C, weight: C, rest: C, cardioType: 'interval', cardioSport: 'run', cardioDur: C,  cardioDist: C, cardioInt: '4 - Difficile', cardioRep: 6, cardioWork: 60, cardioRest: 90 },
     { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: C, bp: C, ex: C, tempo: C, sets: C, reps: C, weight: C, rest: C, cardioType: 'cooldown', cardioSport: 'run', cardioDur: 5,  cardioDist: C, cardioInt: '1 - Tres facile',cardioRep: C, cardioWork: C,  cardioRest: C  },
   ]
@@ -226,7 +228,9 @@ export async function downloadExcelTemplate() {
   })
 
   // ── 5. Data validation: Muscle Group (E2:E2000) ───────────────────────
-  const bpListFormula = '"' + BODY_PARTS.join(',') + '"'
+  // Data validation shows French labels; the named ranges underneath still key off
+  // the raw BODY_PARTS codes (Lists sheet column headers), resolved via toRangeName.
+  const bpListFormula = '"' + BODY_PARTS.map(bodyPartLabel).join(',') + '"'
   ws.dataValidations.add('E2:E2000', { type: 'list', allowBlank: true, formulae: [bpListFormula], showErrorMessage: false })
 
   // ── 5b. Data validation: Cardio fields (L, M, P) ─────────────────────
@@ -234,12 +238,25 @@ export async function downloadExcelTemplate() {
   ws.dataValidations.add('M2:M2000', { type: 'list', allowBlank: true, formulae: ['"run,walk,bike,swim,aqua"'], showErrorMessage: false })
   ws.dataValidations.add('P2:P2000', { type: 'list', allowBlank: true, formulae: ['"1 - Tres facile,2 - Facile,3 - Modere,4 - Difficile,5 - Maximal"'], showErrorMessage: false })
 
-  // ── 6. Data validation: Exercise (F2:F2000) — cascading via INDIRECT ─
+  // ── 6. Data validation: Exercise (F2:F2000) — cascading via VLOOKUP ──
+  // Helper column (far right of Lists) mapping French label -> range name, used by
+  // column F's INDIRECT lookup since the visible dropdown (E) now shows French labels
+  // but named ranges must stay ASCII-safe.
+  const helperCol = BODY_PARTS.length + 1
+  BODY_PARTS.forEach((bp, i) => {
+    listsWs.getCell(i + 1, helperCol).value = bodyPartLabel(bp)
+    listsWs.getCell(i + 1, helperCol + 1).value = toRangeName(bp)
+  })
+  const helperRangeRef = `Lists!$${colLetter(helperCol - 1)}$1:$${colLetter(helperCol)}$${BODY_PARTS.length}`
   // Single range → one <dataValidation sqref="F2:F2000"> entry in the XML.
   // Excel resolves E2 as a relative reference per row: F10 reads E10, etc.
   // Cell-by-cell loops produce multiple overlapping sqref entries whose
   // relative anchors break (F10 reads E2 instead of E10).
-  ws.dataValidations.add('F2:F2000', { type: 'list', allowBlank: true, formulae: ['INDIRECT(SUBSTITUTE(E2," ","_"))'], showErrorMessage: false })
+  ws.dataValidations.add('F2:F2000', {
+    type: 'list', allowBlank: true,
+    formulae: [`INDIRECT(VLOOKUP(E2,${helperRangeRef},2,FALSE))`],
+    showErrorMessage: false,
+  })
 
   // Alternate row shading for user-added rows (after examples)
   for (let row = examples.length + 2; row <= 2000; row++) {
