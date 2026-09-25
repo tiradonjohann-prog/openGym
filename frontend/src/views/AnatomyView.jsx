@@ -5,12 +5,13 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { AnatomyModel } from '../components/anatomy3d/AnatomyModel.jsx'
+import { AnatomyModel, FallbackMesh } from '../components/anatomy3d/AnatomyModel.jsx'
 import { exercisesTargeting } from '../lib/anatomy3d.js'
 import { muscleLabel } from '../lib/exerciseLabels.js'
 import { exerciseDetailSheet } from '../sheets.jsx'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
+import { dragGuard } from '../lib/dragGuard.js'
 
 // Same helper sheets.jsx keeps locally (`const ui = () => useUI.getState()`) — the
 // real mechanism every sheet in the app uses is `useUI.getState().openSheet(render, opts)`.
@@ -36,7 +37,9 @@ function openMuscleExercisesSheet(muscleKey) {
     <>
       <h3>{muscleLabel(muscleKey)}</h3>
       <div className="small muted" style={{ marginBottom: 10 }}>
-        {t('{0} exercises target this muscle', list.length)}
+        {list.length > 30
+          ? t('Showing top {0} of {1} exercises', Math.min(list.length, 30), list.length)
+          : t('{0} exercises target this muscle', list.length)}
       </div>
       <div className="list">
         {list.slice(0, 30).map(ex => (
@@ -79,7 +82,11 @@ export default function AnatomyView() {
   }
 
   return (
-    <div style={{ position: 'absolute', inset: 0 }}>
+    <div
+      style={{ position: 'absolute', inset: 0 }}
+      onPointerDown={e => dragGuard.start(e.clientX, e.clientY)}
+      onPointerMove={e => dragGuard.check(e.clientX, e.clientY)}
+    >
       <button className="iconbtn" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }} onClick={() => nav(-1)} aria-label={t('Back')}>
         <Icon name="chevronLeft" />
       </button>
@@ -104,7 +111,7 @@ export default function AnatomyView() {
           maxDistance={12}
           target={CAMERA_TARGET}
         />
-        <Suspense fallback={null}>
+        <Suspense fallback={<FallbackMesh />}>
           <AnatomyModel
             modelUrl={modelUrl}
             heatmap={heatmap}

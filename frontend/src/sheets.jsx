@@ -452,7 +452,7 @@ function ExerciseDetail({ ex, close }) {
       <button
         className="btn tinted sm"
         style={{ marginTop: 8 }}
-        onClick={() => nav('/anatomy', { state: { muscles } })}
+        onClick={() => { close(); nav('/anatomy', { state: { muscles } }) }}
       >
         <Icon name="cube" /> {t('View in 3D')}
       </button>

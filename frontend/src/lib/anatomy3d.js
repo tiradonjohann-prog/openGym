@@ -24,20 +24,6 @@ function stripBlenderSuffix(name) {
   return name.replace(/\.\d+$/, '')
 }
 
-// Translates an exercise's `exercise_muscles` activation map into the 3D mesh
-// names that should be colored, with their activation value (0 excluded).
-export function meshesForMuscles(exerciseMuscles) {
-  if (!exerciseMuscles || typeof exerciseMuscles !== 'object') return []
-  const out = []
-  for (const [key, value] of Object.entries(exerciseMuscles)) {
-    if (typeof value !== 'number' || value <= 0) continue
-    const entry = muscleMeshMap[key]
-    if (!entry) continue
-    for (const meshName of entry.meshes) out.push({ meshName, value })
-  }
-  return out
-}
-
 // Resolves a clicked mesh's raw name to its muscle key, or null if the mesh
 // isn't part of the muscle-mesh map (e.g. a bone or connective-tissue mesh).
 export function muscleKeyForMesh(meshName) {
