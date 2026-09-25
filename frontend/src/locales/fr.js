@@ -66,6 +66,7 @@ export default {
   "No entries yet — log your weight to start the curve. It's also asked before every workout.": "Aucune entrée — note ton poids pour démarrer la courbe. Il est aussi demandé avant chaque séance.",
   'Best:': 'Record :',
   'Add to my plan': 'Ajouter à mon plan',
+  'View in 3D': 'Voir en 3D',
   'How to': 'Exécution',
   'instructions in English': 'instructions en anglais',
   'Instructions': 'Instructions',

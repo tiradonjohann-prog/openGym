@@ -448,6 +448,15 @@ function ExerciseDetail({ ex, close }) {
     </div>
     {description && <div className="exnote">{description}</div>}
     {Object.keys(muscles).length > 0 && <MuscleActivation muscles={muscles} />}
+    {Object.keys(muscles).length > 0 && (
+      <button
+        className="btn tinted sm"
+        style={{ marginTop: 8 }}
+        onClick={() => nav('/anatomy', { state: { muscles } })}
+      >
+        <Icon name="cube" /> {t('View in 3D')}
+      </button>
+    )}
     {instructions.length > 0 && <>
       <h4 className="sec" style={{ marginTop: 14, marginBottom: 8 }}>{t('Instructions')}</h4>
       <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13.5, lineHeight: 1.7 }}>
