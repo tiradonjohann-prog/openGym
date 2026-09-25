@@ -400,6 +400,8 @@ export default {
   '{0} exercises target this muscle': '{0} exercices sollicitent ce muscle',
   'No exercises found for this muscle.': 'Aucun exercice trouvé pour ce muscle.',
   'Showing top {0} of {1} exercises': 'Affichage de {0} sur {1} exercices',
+  '3D': '3D',
+  'Close': 'Fermer',
   'Less': 'Moins',
   'More': 'Plus',
   'Traps': 'Trapèzes',

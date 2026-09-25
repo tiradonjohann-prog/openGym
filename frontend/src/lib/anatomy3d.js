@@ -24,11 +24,50 @@ function stripBlenderSuffix(name) {
   return name.replace(/\.\d+$/, '')
 }
 
+// This GLB duplicates every muscle mesh 2-3x with an extra infix before the
+// left/right side letter — e.g. "musclel" (base), "muscleol" ("o" variant),
+// "musclee1l"/"musclee2l" ("e"/"e1"/"e2" variants) — almost certainly
+// outline/shell duplicates for the toon-shader look. muscle-mesh-map.json
+// only lists the base name, so a raycast hit on one of these duplicates
+// needs the infix stripped before lookup.
+const VARIANT_INFIXES = ['e2', 'e1', 'e', 'o']
+
 // Resolves a clicked mesh's raw name to its muscle key, or null if the mesh
 // isn't part of the muscle-mesh map (e.g. a bone or connective-tissue mesh).
 export function muscleKeyForMesh(meshName) {
   const normalized = stripBlenderSuffix(meshName).replace(/_/g, ' ')
-  return MESH_NAME_TO_KEY[normalized] ?? null
+  const direct = MESH_NAME_TO_KEY[normalized]
+  if (direct != null) return direct
+
+  const base = stripVariantInfix(normalized)
+  if (base === normalized) return null
+  return MESH_NAME_TO_KEY[base] ?? null
+}
+
+// True when this mesh's name carries one of the extra-infix duplicate
+// markers (see VARIANT_INFIXES above) AND the plain base name it duplicates
+// also exists in the GLB — i.e. this mesh is one of the redundant
+// overlapping copies, not the sole representation of that body part. These
+// duplicates all occupy virtually the same geometry, so leaving them all
+// visible causes z-fighting that hides whatever material (heatmap/selected
+// color) was applied to the base mesh. `knownMeshNames` is the full set of
+// raw mesh names in the loaded GLB.
+export function isDuplicateMeshVariant(meshName, knownMeshNames) {
+  const normalized = stripBlenderSuffix(meshName).replace(/_/g, ' ')
+  const base = stripVariantInfix(normalized)
+  if (base === normalized) return false
+  const baseRaw = base.replace(/ /g, '_')
+  return knownMeshNames.has(baseRaw) && baseRaw !== meshName
+}
+
+function stripVariantInfix(normalized) {
+  const side = normalized.slice(-1)
+  const isSided = side === 'l' || side === 'r' || side === 'L' || side === 'R'
+  const stem = isSided ? normalized.slice(0, -1) : normalized
+  for (const infix of VARIANT_INFIXES) {
+    if (stem.endsWith(infix)) return isSided ? stem.slice(0, -infix.length) + side : stem.slice(0, -infix.length)
+  }
+  return normalized
 }
 
 // Every exercise whose exercise_muscles includes this key with a positive

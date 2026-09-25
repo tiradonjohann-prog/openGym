@@ -82,7 +82,25 @@ function layerFromColor(mat) {
   return null
 }
 
+// Fascia and other connective-tissue sheets wrap directly over the muscle
+// surface in this GLB. Their mesh names never match BONE/LIGAMENT/ORGAN/SKIN_WORDS
+// (fascia isn't a ligament), so they used to fall through to the 'muscles'
+// default layer and render as an opaque, featureless shell hiding the
+// actual (detailed, clickable) muscle mesh underneath — the same list
+// already used to disable clicks on them below.
+const NON_CLICKABLE = [
+  'fascia', 'bursa', 'bursae', 'aponeurosis', 'retinaculum', 'membrane',
+  'tract', 'alba', 'septum', 'sheath', 'capsule', 'labrum', 'symphysis',
+  'arch', 'zona', 'cord', 'investing', 'interosseous', 'iliotibial',
+  'transversalis', 'crural', 'popliteal', 'deltoid fascia', 'lata',
+]
+function isNonClickable(name) {
+  const n = name.toLowerCase()
+  return NON_CLICKABLE.some(w => n.includes(w))
+}
+
 function getMeshLayer(mesh) {
+  if (isNonClickable(mesh.name)) return 'connective'
   const n = layerFromName(mesh.name)
   if (n) return n
   const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
@@ -95,25 +113,14 @@ function getMeshLayer(mesh) {
   return 'muscles'
 }
 
-const NON_CLICKABLE = [
-  'fascia', 'bursa', 'bursae', 'aponeurosis', 'retinaculum', 'membrane',
-  'tract', 'alba', 'septum', 'sheath', 'capsule', 'labrum', 'symphysis',
-  'arch', 'zona', 'cord', 'investing', 'interosseous', 'iliotibial',
-  'transversalis', 'crural', 'popliteal', 'deltoid fascia', 'lata',
-]
-function isNonClickable(name) {
-  const n = name.toLowerCase()
-  return NON_CLICKABLE.some(w => n.includes(w))
-}
-
 // ─── Materials ────────────────────────────────────────────────────────────────
 
 let _muscleMat = null
 function muscleMat() {
   if (!_muscleMat) {
     _muscleMat = new THREE.MeshPhysicalMaterial({
-      color: '#B85858', roughness: 0.72, metalness: 0.0,
-      sheen: 0.5, sheenRoughness: 0.75, sheenColor: new THREE.Color('#FF9090'),
+      color: '#D98BA0', roughness: 0.72, metalness: 0.0,
+      sheen: 0.5, sheenRoughness: 0.75, sheenColor: new THREE.Color('#FFC2D6'),
       clearcoat: 0.12, clearcoatRoughness: 0.7,
     })
   }
@@ -137,6 +144,30 @@ const DIM_MAT = new THREE.MeshStandardMaterial({
   transparent: true, opacity: 0.35, depthWrite: false,
 })
 
+// Skeleton shown faintly through the muscle layer for anatomical context —
+// low opacity, no depth write so it never fights the opaque muscles for
+// z-order (it should always read as "behind" them).
+const BONE_MAT = new THREE.MeshStandardMaterial({
+  color: '#ECE4D0', roughness: 0.55, metalness: 0.05,
+  transparent: true, opacity: 0.65, depthWrite: false,
+})
+
+// Applied to whichever muscle the user last clicked, regardless of heatmap
+// state — takes priority over the heatmap/default coloring so a click's
+// result is always visible.
+let _selectedMat = null
+function selectedMat() {
+  if (!_selectedMat) {
+    _selectedMat = new THREE.MeshPhysicalMaterial({
+      color: '#B85858', roughness: 0.48, metalness: 0.0,
+      sheen: 0.4, sheenRoughness: 0.7, sheenColor: new THREE.Color('#FF9090'),
+      clearcoat: 0.18, clearcoatRoughness: 0.55,
+      emissive: new THREE.Color('#5A1010'), emissiveIntensity: 0.3,
+    })
+  }
+  return _selectedMat
+}
+
 // ─── Fallback + error boundary ─────────────────────────────────────────────────
 
 export function FallbackMesh() {
@@ -156,7 +187,7 @@ class ModelErrorBoundary extends Component {
 
 // ─── Model content ──────────────────────────────────────────────────────────────
 
-function ModelContent({ modelUrl, heatmap, onMuscleClick }) {
+function ModelContent({ modelUrl, heatmap, selectedMuscleKey, onMuscleClick }) {
   const { scene } = useGLTF(modelUrl)
   const groupRef = useRef()
   const [ready, setReady] = useState(false)
@@ -166,7 +197,7 @@ function ModelContent({ modelUrl, heatmap, onMuscleClick }) {
     scene.traverse(obj => {
       if (!obj.isMesh) return
       obj.userData.layer = getMeshLayer(obj)
-      obj.userData.clickable = !isNonClickable(obj.name)
+      obj.userData.clickable = obj.userData.layer === 'muscles' && !isNonClickable(obj.name)
       if (!obj.userData.clickable) obj.raycast = () => {}
       acc.push(obj)
     })
@@ -176,21 +207,30 @@ function ModelContent({ modelUrl, heatmap, onMuscleClick }) {
   useEffect(() => {
     const hasHeatmap = heatmap && Object.keys(heatmap).length > 0
     for (const mesh of meshes) {
+      if (mesh.userData.layer === 'bones') {
+        mesh.visible = true
+        mesh.material = BONE_MAT
+        continue
+      }
       if (mesh.userData.layer !== 'muscles') {
         mesh.visible = false
         continue
       }
       mesh.visible = true
+      const key = muscleKeyForMesh(mesh.name)
+      if (selectedMuscleKey && key === selectedMuscleKey) {
+        mesh.material = selectedMat()
+        continue
+      }
       if (!hasHeatmap) {
         mesh.material = muscleMat()
         continue
       }
-      const key = muscleKeyForMesh(mesh.name)
       const pct = key ? (heatmap[key] ?? 0) : 0
       mesh.material = pct > 0 ? heatmapMat(pct) : DIM_MAT
     }
     setReady(true)
-  }, [meshes, heatmap])
+  }, [meshes, heatmap, selectedMuscleKey])
 
   function handleClick(e) {
     e.stopPropagation()
@@ -199,7 +239,7 @@ function ModelContent({ modelUrl, heatmap, onMuscleClick }) {
     if (!mesh?.isMesh) return
     if (mesh.userData.layer !== 'muscles' || !mesh.userData.clickable) return
     const key = muscleKeyForMesh(mesh.name)
-    if (key) onMuscleClick(key)
+    if (key) onMuscleClick(key, mesh)
   }
 
   return (
@@ -211,10 +251,10 @@ function ModelContent({ modelUrl, heatmap, onMuscleClick }) {
 
 // ─── Public component ─────────────────────────────────────────────────────────
 
-export function AnatomyModel({ modelUrl, heatmap, onMuscleClick }) {
+export function AnatomyModel({ modelUrl, heatmap, selectedMuscleKey, onMuscleClick }) {
   return (
     <ModelErrorBoundary fallback={<FallbackMesh />}>
-      <ModelContent modelUrl={modelUrl} heatmap={heatmap} onMuscleClick={onMuscleClick} />
+      <ModelContent modelUrl={modelUrl} heatmap={heatmap} selectedMuscleKey={selectedMuscleKey} onMuscleClick={onMuscleClick} />
     </ModelErrorBoundary>
   )
 }
