@@ -392,6 +392,8 @@ export default {
   'Body diagram': 'Schéma du corps',
   'Male': 'Homme',
   'Female': 'Femme',
+  'Explore anatomy': 'Explorer l\'anatomie',
+  '3D body, muscles and matching exercises': 'Corps en 3D, muscles et exercices associés',
   'Less': 'Moins',
   'More': 'Plus',
   'Traps': 'Trapèzes',

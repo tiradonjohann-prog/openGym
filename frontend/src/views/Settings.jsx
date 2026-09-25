@@ -196,6 +196,11 @@ export default function Settings() {
           onChange={v => update(s => { s.body = v })}
         />
       </Row>
+      {/* No state passed — AnatomyView's location.state?.muscles resolves to null, so the body
+          renders neutral (no heatmap) for free exploration. */}
+      <Row icon="cube" iconTint="var(--indigo)" title={t("Explore anatomy")}
+        subtitle={t("3D body, muscles and matching exercises")}
+        accessory="chevron" onClick={() => nav('/anatomy')} />
       <div className="lrow" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12, paddingTop: 13, paddingBottom: 14 }}>
         <span className="lrow-t">{t("Accent color")}</span>
         <div className="swatches">
