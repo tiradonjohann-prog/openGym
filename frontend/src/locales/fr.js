@@ -401,6 +401,7 @@ export default {
   'No exercises found for this muscle.': 'Aucun exercice trouvé pour ce muscle.',
   'Showing top {0} of {1} exercises': 'Affichage de {0} sur {1} exercices',
   '3D': '3D',
+  'Front/back': 'Face avant/arrière',
   'Close': 'Fermer',
   'Less': 'Moins',
   'More': 'Plus',

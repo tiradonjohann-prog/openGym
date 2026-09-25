@@ -239,7 +239,7 @@ function ModelContent({ modelUrl, heatmap, selectedMuscleKey, onMuscleClick }) {
     if (!mesh?.isMesh) return
     if (mesh.userData.layer !== 'muscles' || !mesh.userData.clickable) return
     const key = muscleKeyForMesh(mesh.name)
-    if (key) onMuscleClick(key, mesh)
+    if (key) onMuscleClick?.(key, mesh)
   }
 
   return (

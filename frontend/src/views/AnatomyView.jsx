@@ -6,6 +6,7 @@ import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore } from '../store/useStore.js'
 import { AnatomyModel, FallbackMesh } from '../components/anatomy3d/AnatomyModel.jsx'
+import { SplitViewRenderer } from '../components/anatomy3d/SplitViewRenderer.jsx'
 import { exercisesTargeting } from '../lib/anatomy3d.js'
 import { muscleLabel } from '../lib/exerciseLabels.js'
 import { focusMesh, dezoom } from '../lib/cameraUtils.js'
@@ -13,6 +14,7 @@ import { exerciseDetailSheet } from '../sheets.jsx'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
 import { dragGuard } from '../lib/dragGuard.js'
+import { Segmented } from '../components/ui.jsx'
 
 export function hasWebGL() {
   try {
@@ -63,11 +65,19 @@ export default function AnatomyView() {
   // { muscleKey, mesh } | null — the single source of truth for both the
   // model's highlight color and the side/bottom exercise panel.
   const [selected, setSelected] = useState(null)
+  // Split view is a look-only mode (fixed front/back cameras) — no orbit,
+  // no muscle selection while it's active.
+  const [splitView, setSplitView] = useState(false)
 
   const handleMuscleClick = useCallback((muscleKey, mesh) => {
     setSelected(prev => (prev?.muscleKey === muscleKey ? null : { muscleKey, mesh }))
   }, [])
   const deselect = useCallback(() => setSelected(null), [])
+
+  const setSplitViewOn = useCallback(v => {
+    setSplitView(v)
+    if (v) setSelected(null)
+  }, [])
 
   if (!webglOk) {
     return (
@@ -91,6 +101,17 @@ export default function AnatomyView() {
         <button className="iconbtn" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }} onClick={() => nav(-1)} aria-label={t('Back')}>
           <Icon name="chevronLeft" />
         </button>
+        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
+          <Segmented
+            className="seg-inline"
+            options={[
+              { value: false, label: t('3D') },
+              { value: true, label: t('Front/back') },
+            ]}
+            value={splitView}
+            onChange={setSplitViewOn}
+          />
+        </div>
         <Canvas
           camera={{ position: CAMERA_POSITION, fov: 36, near: 0.1, far: 100 }}
           gl={{ antialias: true, alpha: false }}
@@ -103,6 +124,7 @@ export default function AnatomyView() {
           <directionalLight position={[-2, 5, -6]} intensity={0.5} color="#aaccff" />
           <OrbitControls
             makeDefault
+            enabled={!splitView}
             enablePan
             enableZoom
             enableRotate
@@ -113,13 +135,14 @@ export default function AnatomyView() {
             maxDistance={12}
             target={CAMERA_TARGET}
           />
+          {splitView && <SplitViewRenderer />}
           <CameraFocusController selectedMesh={selected?.mesh ?? null} />
           <Suspense fallback={<FallbackMesh />}>
             <AnatomyModel
               modelUrl={modelUrl}
               heatmap={heatmap}
               selectedMuscleKey={selected?.muscleKey ?? null}
-              onMuscleClick={handleMuscleClick}
+              onMuscleClick={splitView ? undefined : handleMuscleClick}
             />
           </Suspense>
         </Canvas>
