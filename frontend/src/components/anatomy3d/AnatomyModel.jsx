@@ -196,9 +196,15 @@ function ModelContent({ modelUrl, heatmap, selectedMuscleKey, onMuscleClick }) {
     const acc = []
     scene.traverse(obj => {
       if (!obj.isMesh) return
-      obj.userData.layer = getMeshLayer(obj)
-      obj.userData.clickable = obj.userData.layer === 'muscles' && !isNonClickable(obj.name)
-      if (!obj.userData.clickable) obj.raycast = () => {}
+      // `scene` is drei's cached, shared GLTF result — the same mesh objects
+      // come back on every mount of this component. Classification (name
+      // parsing across ~3000 meshes) is pure overhead the second time
+      // around, so skip it once userData.layer is already set.
+      if (!obj.userData.layer) {
+        obj.userData.layer = getMeshLayer(obj)
+        obj.userData.clickable = obj.userData.layer === 'muscles' && !isNonClickable(obj.name)
+        if (!obj.userData.clickable) obj.raycast = () => {}
+      }
       acc.push(obj)
     })
     return acc
@@ -244,7 +250,12 @@ function ModelContent({ modelUrl, heatmap, selectedMuscleKey, onMuscleClick }) {
 
   return (
     <group ref={groupRef} onClick={handleClick} visible={ready}>
-      <primitive object={scene} />
+      {/* dispose=null: `scene` is drei's cached, shared GLTF result (same object
+          across every mount of this component) — without this, R3F's default
+          unmount disposal tears down its geometries/materials, forcing a full
+          re-decode of the ~8MB Draco-compressed model on every visit to this
+          view instead of reusing the cache. */}
+      <primitive object={scene} dispose={null} />
     </group>
   )
 }
