@@ -1,11 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { App as CapApp } from '@capacitor/app'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { bindUI } from './components/ui.jsx'
 import { ACCENTS } from './lib/format.js'
-import { setLang, useLang } from './lib/i18n.js'
+import { setLang, useLang, t } from './lib/i18n.js'
 import { setNav } from './lib/nav.js'
 import { useWakeLock } from './lib/wakelock.js'
 import { startFlow } from './sheets.jsx'
@@ -29,6 +29,8 @@ import Nutrition from './views/Nutrition.jsx'
 import BodyWeight from './views/BodyWeight.jsx'
 import CardioWorkout from './views/CardioWorkout.jsx'
 import Onboarding from './views/Onboarding.jsx'
+
+const AnatomyView = lazy(() => import('./views/AnatomyView.jsx'))
 
 bindUI(useUI)   // lets the shared controls open sheets without importing the store at module scope
 
@@ -83,6 +85,7 @@ function Shell() {
               <Route path="/nutrition" element={<Nutrition />} />
               <Route path="/bodyweight" element={<BodyWeight />} />
               <Route path="/cardio" element={<CardioWorkout />} />
+              <Route path="/anatomy" element={<Suspense fallback={<div className="empty">{t('Loading…')}</div>}><AnatomyView /></Suspense>} />
               <Route path="/admin" element={user?.admin ? <Admin /> : <Navigate to="/home" replace />} />
               <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
