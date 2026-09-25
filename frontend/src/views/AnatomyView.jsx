@@ -98,7 +98,12 @@ export default function AnatomyView() {
         onPointerDown={e => dragGuard.start(e.clientX, e.clientY)}
         onPointerMove={e => dragGuard.check(e.clientX, e.clientY)}
       >
-        <button className="iconbtn" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }} onClick={() => nav(-1)} aria-label={t('Back')}>
+        <button
+          className="iconbtn"
+          style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}
+          onClick={() => (splitView ? setSplitViewOn(false) : nav(-1))}
+          aria-label={t('Back')}
+        >
           <Icon name="chevronLeft" />
         </button>
         {heatmap && (
