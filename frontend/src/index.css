@@ -1348,6 +1348,21 @@ input.num.imc-input{
 .anatomy-panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
 .anatomy-panel-hdr h3{margin:0}
 
+/* activation-heatmap color legend, shown over the 3D canvas in exercise mode */
+.anatomy-legend{
+  position:absolute;top:12px;right:12px;z-index:2;width:150px;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-radius:10px;padding:8px 10px;
+}
+.anatomy-legend-bar{
+  height:7px;border-radius:4px;
+  background:linear-gradient(to right,#2255FF,#00CC88 33%,#FFAA00 66%,#FF2200);
+}
+.anatomy-legend-labels{
+  display:flex;justify-content:space-between;margin-top:5px;
+  font-size:10px;color:rgba(255,255,255,.65);
+}
+
 /* --------------------------------------------------- desktop (≥1000px) --- */
 .cols{display:block}
 @media (min-width:1000px){

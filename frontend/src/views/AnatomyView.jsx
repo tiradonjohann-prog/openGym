@@ -109,6 +109,16 @@ export default function AnatomyView() {
         <button className="iconbtn" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }} onClick={() => nav(-1)} aria-label={t('Back')}>
           <Icon name="chevronLeft" />
         </button>
+        {effectiveHeatmap && (
+          <div className="anatomy-legend">
+            <div className="anatomy-legend-bar" />
+            <div className="anatomy-legend-labels">
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
+            </div>
+          </div>
+        )}
         <Canvas
           camera={{ position: CAMERA_POSITION, fov: 36, near: 0.1, far: 100 }}
           gl={{ antialias: true, alpha: false }}
