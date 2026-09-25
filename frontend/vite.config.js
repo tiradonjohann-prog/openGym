@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   server: {
+    host: true, // listen on the LAN, not just localhost — lets a phone on the same Wi-Fi open the dev server
     proxy: {
       '/api': { target: backend, changeOrigin: true },
       '/img': { target: media, changeOrigin: true },

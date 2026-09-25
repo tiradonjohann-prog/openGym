@@ -13,26 +13,48 @@ import { useMemo } from 'react'
 // half of the canvas, a back camera on the right — using viewport/scissor
 // per half. Only mounted while split view is active, so it adds no cost in
 // the normal orbit mode.
-export function SplitViewRenderer() {
-  const frontCam = useMemo(() => {
-    const cam = new THREE.PerspectiveCamera(40, 1, 0.1, 100)
-    cam.position.set(0, 0.8, 3.5)
-    cam.lookAt(0, 0.8, 0)
-    return cam
-  }, [])
+const FOV = 40
+// Half-extents (in world units, from the target point) the body must fit
+// inside, with some headroom/footroom and shoulder margin — used to pick a
+// camera distance that keeps the whole body in frame regardless of the
+// half-viewport's aspect ratio.
+const BODY_HALF_HEIGHT = 1.15
+const BODY_HALF_WIDTH = 0.5
 
-  const backCam = useMemo(() => {
-    const cam = new THREE.PerspectiveCamera(40, 1, 0.1, 100)
-    cam.position.set(0, 0.8, -3.5)
-    cam.lookAt(0, 0.8, 0)
-    return cam
-  }, [])
+// On a narrow phone-portrait screen, each split half is itself tall and
+// narrow (halfWidth = totalWidth/2, full height) — a fixed camera distance
+// tuned for a landscape-ish half crops the body's sides. Solving for
+// whichever of height/width is the binding constraint at the current
+// aspect keeps the full body (both views) in frame on any screen shape.
+function distanceToFit(aspect) {
+  const halfFovRad = (FOV * Math.PI) / 360
+  const tanHalfFov = Math.tan(halfFovRad)
+  const distanceForHeight = BODY_HALF_HEIGHT / tanHalfFov
+  const distanceForWidth = BODY_HALF_WIDTH / (aspect * tanHalfFov)
+  return Math.max(distanceForHeight, distanceForWidth)
+}
+
+export function SplitViewRenderer() {
+  const frontCam = useMemo(() => new THREE.PerspectiveCamera(FOV, 1, 0.1, 100), [])
+  const backCam = useMemo(() => new THREE.PerspectiveCamera(FOV, 1, 0.1, 100), [])
 
   useFrame(({ gl, scene }) => {
     const canvas = gl.domElement
     const w = canvas.width
     const h = canvas.height
     const halfW = Math.floor(w / 2)
+    const aspect = halfW / h
+    const distance = distanceToFit(aspect)
+
+    frontCam.aspect = aspect
+    frontCam.position.set(0, 0.8, distance)
+    frontCam.lookAt(0, 0.8, 0)
+    frontCam.updateProjectionMatrix()
+
+    backCam.aspect = aspect
+    backCam.position.set(0, 0.8, -distance)
+    backCam.lookAt(0, 0.8, 0)
+    backCam.updateProjectionMatrix()
 
     gl.autoClear = false
     gl.setScissorTest(true)
@@ -43,16 +65,12 @@ export function SplitViewRenderer() {
     gl.clear(true, true, false)
 
     // Front (left half)
-    frontCam.aspect = halfW / h
-    frontCam.updateProjectionMatrix()
     gl.setViewport(0, 0, halfW, h)
     gl.setScissor(0, 0, halfW, h)
     gl.clearDepth()
     gl.render(scene, frontCam)
 
     // Back (right half)
-    backCam.aspect = halfW / h
-    backCam.updateProjectionMatrix()
     gl.setViewport(halfW, 0, halfW, h)
     gl.setScissor(halfW, 0, halfW, h)
     gl.clearDepth()
