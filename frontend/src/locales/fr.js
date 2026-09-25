@@ -401,7 +401,6 @@ export default {
   'No exercises found for this muscle.': 'Aucun exercice trouvé pour ce muscle.',
   'Showing top {0} of {1} exercises': 'Affichage de {0} sur {1} exercices',
   '3D': '3D',
-  'Front/back': 'Face avant/arrière',
   'Leave this exercise?': 'Quitter cet exercice ?',
   'This muscle isn’t part of the exercise shown. Selecting it switches to free 3D exploration.': 'Ce muscle ne fait pas partie de l’exercice affiché. Le sélectionner bascule vers l’exploration 3D libre.',
   'View this muscle': 'Voir ce muscle',

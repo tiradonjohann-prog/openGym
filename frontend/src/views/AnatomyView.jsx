@@ -6,7 +6,6 @@ import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore } from '../store/useStore.js'
 import { AnatomyModel, FallbackMesh } from '../components/anatomy3d/AnatomyModel.jsx'
-import { SplitViewRenderer } from '../components/anatomy3d/SplitViewRenderer.jsx'
 import { exercisesTargeting } from '../lib/anatomy3d.js'
 import { muscleLabel } from '../lib/exerciseLabels.js'
 import { focusMesh, dezoom } from '../lib/cameraUtils.js'
@@ -14,7 +13,6 @@ import { exerciseDetailSheet, confirmSheet } from '../sheets.jsx'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
 import { dragGuard } from '../lib/dragGuard.js'
-import { Segmented } from '../components/ui.jsx'
 
 export function hasWebGL() {
   try {
@@ -35,40 +33,16 @@ const DEFAULT_DISTANCE = Math.hypot(
 
 // Lives inside the Canvas (needs useThree for camera/controls). Animates the
 // camera toward the selected mesh, or back out to the default framing when
-// nothing is selected — keeping the current viewing angle either way. Also
-// snapshots the camera right before entering split view and restores it on
-// exit, so split view (which uses its own separate cameras) never leaves
-// the main orbit camera in a different spot than where the user left it.
-function CameraFocusController({ selectedMesh, splitView }) {
+// nothing is selected — keeping the current viewing angle either way.
+function CameraFocusController({ selectedMesh }) {
   const { camera, controls } = useThree()
   const defaultTarget = useRef(new THREE.Vector3(...CAMERA_TARGET)).current
 
-  const prevSplit = useRef(splitView)
-  const preSplitSnapshot = useRef(null)
-  if (controls && splitView !== prevSplit.current) {
-    prevSplit.current = splitView
-    if (splitView) {
-      preSplitSnapshot.current = { position: camera.position.clone(), target: controls.target.clone() }
-    } else if (preSplitSnapshot.current) {
-      camera.position.copy(preSplitSnapshot.current.position)
-      controls.target.copy(preSplitSnapshot.current.target)
-      controls.update()
-      preSplitSnapshot.current = null
-    }
-  }
-
-  // Always track the latest selection so a change that happens *while* in
-  // split view (selection is cleared on entry) doesn't look like a fresh
-  // change once split view exits and trigger a redundant dezoom on top of
-  // the snapshot restore above.
   const prevSelected = useRef(null)
-  if (selectedMesh !== prevSelected.current) {
-    const next = selectedMesh
+  if (controls && selectedMesh !== prevSelected.current) {
     prevSelected.current = selectedMesh
-    if (controls && !splitView) {
-      if (next) focusMesh(camera, controls, next)
-      else dezoom(camera, controls, defaultTarget, DEFAULT_DISTANCE)
-    }
+    if (selectedMesh) focusMesh(camera, controls, selectedMesh)
+    else dezoom(camera, controls, defaultTarget, DEFAULT_DISTANCE)
   }
 
   return null
@@ -89,9 +63,6 @@ export default function AnatomyView() {
   // { muscleKey, mesh } | null — the single source of truth for both the
   // model's highlight color and the side/bottom exercise panel.
   const [selected, setSelected] = useState(null)
-  // Split view is a look-only mode (fixed front/back cameras) — no orbit,
-  // no muscle selection while it's active.
-  const [splitView, setSplitView] = useState(false)
   // Once the user picks a muscle outside the exercise's own heatmap (after
   // confirming), the heatmap view is done — free exploration from then on.
   const [heatmapDismissed, setHeatmapDismissed] = useState(false)
@@ -116,11 +87,6 @@ export default function AnatomyView() {
   }, [effectiveHeatmap])
   const deselect = useCallback(() => setSelected(null), [])
 
-  const setSplitViewOn = useCallback(v => {
-    setSplitView(v)
-    if (v) setSelected(null)
-  }, [])
-
   if (!webglOk) {
     return (
       <div className="empty" style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
@@ -140,27 +106,9 @@ export default function AnatomyView() {
         onPointerDown={e => dragGuard.start(e.clientX, e.clientY)}
         onPointerMove={e => dragGuard.check(e.clientX, e.clientY)}
       >
-        <button
-          className="iconbtn"
-          style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }}
-          onClick={() => (splitView ? setSplitViewOn(false) : nav(-1))}
-          aria-label={t('Back')}
-        >
+        <button className="iconbtn" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }} onClick={() => nav(-1)} aria-label={t('Back')}>
           <Icon name="chevronLeft" />
         </button>
-        {effectiveHeatmap && (
-          <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
-            <Segmented
-              className="seg-inline"
-              options={[
-                { value: false, label: t('3D') },
-                { value: true, label: t('Front/back') },
-              ]}
-              value={splitView}
-              onChange={setSplitViewOn}
-            />
-          </div>
-        )}
         <Canvas
           camera={{ position: CAMERA_POSITION, fov: 36, near: 0.1, far: 100 }}
           gl={{ antialias: true, alpha: false }}
@@ -173,7 +121,6 @@ export default function AnatomyView() {
           <directionalLight position={[-2, 5, -6]} intensity={0.5} color="#aaccff" />
           <OrbitControls
             makeDefault
-            enabled={!splitView}
             enablePan
             enableZoom
             enableRotate
@@ -184,14 +131,13 @@ export default function AnatomyView() {
             maxDistance={12}
             target={CAMERA_TARGET}
           />
-          {splitView && <SplitViewRenderer />}
-          <CameraFocusController selectedMesh={selected?.mesh ?? null} splitView={splitView} />
+          <CameraFocusController selectedMesh={selected?.mesh ?? null} />
           <Suspense fallback={<FallbackMesh />}>
             <AnatomyModel
               modelUrl={modelUrl}
               heatmap={effectiveHeatmap}
               selectedMuscleKey={selected?.muscleKey ?? null}
-              onMuscleClick={splitView ? undefined : handleMuscleClick}
+              onMuscleClick={handleMuscleClick}
             />
           </Suspense>
         </Canvas>
