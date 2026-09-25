@@ -44,22 +44,6 @@ export function muscleKeyForMesh(meshName) {
   return MESH_NAME_TO_KEY[base] ?? null
 }
 
-// True when this mesh's name carries one of the extra-infix duplicate
-// markers (see VARIANT_INFIXES above) AND the plain base name it duplicates
-// also exists in the GLB — i.e. this mesh is one of the redundant
-// overlapping copies, not the sole representation of that body part. These
-// duplicates all occupy virtually the same geometry, so leaving them all
-// visible causes z-fighting that hides whatever material (heatmap/selected
-// color) was applied to the base mesh. `knownMeshNames` is the full set of
-// raw mesh names in the loaded GLB.
-export function isDuplicateMeshVariant(meshName, knownMeshNames) {
-  const normalized = stripBlenderSuffix(meshName).replace(/_/g, ' ')
-  const base = stripVariantInfix(normalized)
-  if (base === normalized) return false
-  const baseRaw = base.replace(/ /g, '_')
-  return knownMeshNames.has(baseRaw) && baseRaw !== meshName
-}
-
 function stripVariantInfix(normalized) {
   const side = normalized.slice(-1)
   const isSided = side === 'l' || side === 'r' || side === 'L' || side === 'R'

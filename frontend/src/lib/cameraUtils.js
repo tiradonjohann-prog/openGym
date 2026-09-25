@@ -3,9 +3,18 @@
 // view switching, no flyToMesh-from-scratch variant).
 import * as THREE from 'three'
 
+// Only one fly-to animation should ever be driving the camera at a time —
+// tracked per controls instance so a second call (e.g. clicking another
+// muscle before the first animation finishes) cancels the first instead of
+// both fighting over camera.position/controls.target every frame.
+const activeAnimations = new WeakMap()
+
 // Smoothly animates the camera position and OrbitControls target from their
 // current values to the given ones over `duration` ms (ease-out cubic).
 export function lerpCamera(camera, controls, targetPos, targetLookAt, duration = 600) {
+  const prevFrame = activeAnimations.get(controls)
+  if (prevFrame != null) cancelAnimationFrame(prevFrame)
+
   const startPos = camera.position.clone()
   const startTarget = controls.target.clone()
   const startTime = performance.now()
@@ -18,7 +27,8 @@ export function lerpCamera(camera, controls, targetPos, targetLookAt, duration =
     controls.target.lerpVectors(startTarget, targetLookAt, ease)
     controls.update()
 
-    if (t < 1) requestAnimationFrame(animate)
+    if (t < 1) activeAnimations.set(controls, requestAnimationFrame(animate))
+    else activeAnimations.delete(controls)
   }
 
   animate()

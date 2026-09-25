@@ -14,6 +14,27 @@ describe('muscleKeyForMesh', () => {
   it('returns null for an unknown mesh name', () => {
     expect(muscleKeyForMesh('Some Unrelated Object')).toBe(null)
   })
+
+  // The male/female GLBs duplicate every muscle mesh 2-3x with an extra
+  // infix before the side letter — e.g. "musclel" (base), "muscleol" ("o"
+  // variant), "musclee1l"/"musclee2l" ("e"/"e1"/"e2" variants) — almost
+  // certainly outline/shell duplicates for the toon-shader look. A raycast
+  // hit on any of these duplicates has to resolve to the same key as the
+  // base mesh, or clicking the body silently does nothing (the original bug
+  // this stripping was written to fix).
+  it('resolves the "o" duplicate-shell variant to the same key as the base mesh', () => {
+    expect(muscleKeyForMesh('Latissimus_dorsi_muscleol')).toBe('BACK_LATS')
+  })
+
+  it('resolves the "e"/"e1"/"e2" duplicate-shell variants to the same key as the base mesh', () => {
+    expect(muscleKeyForMesh('Latissimus_dorsi_muscleel')).toBe('BACK_LATS')
+    expect(muscleKeyForMesh('Latissimus_dorsi_musclee1l')).toBe('BACK_LATS')
+    expect(muscleKeyForMesh('Latissimus_dorsi_musclee2r')).toBe('BACK_LATS')
+  })
+
+  it('does not strip a real word that merely ends in one of the infix letters', () => {
+    expect(muscleKeyForMesh('Some Unrelated Objecto')).toBe(null)
+  })
 })
 
 describe('exercisesTargeting', () => {
