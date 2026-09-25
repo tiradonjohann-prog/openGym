@@ -85,7 +85,10 @@ function Shell() {
               <Route path="/nutrition" element={<Nutrition />} />
               <Route path="/bodyweight" element={<BodyWeight />} />
               <Route path="/cardio" element={<CardioWorkout />} />
-              <Route path="/anatomy" element={<Suspense fallback={<div className="empty">{t('Loading…')}</div>}><AnatomyView /></Suspense>} />
+              {/* keyed on the location, not just the path: navigating here again from a
+                  different exercise (same "/anatomy" path, different state) must start
+                  fresh instead of reusing selection/split-view state from the last visit */}
+              <Route path="/anatomy" element={<Suspense fallback={<div className="empty">{t('Loading…')}</div>}><AnatomyView key={loc.key} /></Suspense>} />
               <Route path="/admin" element={user?.admin ? <Admin /> : <Navigate to="/home" replace />} />
               <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
