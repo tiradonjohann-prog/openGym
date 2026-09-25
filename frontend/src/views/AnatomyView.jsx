@@ -101,17 +101,19 @@ export default function AnatomyView() {
         <button className="iconbtn" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }} onClick={() => nav(-1)} aria-label={t('Back')}>
           <Icon name="chevronLeft" />
         </button>
-        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
-          <Segmented
-            className="seg-inline"
-            options={[
-              { value: false, label: t('3D') },
-              { value: true, label: t('Front/back') },
-            ]}
-            value={splitView}
-            onChange={setSplitViewOn}
-          />
-        </div>
+        {heatmap && (
+          <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
+            <Segmented
+              className="seg-inline"
+              options={[
+                { value: false, label: t('3D') },
+                { value: true, label: t('Front/back') },
+              ]}
+              value={splitView}
+              onChange={setSplitViewOn}
+            />
+          </div>
+        )}
         <Canvas
           camera={{ position: CAMERA_POSITION, fov: 36, near: 0.1, far: 100 }}
           gl={{ antialias: true, alpha: false }}
