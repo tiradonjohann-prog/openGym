@@ -1,0 +1,206 @@
+{
+  "ABS_LOWER": {
+    "label": "Abdominaux inférieurs",
+    "meshes": ["Rectus abdominis muscle"]
+  },
+  "ABS_UPPER": {
+    "label": "Abdominaux supérieurs",
+    "meshes": ["Rectus abdominis muscle"]
+  },
+  "ABS_OBLIQUES": {
+    "label": "Obliques",
+    "meshes": [
+      "External abdominal oblique muscle",
+      "Internal abdominal oblique muscle"
+    ]
+  },
+  "BACK_LATS": {
+    "label": "Grand dorsal",
+    "meshes": ["Latissimus dorsi muscle"]
+  },
+  "BACK_TRAPEZIUS_UPPER": {
+    "label": "Trapèze supérieur",
+    "meshes": ["Descending part of trapezius muscle"]
+  },
+  "BACK_TRAPEZIUS_MIDDLE": {
+    "label": "Trapèze moyen",
+    "meshes": ["Transverse part of trapezius muscle"]
+  },
+  "BACK_TRAPEZIUS_LOWER": {
+    "label": "Trapèze inférieur",
+    "meshes": ["Ascending part of trapezius muscle"]
+  },
+  "BACK_INFRASPINATUS": {
+    "label": "Infra-épineux",
+    "meshes": ["Infraspinatus muscle"]
+  },
+  "BACK_TERES_MAJOR": {
+    "label": "Grand rond",
+    "meshes": ["Teres major muscle"]
+  },
+  "BACK_TERES_MINOR": {
+    "label": "Petit rond",
+    "meshes": ["Teres minor muscle"]
+  },
+  "BICEPS_LONG_HEAD": {
+    "label": "Biceps — longue portion",
+    "meshes": ["Long head of biceps brachii"]
+  },
+  "BICEPS_SHORT_HEAD": {
+    "label": "Biceps — courte portion",
+    "meshes": ["Short head of biceps brachii"]
+  },
+  "BRACHIORADIALIS": {
+    "label": "Brachio-radial",
+    "meshes": ["Brachioradialis muscle"]
+  },
+  "CHEST_UPPER": {
+    "label": "Pectoral supérieur",
+    "meshes": ["Clavicular head of pectoralis major muscle"]
+  },
+  "CHEST_MIDDLE": {
+    "label": "Pectoral moyen",
+    "meshes": ["Sternocostal head of pectoralis major muscle"]
+  },
+  "CHEST_LOWER": {
+    "label": "Pectoral inférieur",
+    "meshes": ["(Abdominal part of pectoralis major muscle)"]
+  },
+  "CHEST_BIG_SWING_MUSCLE": {
+    "label": "Grand pectoral",
+    "meshes": [
+      "Clavicular head of pectoralis major muscle",
+      "Sternocostal head of pectoralis major muscle",
+      "(Abdominal part of pectoralis major muscle)"
+    ]
+  },
+  "GLUTEUS_MAXIMUS": {
+    "label": "Grand fessier",
+    "meshes": ["Gluteus maximus muscle"]
+  },
+  "GLUTEUS_MEDIUS": {
+    "label": "Moyen fessier",
+    "meshes": ["Gluteus medius muscle"]
+  },
+  "SHOULDERS_FRONT_PART": {
+    "label": "Deltoïde antérieur",
+    "meshes": ["Clavicular part of deltoid muscle"]
+  },
+  "SHOULDERS_MIDDLE_PART": {
+    "label": "Deltoïde latéral",
+    "meshes": ["Acromial part of deltoid muscle"]
+  },
+  "SHOULDERS_REAR_PART": {
+    "label": "Deltoïde postérieur",
+    "meshes": ["Scapular spinal part of deltoid muscle"]
+  },
+  "TRICEPS_LATERAL_HEAD": {
+    "label": "Triceps — faisceau latéral",
+    "meshes": ["Lateral head of triceps brachii"]
+  },
+  "TRICEPS_LONG_HEAD": {
+    "label": "Triceps — longue portion",
+    "meshes": ["Long head of triceps brachii"]
+  },
+  "TRICEPS_MEDIAL_HEAD": {
+    "label": "Triceps — faisceau médial",
+    "meshes": ["Medial head of triceps brachii"]
+  },
+  "QUADRICEPS_RECTUS_FEMORIS": {
+    "label": "Droit fémoral",
+    "meshes": ["Rectus femoris muscle"]
+  },
+  "QUADRICEPS_VASTUS_LATERALIS": {
+    "label": "Vaste latéral",
+    "meshes": ["Vastus lateralis muscle"]
+  },
+  "QUADRICEPS_VASTUS_MEDIALIS": {
+    "label": "Vaste médial",
+    "meshes": ["Vastus medialis muscle"]
+  },
+  "QUADRICEPS_VASTUS_INTERMEDIUS": {
+    "label": "Vaste intermédiaire",
+    "meshes": ["Vastus intermedius muscle"]
+  },
+  "ERECTOR_SPINAE": {
+    "label": "Érecteurs du rachis",
+    "meshes": [
+      "Iliocostalis lumborum muscle",
+      "Longissimus thoracis muscle",
+      "Spinalis thoracis muscle"
+    ]
+  },
+  "CLAVES_GASTROCNEMIUS": {
+    "label": "Gastrocnémien",
+    "meshes": [
+      "Lateral head of gastrocnemius",
+      "Medial head of gastrocnemius"
+    ]
+  },
+  "CLAVES_SOLEUS_MUSCLE": {
+    "label": "Soléaire",
+    "meshes": ["Soleus muscle"]
+  },
+  "CLAVES_TRIBIALIS": {
+    "label": "Tibial antérieur",
+    "meshes": ["Tibialis anterior muscle"]
+  },
+  "BICEPS_FEMORIS": {
+    "label": "Biceps fémoral",
+    "meshes": [
+      "Long head of biceps femoris",
+      "Short head of biceps femoris"
+    ]
+  },
+  "SEMIMEMBRANOSUS": {
+    "label": "Semi-membraneux",
+    "meshes": ["Semimembranosus muscle"]
+  },
+  "SEMITENDINOSUS": {
+    "label": "Semi-tendineux",
+    "meshes": ["Semitendinosus muscle"]
+  },
+  "ADDUCTOR_LONGUS": {
+    "label": "Adducteur long",
+    "meshes": ["Adductor longus"]
+  },
+  "ADDUCTOR_MAGNUS": {
+    "label": "Grand adducteur",
+    "meshes": ["Adductor magnus"]
+  },
+  "FOREARM_EXTENSORS": {
+    "label": "Extenseurs avant-bras",
+    "meshes": [
+      "Extensor carpi radialis longus",
+      "Extensor carpi radialis brevis",
+      "Extensor digitorum"
+    ]
+  },
+  "FOREARM_FLEXORS": {
+    "label": "Fléchisseurs avant-bras",
+    "meshes": [
+      "Flexor carpi radialis",
+      "Humero-ulnar head of flexor digitorum superficialis",
+      "Flexor digitorum profundus"
+    ]
+  },
+  "ILIOPSOAS": {
+    "label": "Ilio-psoas",
+    "meshes": [
+      "Iliacus muscle",
+      "Psoas major"
+    ]
+  },
+  "GRACILIS": {
+    "label": "Gracile",
+    "meshes": ["Gracilis muscle"]
+  },
+  "PECTINEUS": {
+    "label": "Pectiné",
+    "meshes": ["Pectineus muscle"]
+  },
+  "SARTORIUS": {
+    "label": "Sartorius",
+    "meshes": ["Sartorius muscle"]
+  }
+}
