@@ -10,7 +10,7 @@ import { SplitViewRenderer } from '../components/anatomy3d/SplitViewRenderer.jsx
 import { exercisesTargeting } from '../lib/anatomy3d.js'
 import { muscleLabel } from '../lib/exerciseLabels.js'
 import { focusMesh, dezoom } from '../lib/cameraUtils.js'
-import { exerciseDetailSheet } from '../sheets.jsx'
+import { exerciseDetailSheet, confirmSheet } from '../sheets.jsx'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
 import { dragGuard } from '../lib/dragGuard.js'
@@ -35,16 +35,40 @@ const DEFAULT_DISTANCE = Math.hypot(
 
 // Lives inside the Canvas (needs useThree for camera/controls). Animates the
 // camera toward the selected mesh, or back out to the default framing when
-// nothing is selected — keeping the current viewing angle either way.
-function CameraFocusController({ selectedMesh }) {
+// nothing is selected — keeping the current viewing angle either way. Also
+// snapshots the camera right before entering split view and restores it on
+// exit, so split view (which uses its own separate cameras) never leaves
+// the main orbit camera in a different spot than where the user left it.
+function CameraFocusController({ selectedMesh, splitView }) {
   const { camera, controls } = useThree()
   const defaultTarget = useRef(new THREE.Vector3(...CAMERA_TARGET)).current
 
+  const prevSplit = useRef(splitView)
+  const preSplitSnapshot = useRef(null)
+  if (controls && splitView !== prevSplit.current) {
+    prevSplit.current = splitView
+    if (splitView) {
+      preSplitSnapshot.current = { position: camera.position.clone(), target: controls.target.clone() }
+    } else if (preSplitSnapshot.current) {
+      camera.position.copy(preSplitSnapshot.current.position)
+      controls.target.copy(preSplitSnapshot.current.target)
+      controls.update()
+      preSplitSnapshot.current = null
+    }
+  }
+
+  // Always track the latest selection so a change that happens *while* in
+  // split view (selection is cleared on entry) doesn't look like a fresh
+  // change once split view exits and trigger a redundant dezoom on top of
+  // the snapshot restore above.
   const prevSelected = useRef(null)
-  if (controls && selectedMesh !== prevSelected.current) {
+  if (selectedMesh !== prevSelected.current) {
+    const next = selectedMesh
     prevSelected.current = selectedMesh
-    if (selectedMesh) focusMesh(camera, controls, selectedMesh)
-    else dezoom(camera, controls, defaultTarget, DEFAULT_DISTANCE)
+    if (controls && !splitView) {
+      if (next) focusMesh(camera, controls, next)
+      else dezoom(camera, controls, defaultTarget, DEFAULT_DISTANCE)
+    }
   }
 
   return null
@@ -68,10 +92,28 @@ export default function AnatomyView() {
   // Split view is a look-only mode (fixed front/back cameras) — no orbit,
   // no muscle selection while it's active.
   const [splitView, setSplitView] = useState(false)
+  // Once the user picks a muscle outside the exercise's own heatmap (after
+  // confirming), the heatmap view is done — free exploration from then on.
+  const [heatmapDismissed, setHeatmapDismissed] = useState(false)
+  const effectiveHeatmap = heatmapDismissed ? null : heatmap
 
   const handleMuscleClick = useCallback((muscleKey, mesh) => {
+    const inExercise = effectiveHeatmap && (effectiveHeatmap[muscleKey] ?? 0) > 0
+    if (effectiveHeatmap && !inExercise) {
+      confirmSheet({
+        title: t('Leave this exercise?'),
+        message: t('This muscle isn’t part of the exercise shown. Selecting it switches to free 3D exploration.'),
+        confirmText: t('View this muscle'),
+        cancelText: t('Cancel'),
+        onConfirm: () => {
+          setHeatmapDismissed(true)
+          setSelected({ muscleKey, mesh })
+        },
+      })
+      return
+    }
     setSelected(prev => (prev?.muscleKey === muscleKey ? null : { muscleKey, mesh }))
-  }, [])
+  }, [effectiveHeatmap])
   const deselect = useCallback(() => setSelected(null), [])
 
   const setSplitViewOn = useCallback(v => {
@@ -106,7 +148,7 @@ export default function AnatomyView() {
         >
           <Icon name="chevronLeft" />
         </button>
-        {heatmap && (
+        {effectiveHeatmap && (
           <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
             <Segmented
               className="seg-inline"
@@ -143,11 +185,11 @@ export default function AnatomyView() {
             target={CAMERA_TARGET}
           />
           {splitView && <SplitViewRenderer />}
-          <CameraFocusController selectedMesh={selected?.mesh ?? null} />
+          <CameraFocusController selectedMesh={selected?.mesh ?? null} splitView={splitView} />
           <Suspense fallback={<FallbackMesh />}>
             <AnatomyModel
               modelUrl={modelUrl}
-              heatmap={heatmap}
+              heatmap={effectiveHeatmap}
               selectedMuscleKey={selected?.muscleKey ?? null}
               onMuscleClick={splitView ? undefined : handleMuscleClick}
             />

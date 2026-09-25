@@ -18,8 +18,8 @@ const FOV = 40
 // inside, with some headroom/footroom and shoulder margin — used to pick a
 // camera distance that keeps the whole body in frame regardless of the
 // half-viewport's aspect ratio.
-const BODY_HALF_HEIGHT = 1.15
-const BODY_HALF_WIDTH = 0.5
+const BODY_HALF_HEIGHT = 1.4
+const BODY_HALF_WIDTH = 0.6
 
 // On a narrow phone-portrait screen, each split half is itself tall and
 // narrow (halfWidth = totalWidth/2, full height) — a fixed camera distance
