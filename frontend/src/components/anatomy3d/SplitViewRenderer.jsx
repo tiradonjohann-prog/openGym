@@ -1,17 +1,19 @@
 // frontend/src/components/anatomy3d/SplitViewRenderer.jsx
-// Ported from anatomy-viewer's Viewer3D.jsx split-screen renderer.
+// Adapted from anatomy-viewer's Viewer3D.jsx split-screen renderer, using
+// R3F's built-in take-over-the-render-loop mechanism instead of monkey-
+// patching gl.render directly (a positive useFrame priority disables R3F's
+// default render call for as long as this component is mounted, and R3F
+// resumes it automatically on unmount — no manual restore, no risk of
+// leaving the renderer in a broken state if unmount ordering is unlucky).
 import * as THREE from 'three'
-import { useThree, useFrame } from '@react-three/fiber'
-import { useEffect, useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useMemo } from 'react'
 
 // Renders the scene twice in the same frame — a front camera on the left
-// half of the canvas, a back camera on the right — by taking over R3F's
-// render call and using viewport/scissor per half. Only mounted while split
-// view is active, so it adds no cost in the normal orbit mode.
+// half of the canvas, a back camera on the right — using viewport/scissor
+// per half. Only mounted while split view is active, so it adds no cost in
+// the normal orbit mode.
 export function SplitViewRenderer() {
-  const { gl, scene } = useThree()
-  const origRenderRef = useRef(null)
-
   const frontCam = useMemo(() => {
     const cam = new THREE.PerspectiveCamera(40, 1, 0.1, 100)
     cam.position.set(0, 0.8, 3.5)
@@ -26,20 +28,7 @@ export function SplitViewRenderer() {
     return cam
   }, [])
 
-  useEffect(() => {
-    origRenderRef.current = gl.render.bind(gl)
-    gl.render = () => {}
-    return () => {
-      if (origRenderRef.current) {
-        gl.render = origRenderRef.current
-        origRenderRef.current = null
-      }
-    }
-  }, [gl])
-
-  useFrame(() => {
-    if (!origRenderRef.current) return
-
+  useFrame(({ gl, scene }) => {
     const canvas = gl.domElement
     const w = canvas.width
     const h = canvas.height
@@ -59,7 +48,7 @@ export function SplitViewRenderer() {
     gl.setViewport(0, 0, halfW, h)
     gl.setScissor(0, 0, halfW, h)
     gl.clearDepth()
-    origRenderRef.current(scene, frontCam)
+    gl.render(scene, frontCam)
 
     // Back (right half)
     backCam.aspect = halfW / h
@@ -67,12 +56,12 @@ export function SplitViewRenderer() {
     gl.setViewport(halfW, 0, halfW, h)
     gl.setScissor(halfW, 0, halfW, h)
     gl.clearDepth()
-    origRenderRef.current(scene, backCam)
+    gl.render(scene, backCam)
 
     gl.setScissorTest(false)
     gl.setViewport(0, 0, w, h)
     gl.autoClear = true
-  })
+  }, 1)
 
   return null
 }
