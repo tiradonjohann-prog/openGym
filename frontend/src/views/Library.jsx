@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
-import { EXDB, BODYPARTS, allExercises, equipmentOf, musclesOf } from '../lib/exercises.js'
+import { EXDB, BODYPARTS, allExercises, musclesOf } from '../lib/exercises.js'
 import { bodyPartLabel, equipmentLabel, mechanicsLabel, lateralityLabel, muscleLabel } from '../lib/exerciseLabels.js'
 import { bestWeightFor } from '../lib/history.js'
 import { fmtNum } from '../lib/format.js'
@@ -10,7 +10,7 @@ import { t } from '../lib/i18n.js'
 import { Thumb } from '../components/Media.jsx'
 import { exerciseDetailSheet, addToRoutineSheet, customExSheet } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
-import { Button, SearchField } from '../components/ui.jsx'
+import { Button, SearchField, SelectRow } from '../components/ui.jsx'
 
 const BP_COLOR = {
   ABS: 'var(--teal)', BACK: 'var(--blue)', BICEPS: 'var(--orange)', CHEST: 'var(--acc)',
@@ -97,43 +97,48 @@ export default function Library() {
       })}
     </div>
 
+    {/* Equipment chips — same row style as body parts */}
+    <div className="chips" style={{ marginBottom: 8 }}>
+      <button className={'chip nocap' + (!filters.equipment ? ' on' : '')} onClick={() => setFilters(f => ({ ...f, equipment: '' }))}>{t('Any equipment')}</button>
+      <button className={'chip nocap' + (filters.equipment === 'Bodyweight' ? ' on' : '')} onClick={() => setFilters(f => ({ ...f, equipment: 'Bodyweight' }))}>{t('Bodyweight only')}</button>
+      {opts.equipments.map(x => (
+        <button key={x} className={'chip' + (filters.equipment === x ? ' on' : '')} onClick={() => setFilters(f => ({ ...f, equipment: x }))}>
+          {equipmentLabel(x)}
+        </button>
+      ))}
+    </div>
+
     <button className="chip nocap" style={{ marginBottom: 12 }} onClick={() => setShowFilters(s => !s)}>
       <Icon name="filter" /> {t('More filters')} {hasFilter && <span className="tag acc" style={{ marginLeft: 4 }}>•</span>}
     </button>
 
-    {showFilters && <div className="card" style={{ padding: 12, marginBottom: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <label className="small muted">{t('Equipment')}
-        <select value={filters.equipment} onChange={set('equipment')}>
-          <option value="">{t('Any equipment')}</option>
-          <option value="Bodyweight">{t('Bodyweight only')}</option>
-          {opts.equipments.map(x => <option key={x} value={x}>{equipmentLabel(x)}</option>)}
-        </select>
-      </label>
-      <label className="small muted">{t('Mechanics')}
-        <select value={filters.mechanics} onChange={set('mechanics')}>
-          <option value="">{t('All')}</option>
-          {opts.mechanics.map(x => <option key={x} value={x}>{mechanicsLabel(x)}</option>)}
-        </select>
-      </label>
-      <label className="small muted">{t('Laterality')}
-        <select value={filters.laterality} onChange={set('laterality')}>
-          <option value="">{t('All')}</option>
-          {opts.lateralities.map(x => <option key={x} value={x}>{lateralityLabel(x)}</option>)}
-        </select>
-      </label>
-      <label className="small muted">{t('Muscle')}
-        <select value={filters.muscle} onChange={set('muscle')}>
-          <option value="">{t('All')}</option>
-          {opts.muscles.map(x => <option key={x} value={x}>{muscleLabel(x)}</option>)}
-        </select>
-      </label>
-      <label className="small muted">{t('Minimum activation')}
-        <select value={filters.activation} onChange={e => setFilters(f => ({ ...f, activation: Number(e.target.value) }))}>
-          {ACTIVATION_THRESHOLDS.map(v => <option key={v} value={v}>{v === 0 ? t('Any') : `≥ ${v}%`}</option>)}
-        </select>
-      </label>
-      {hasFilter && <Button size="sm" variant="tinted" onClick={reset}>{t('Reset filters')}</Button>}
+    {showFilters && <div className="sect-b" style={{ marginBottom: 12 }}>
+      <SelectRow
+        title={t('Mechanics')}
+        value={filters.mechanics}
+        onChange={v => { setFilters(f => ({ ...f, mechanics: v })); setShown(40) }}
+        options={[{ value: '', label: t('All') }, ...opts.mechanics.map(x => ({ value: x, label: mechanicsLabel(x) }))]}
+      />
+      <SelectRow
+        title={t('Laterality')}
+        value={filters.laterality}
+        onChange={v => { setFilters(f => ({ ...f, laterality: v })); setShown(40) }}
+        options={[{ value: '', label: t('All') }, ...opts.lateralities.map(x => ({ value: x, label: lateralityLabel(x) }))]}
+      />
+      <SelectRow
+        title={t('Muscle')}
+        value={filters.muscle}
+        onChange={v => { setFilters(f => ({ ...f, muscle: v })); setShown(40) }}
+        options={[{ value: '', label: t('All') }, ...opts.muscles.map(x => ({ value: x, label: muscleLabel(x) }))]}
+      />
+      <SelectRow
+        title={t('Minimum activation')}
+        value={filters.activation}
+        onChange={v => { setFilters(f => ({ ...f, activation: Number(v) })); setShown(40) }}
+        options={ACTIVATION_THRESHOLDS.map(v => ({ value: v, label: v === 0 ? t('Any') : `≥ ${v}%` }))}
+      />
     </div>}
+    {showFilters && hasFilter && <div style={{ marginBottom: 12 }}><Button size="sm" variant="tinted" onClick={reset}>{t('Reset filters')}</Button></div>}
 
     <div className="list">
       {/* Create custom exercise — accent entry */}
