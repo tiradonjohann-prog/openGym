@@ -84,5 +84,23 @@ export function Thumb({ ex }) {
   if (ex.img) return <img className="thumb" loading="lazy" decoding="async" src={imgSrc(ex)} alt="" />
   const photo = photoSrc(ex)
   if (photo) return <img className="thumb" loading="lazy" decoding="async" src={photo} alt="" />
+  // Exercises with only a video (e.g. the local-video fallback) and no
+  // static image/gif otherwise showed a bare placeholder icon in the list.
+  // Autoplaying it was unreliable (the browser paused it almost immediately
+  // in a list of many videos), so instead seek to a representative frame
+  // once metadata loads and leave it as a static "poster" — no play needed.
+  const video = videoSrc(ex)
+  if (video) {
+    return (
+      <video
+        className="thumb"
+        src={video}
+        muted
+        playsInline
+        preload="metadata"
+        onLoadedMetadata={e => { e.currentTarget.currentTime = Math.min(1, (e.currentTarget.duration || 2) / 4) }}
+      />
+    )
+  }
   return <div className="thumb thumb-x"><Icon name="dumbbell" /></div>
 }
