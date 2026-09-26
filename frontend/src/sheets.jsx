@@ -433,6 +433,12 @@ function ExerciseDetail({ ex, close }) {
   const last = lastEntryFor(st, ex.id)
   const best = bestWeightFor(st, ex.id)
   const muscles = ex.exercise_muscles || {}
+  const similar = allExercises(st)
+    .filter(e => e.id !== ex.id)
+    .map(e => ({ ...e, score: (e.bp && e.bp === ex.bp ? 10 : 0) + (e.eq && e.eq === ex.eq ? 5 : 0) }))
+    .filter(e => e.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6)
   const description = ex.description_fr || ex.description || ex.desc
   const instructions = ex.instructions?.fr?.length ? ex.instructions.fr : (ex.instructions?.en || [])
   const tips = ex.tips?.fr?.length ? ex.tips.fr : (ex.tips?.en || [])
@@ -456,6 +462,26 @@ function ExerciseDetail({ ex, close }) {
       >
         <Icon name="cube" /> {t('View in 3D')}
       </button>
+    )}
+    {similar.length > 0 && (
+      <div style={{ marginTop: 14 }}>
+        <h4 className="sec" style={{ marginBottom: 8 }}>{t('Exercices similaires')}</h4>
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 2 }}>
+          {similar.map(e => (
+            <div
+              key={e.id}
+              className="tap"
+              style={{ flexShrink: 0, width: 60, textAlign: 'center', cursor: 'pointer' }}
+              onClick={() => exerciseDetailSheet(e)}
+            >
+              <Thumb ex={e} />
+              <div className="small capitalize" style={{ fontSize: 11, lineHeight: 1.25, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {e.n}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     )}
     {instructions.length > 0 && <>
       <h4 className="sec" style={{ marginTop: 14, marginBottom: 8 }}>{t('Instructions')}</h4>
