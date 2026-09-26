@@ -25,7 +25,7 @@ import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLIC
 import { MOBILE, shareExport } from './lib/mobile.js'
 import { pickImage, isUserImage } from './lib/imageUtils.js'
 import { isCardioSport, isHybrid, SPORTS, BLOCK_TYPES, blockSummary, estimateBlockKcal, defaultCardioBlocks, routineSubtitle } from './lib/sports.js'
-import { sessionStates, isWeekComplete, isProgrammeComplete, rewindProgrammeForDeletedWorkout } from './lib/programme.js'
+import { isWeekComplete, isProgrammeComplete, rewindProgrammeForDeletedWorkout } from './lib/programme.js'
 import { calcStrengthKcal } from './lib/cardio.js'
 import { CardioForm } from './views/nutrition/CardioEntry.jsx'
 
@@ -2063,47 +2063,6 @@ export const programmeCreateSheet = () =>
 
 export const programmeEditSheet = prog =>
   ui().openSheet(close => <ProgrammeEditor initial={prog} close={close} />)
-
-function ProgrammeWeeks({ prog, close }) {
-  const st = useStore(s => s.S)
-  const [week, setWeek] = useState(prog.currentWeek)
-  const states = sessionStates(prog, week)
-  const badge = { done: { icon: 'check', color: 'var(--green)' }, next: { icon: 'play', color: 'var(--acc)' }, upcoming: { icon: 'clock', color: 'var(--label-4)' } }
-  return <>
-    <h3>{prog.name}</h3>
-    <div className="row between" style={{ margin: '10px 0 14px' }}>
-      <button className="iconbtn" disabled={week <= 1} onClick={() => setWeek(w => Math.max(1, w - 1))} aria-label={t('Previous week')}>
-        <Icon name="chevronLeft" />
-      </button>
-      <div className="small" style={{ fontWeight: 600 }}>{t('Semaine {0}/{1}', week, prog.totalWeeks)}</div>
-      <button className="iconbtn" disabled={week >= prog.totalWeeks} onClick={() => setWeek(w => Math.min(prog.totalWeeks, w + 1))} aria-label={t('Next week')}>
-        <Icon name="chevronRight" />
-      </button>
-    </div>
-    <div className="list">
-      {prog.routineIds.map((routineId, i) => {
-        const routine = st.routines.find(r => r.id === routineId)
-        // "next"/"done" only mean something on the programme's actual current week —
-        // sessionStates marks the first non-done index 'next' regardless of which
-        // week is being *viewed*, so a future week must not borrow that badge.
-        const state = week === prog.currentWeek ? states[i] : (states[i] === 'done' ? 'done' : 'upcoming')
-        const b = badge[state]
-        return (
-          <div key={i} className="item" style={{ opacity: state === 'upcoming' ? 0.6 : 1 }}>
-            <span className="lrow-i" style={{ background: b.color }}><Icon name={b.icon} /></span>
-            <div className="grow">
-              <div className="tt">{routine ? routine.name : t('Séance')}</div>
-              <div className="ss">{state === 'done' ? t('Terminée') : state === 'next' ? t('Prochaine') : t('À venir')}</div>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-    <div style={{ height: 10 }} />
-    <Button onClick={close}>{t('Close')}</Button>
-  </>
-}
-export const programmeWeeksSheet = prog => ui().openSheet(close => <ProgrammeWeeks prog={prog} close={close} />)
 
 export function deleteProgramme(id) {
   confirmSheet({

@@ -1,6 +1,6 @@
 import { t } from '../lib/i18n.js'
 import { isProgrammeComplete, completedWeekCount } from '../lib/programme.js'
-import { programmeEditSheet, programmeWeeksSheet, deleteProgramme } from '../sheets.jsx'
+import { programmeEditSheet, deleteProgramme } from '../sheets.jsx'
 import Icon from './Icon.jsx'
 
 export default function ProgrammeCard({ prog }) {
@@ -60,22 +60,6 @@ export default function ProgrammeCard({ prog }) {
       }}>
         {complete ? t('Terminé') : paused ? t('En pause') : t('Actif')}
       </div>
-
-      {/* Weeks browser button */}
-      <button
-        className="iconbtn"
-        style={{
-          position: 'absolute', top: 5, right: 46,
-          width: 36, height: 36, fontSize: 13,
-          color: hasImg ? 'rgba(255,255,255,0.85)' : 'var(--label-3)',
-          background: hasImg ? 'rgba(0,0,0,0.35)' : 'transparent',
-          borderRadius: 8,
-        }}
-        aria-label={t('View weeks')}
-        onClick={e => { e.stopPropagation(); programmeWeeksSheet(prog) }}
-      >
-        <Icon name="calendar" />
-      </button>
 
       {/* Delete button */}
       <button
