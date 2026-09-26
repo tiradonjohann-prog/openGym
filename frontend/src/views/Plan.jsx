@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
@@ -44,6 +45,7 @@ export default function Plan() {
   const { openSheet } = useUI()
 
   const programmes = S.programmes || []
+  const [showClassic, setShowClassic] = useState(false)
 
   const addRoutine = () => {
     openSheet(close => (
@@ -100,9 +102,23 @@ export default function Plan() {
       )}
     </div>
 
-    {/* ── Week schedule grid ── */}
+    {/* ── Week schedule grid (collapsed behind a toggle once programmes exist) ── */}
+    {programmes.length > 0 && !showClassic ? (
+      <div style={{ marginBottom: 24 }}>
+        <button className="chip" onClick={() => setShowClassic(true)}>
+          {t('Voir le planning classique')}
+        </button>
+      </div>
+    ) : (
     <div data-tuto="plan-week" style={{ marginBottom: 24 }}>
-      <h4 className="sec">{t('Week schedule')}</h4>
+      <div className="row between" style={{ marginBottom: 4 }}>
+        <h4 className="sec" style={{ margin: 0 }}>{t('Week schedule')}</h4>
+        {programmes.length > 0 && (
+          <button className="chip" style={{ fontSize: 12 }} onClick={() => setShowClassic(false)}>
+            {t('Masquer')}
+          </button>
+        )}
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
         {[1, 2, 3, 4, 5, 6, 0].map(d => {
           const r = S.routines.find(x => x.id === S.week[d])
@@ -182,11 +198,12 @@ export default function Plan() {
         })}
       </div>
     </div>
+    )}
 
     {/* ── Routines list ── */}
     <div data-tuto="plan-routines">
       <div className="row between" style={{ marginBottom: 10 }}>
-        <h4 className="sec" style={{ margin: 0 }}>{t('Entrainements / Séances')}</h4>
+        <h4 className="sec" style={{ margin: 0 }}>{t('Bibliothèque de séances')}</h4>
         <Button size="sm" variant="tinted" icon="plus" onClick={addRoutine}>{t('Créer séance')}</Button>
       </div>
       {S.routines.length ? (
