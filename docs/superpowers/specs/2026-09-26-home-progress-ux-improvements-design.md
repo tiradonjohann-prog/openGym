@@ -19,15 +19,13 @@ suggestions in-session) are left untouched.
 1. Programme mode gets the same "what do I do now" clarity classic mode
    already has: a clickable next-session card, and a Démarrer button that
    knows about programme progression.
-2. A dedicated measurements history page, on par with the existing body
-   weight page.
-3. A visible "this programme's progress" summary on Home.
-4. Explicit scope choice when swapping an exercise mid-session.
-5. A real beginner-friendly mode restricted to Home + the workout screen.
-6. A real pause (stops the elapsed-time clock) on the workout screen.
-7. Similar-exercise shortcuts on the exercise detail sheet.
-8. Three small, independent bug fixes in the 3D body / exercise list view.
-9. A read-only week-by-week browser for programmes.
+2. A visible "this programme's progress" summary on Home.
+3. Explicit scope choice when swapping an exercise mid-session.
+4. A real beginner-friendly mode restricted to Home + the workout screen.
+5. A real pause (stops the elapsed-time clock) on the workout screen.
+6. Similar-exercise shortcuts on the exercise detail sheet.
+7. Three small, independent bug fixes in the 3D body / exercise list view.
+8. A read-only week-by-week browser for programmes.
 
 ## Non-goals
 
@@ -60,15 +58,15 @@ session (via `nextSession`) before falling back to `effectiveRoutine`
 (day-of-week classic plan). Priority order: resume active workout → next
 programme session → today's classic-plan routine → open `/workout` picker.
 
-## 2. Measurements history page + per-programme progress on Home
+## 2. Per-programme progress on Home
 
-**New route** `/measurements` (`views/Measurements.jsx`), modeled directly on
-`views/BodyWeight.jsx`: one `LineChart` per tracked zone (`MEASURE_FIELDS`),
-using the existing `measureSeries`/`measureDelta`/`latestMeasurements`
-helpers from `lib/measurements.js` (no data-layer changes needed). Add the
-route in `App.jsx` and point the existing "Measurements" quick-log card
-title on Home to navigate there (same pattern as the body-weight card
-already does for `/bodyweight`).
+**Correction after further investigation:** `views/BodyWeight.jsx` already
+renders a full measurements section (lines 329-452) — per-zone mini trend
+charts, deltas, monthly rate, and collapsible session history, reusing
+`measureSeries`/`latestMeasurements`/`MEASURE_COLORS` from
+`lib/measurements.js`. No new page needed; this part of point 2 is already
+satisfied and is dropped from this plan. Only the progress block below is
+new work.
 
 **Programme progress block** on `ClassicHome`/`ProgrammeHome`: for the same
 active programme used in §1, a small card showing `Semaine {currentWeek}/
