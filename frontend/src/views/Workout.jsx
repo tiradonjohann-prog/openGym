@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { exOr } from '../lib/exercises.js'
-import { effectiveRoutine, lastEntryFor, bestWeightFor, buildSets, setsDoneActive, supersetUnits, unitOf, setLabel, modeOf, isBw, isPerSide, sideReps, repStep, EFFORT, effortOf, stepEffort, capEffort } from '../lib/history.js'
+import { effectiveRoutine, lastEntryFor, bestWeightFor, buildSets, setsDoneActive, supersetUnits, unitOf, setLabel, modeOf, isBw, isPerSide, sideReps, repStep, EFFORT, effortOf, stepEffort, capEffort, elapsedMs } from '../lib/history.js'
 import { SPORTS, BLOCK_TYPES, INTENSITIES, blockSummary, estimateBlockKcal } from '../lib/sports.js'
 import { fmtNum, fmtDate, todayISO, exCount, DAYN } from '../lib/format.js'
 import { beep, vibrate } from '../lib/sound.js'
@@ -11,7 +11,7 @@ import { t } from '../lib/i18n.js'
 import { bodyPartLabel, equipmentLabel, muscleLabel } from '../lib/exerciseLabels.js'
 import { api } from '../lib/api.js'
 import Media from '../components/Media.jsx'
-import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, swapExerciseSheet } from '../sheets.jsx'
+import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, swapExerciseSheet, pauseWorkout, resumeWorkout } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
 import { nextPrescription, applyPrescription } from '../lib/progression.js'
@@ -267,13 +267,20 @@ function StartChooser() {
 }
 
 /* ---------- elapsed clock (isolated so the workout tree doesn't re-render every second) ---------- */
-function Elapsed({ start }) {
-  const [t, setT] = useState('0:00')
+function Elapsed({ start, pausedAt, pausedMs }) {
+  const [txt, setTxt] = useState('0:00')
   useEffect(() => {
-    const tick = () => { const s = Math.floor((Date.now() - start) / 1000); setT(Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0')) }
-    tick(); const iv = setInterval(tick, 1000); return () => clearInterval(iv)
-  }, [start])
-  return <span>{t}</span>
+    const tick = () => {
+      const ms = elapsedMs({ start, pausedAt, pausedMs })
+      const s = Math.max(0, Math.floor(ms / 1000))
+      setTxt(Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'))
+    }
+    tick()
+    if (pausedAt) return // frozen — no ticking interval needed
+    const iv = setInterval(tick, 1000)
+    return () => clearInterval(iv)
+  }, [start, pausedAt, pausedMs])
+  return <span>{txt}</span>
 }
 
 /* ---------- one exercise block (reps: weight×reps · time: a held duration · cardio: duration+speed) ---------- */
@@ -516,9 +523,16 @@ function ActiveWorkout() {
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontWeight: 600 }}>{A.name}</div>
         <div className="sub">
-          <Elapsed start={A.start} /> · {t('{0} sets', done + '/' + total)}{volume > 0 ? ' · ' + fmtNum(Math.round(volume)) + ' ' + S.unit : ''}
+          <Elapsed start={A.start} pausedAt={A.pausedAt} pausedMs={A.pausedMs} /> · {t('{0} sets', done + '/' + total)}{volume > 0 ? ' · ' + fmtNum(Math.round(volume)) + ' ' + S.unit : ''}
         </div>
       </div>
+      <button
+        className="iconbtn"
+        aria-label={A.pausedAt ? t('Resume') : t('Pause')}
+        onClick={() => (A.pausedAt ? resumeWorkout() : pauseWorkout())}
+      >
+        <Icon name={A.pausedAt ? 'play' : 'pause'} />
+      </button>
       <button className="iconbtn" style={{ color: 'var(--acc)' }} aria-label={t('Finish')} onClick={finishWorkout}><Icon name="check" /></button>
     </div>
     <div className="wprog"><i style={{ width: (total ? done / total * 100 : 0) + '%' }} /></div>

@@ -274,7 +274,7 @@ function NextSessionCard({ S, prog }) {
           <div className="lbl2">{t('Prochaine séance')}</div>
           <div className="ttl">{ns.routine ? ns.routine.name : t('Séance')}</div>
         </div>
-        <span className="tag resume pop">{S.active ? t('Resume') : t('Start')}</span>
+        <span className="tag resume pop">{S.active ? (S.active.pausedAt ? t('En pause') : t('Resume')) : t('Start')}</span>
       </div>
     </div>
   )
@@ -467,7 +467,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
             <div className="ttl">{S.active ? t('{0} — in progress', S.active.name) : routine ? routine.name : t('Rest day')}{todayOvr && routine ? ' \xB7 ' + t('rescheduled') : ''}</div>
           </div>
         </div>
-        {S.active ? <span className="tag resume pop">{t('Resume')}</span>
+        {S.active ? <span className="tag resume pop">{S.active.pausedAt ? t('En pause') : t('Resume')}</span>
           : routine ? <span className="tag acc pop">{t('Start')}</span>
           : <Icon name="plus" className="chev" />}
       </div>
