@@ -1,9 +1,12 @@
+import { useLocation, useNavigate } from 'react-router-dom'
 import { t } from '../lib/i18n.js'
 import { isProgrammeComplete, completedWeekCount } from '../lib/programme.js'
 import { programmeEditSheet, deleteProgramme } from '../sheets.jsx'
 import Icon from './Icon.jsx'
 
 export default function ProgrammeCard({ prog }) {
+  const nav = useNavigate()
+  const loc = useLocation()
   const complete = isProgrammeComplete(prog)
   const paused = !complete && !!prog.paused
   const doneWeeks = completedWeekCount(prog)
@@ -19,7 +22,7 @@ export default function ProgrammeCard({ prog }) {
 
   return (
     <div
-      onClick={() => programmeEditSheet(prog)}
+      onClick={() => { if (loc.pathname !== '/plan') nav('/plan'); programmeEditSheet(prog) }}
       style={{
         position: 'relative',
         aspectRatio: '1',
