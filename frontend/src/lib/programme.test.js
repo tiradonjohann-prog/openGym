@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { activeProgramme, nextSession, workoutForProgSession } from './programme.js'
+import { activeProgramme, nextSession, workoutForProgSession, rewindProgrammeForDeletedWorkout } from './programme.js'
 
 const routine = (id, name = id) => ({ id, name, ex: [] })
 
@@ -90,5 +90,40 @@ describe('workoutForProgSession', () => {
     expect(workoutForProgSession(workouts, 'p1', 3, 0)).toBe(null)
     expect(workoutForProgSession(workouts, 'p-other', 1, 0)).toBe(null)
     expect(workoutForProgSession([], 'p1', 1, 0)).toBe(null)
+  })
+})
+
+describe('rewindProgrammeForDeletedWorkout', () => {
+  it('unmarks the session and rewinds currentWeek when it had advanced past that week', () => {
+    const prog = { currentWeek: 4, totalWeeks: 8, routineIds: ['a', 'b'], weekProgress: { 2: [true, true] } }
+    expect(rewindProgrammeForDeletedWorkout(prog, 2, 1)).toBe(true)
+    expect(prog.weekProgress['2']).toEqual([true, false])
+    expect(prog.currentWeek).toBe(2)
+  })
+
+  it('unmarks the session without touching currentWeek when the week is already current or in the future', () => {
+    const prog = { currentWeek: 2, totalWeeks: 8, routineIds: ['a', 'b'], weekProgress: { 2: [true, true] } }
+    expect(rewindProgrammeForDeletedWorkout(prog, 2, 0)).toBe(true)
+    expect(prog.weekProgress['2']).toEqual([false, true])
+    expect(prog.currentWeek).toBe(2)
+  })
+
+  it('returns false and changes nothing for a freestyle workout (no programme fields)', () => {
+    const prog = { currentWeek: 2, totalWeeks: 8, routineIds: ['a'], weekProgress: { 1: [true] } }
+    expect(rewindProgrammeForDeletedWorkout(prog, null, null)).toBe(false)
+    expect(prog.weekProgress).toEqual({ 1: [true] })
+    expect(prog.currentWeek).toBe(2)
+  })
+
+  it('returns false without throwing when the recorded week has no progress data at all (already-deleted programme, or stale data)', () => {
+    const prog = { currentWeek: 1, totalWeeks: 8, routineIds: ['a'], weekProgress: {} }
+    expect(rewindProgrammeForDeletedWorkout(prog, 5, 0)).toBe(false)
+    expect(rewindProgrammeForDeletedWorkout(null, 1, 0)).toBe(false)
+  })
+
+  it('returns false for an ad-hoc workout (progSessionIdx null) — nothing to unmark', () => {
+    const prog = { currentWeek: 2, totalWeeks: 8, routineIds: ['a'], weekProgress: { 2: [true] } }
+    expect(rewindProgrammeForDeletedWorkout(prog, 2, null)).toBe(false)
+    expect(prog.weekProgress['2']).toEqual([true])
   })
 })

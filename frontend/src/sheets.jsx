@@ -25,7 +25,7 @@ import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLIC
 import { MOBILE, shareExport } from './lib/mobile.js'
 import { pickImage, isUserImage } from './lib/imageUtils.js'
 import { isCardioSport, isHybrid, SPORTS, BLOCK_TYPES, blockSummary, estimateBlockKcal, defaultCardioBlocks } from './lib/sports.js'
-import { sessionStates, isWeekComplete, isProgrammeComplete } from './lib/programme.js'
+import { sessionStates, isWeekComplete, isProgrammeComplete, rewindProgrammeForDeletedWorkout } from './lib/programme.js'
 import { calcStrengthKcal } from './lib/cardio.js'
 import { CardioForm } from './views/nutrition/CardioEntry.jsx'
 
@@ -1188,7 +1188,20 @@ function WorkoutDetail({ w, close }) {
       </div>
     })}
     <div style={{ height: 4 }} />
-    <Button variant="danger" onClick={() => confirmSheet({ title: t('Delete workout?'), message: t('This removes it from your history for good.'), confirmText: t('Delete'), danger: true, onConfirm: () => { update(s => { s.workouts = s.workouts.filter(x => x.id !== w.id) }); close(); toast(t('Workout deleted')) } })}>{t('Delete workout')}</Button>
+    <Button variant="danger" onClick={() => confirmSheet({
+      title: t('Delete workout?'), message: t('This removes it from your history for good.'), confirmText: t('Delete'), danger: true,
+      onConfirm: () => {
+        update(s => {
+          s.workouts = s.workouts.filter(x => x.id !== w.id)
+          if (w.programmeId != null) {
+            const prog = s.programmes.find(p => p.id === w.programmeId)
+            if (prog) rewindProgrammeForDeletedWorkout(prog, w.progWeek, w.progSessionIdx)
+          }
+        })
+        close()
+        toast(t('Workout deleted'))
+      },
+    })}>{t('Delete workout')}</Button>
   </>
 }
 export const workoutDetailSheet = w => ui().openSheet(close => <WorkoutDetail w={w} close={close} />)

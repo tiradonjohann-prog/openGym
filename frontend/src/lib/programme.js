@@ -49,6 +49,15 @@ export function workoutForProgSession(workouts, programmeId, weekNum, sessionIdx
   ) || null
 }
 
+export function rewindProgrammeForDeletedWorkout(prog, progWeek, progSessionIdx) {
+  if (!prog || progWeek == null || progSessionIdx == null) return false
+  const key = String(progWeek)
+  if (!prog.weekProgress || !prog.weekProgress[key] || !prog.weekProgress[key][progSessionIdx]) return false
+  prog.weekProgress[key][progSessionIdx] = false
+  if (prog.currentWeek > progWeek) prog.currentWeek = progWeek
+  return true
+}
+
 export function activeProgramme(S) {
   const list = S.programmes || []
   return list.find(p => !p.paused && !isProgrammeComplete(p)) || null
