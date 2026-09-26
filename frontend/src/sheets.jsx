@@ -648,7 +648,34 @@ function ExercisePicker({ onPick, close }) {
 export const exercisePicker = onPick => ui().openSheet(close => <ExercisePicker onPick={onPick} close={close} />)
 
 /* ============================ exercise swap ============================ */
-function SwapPicker({ currentExId, onSwap, close }) {
+function SwapScopeDialog({ newEx, current, routineId, onSwap, close }) {
+  const applyAlways = () => {
+    update(s => {
+      const r = s.routines.find(x => x.id === routineId)
+      if (!r) return
+      if (r.items) {
+        const item = r.items.find(x => x.kind === 'ex' && x.id === current.id)
+        if (item) item.id = newEx.id
+      } else if (r.ex) {
+        const item = r.ex.find(x => x.id === current.id)
+        if (item) item.id = newEx.id
+      }
+    })
+    close()
+    onSwap(newEx)
+  }
+  const applyOnce = () => { close(); onSwap(newEx) }
+  return <div style={{ textAlign: 'center', padding: '4px 0' }}>
+    <h3 style={{ marginBottom: 8 }}>{t('Remplacer "{0}" par "{1}"', current.n, newEx.n)}</h3>
+    <div className="muted" style={{ marginBottom: 18, lineHeight: 1.5 }}>
+      {t('Ce changement s\'applique-t-il seulement à cette séance, ou à toutes les prochaines séances de cette routine ?')}
+    </div>
+    <button className="btn primary" onClick={applyAlways}>{t('Toutes les prochaines séances')}</button>
+    <div style={{ height: 8 }} />
+    <Button variant="ghost" onClick={applyOnce}>{t('Cette séance seulement')}</Button>
+  </div>
+}
+function SwapPicker({ currentExId, onSwap, routineId, close }) {
   const st = useStore(s => s.S)
   const current = EXDB[currentExId] || allExercises(st).find(e => e.id === currentExId) || { n: currentExId, bp: '', eq: '' }
   const all = allExercises(st).filter(e => e.id !== currentExId)
@@ -656,7 +683,14 @@ function SwapPicker({ currentExId, onSwap, close }) {
     .map(e => ({ ...e, score: (e.bp && e.bp === current.bp ? 10 : 0) + (e.eq && e.eq === current.eq ? 5 : 0) }))
     .filter(e => e.score > 0)
     .sort((a, b) => b.score - a.score)
-  const showAll = () => { close(); exercisePicker(newEx => onSwap(newEx)) }
+  const pick = newEx => {
+    if (!routineId) { close(); onSwap(newEx); return }
+    close()
+    ui().openSheet(closeScope => (
+      <SwapScopeDialog newEx={newEx} current={current} routineId={routineId} onSwap={onSwap} close={closeScope} />
+    ), { kind: 'center' })
+  }
+  const showAll = () => { close(); exercisePicker(newEx => pick(newEx)) }
   return <>
     <h3>{t('Switch exercise')}</h3>
     <div className="small muted" style={{ marginBottom: 10 }}>
@@ -665,7 +699,7 @@ function SwapPicker({ currentExId, onSwap, close }) {
     {similar.length === 0 && <div className="empty" style={{ margin: '10px 0' }}>{t('No similar exercises found.')}</div>}
     <div className="list">
       {similar.slice(0, 20).map(e => (
-        <div key={e.id} className="item" onClick={() => { close(); onSwap(e) }}>
+        <div key={e.id} className="item" onClick={() => pick(e)}>
           <Thumb ex={e} />
           <div className="grow">
             <div className="tt capitalize">{e.n}</div>
@@ -679,8 +713,8 @@ function SwapPicker({ currentExId, onSwap, close }) {
     <Button icon="list" onClick={showAll}>{t('Browse all exercises')}</Button>
   </>
 }
-export const swapExerciseSheet = (currentExId, onSwap) =>
-  ui().openSheet(close => <SwapPicker currentExId={currentExId} onSwap={onSwap} close={close} />)
+export const swapExerciseSheet = (currentExId, onSwap, routineId = null) =>
+  ui().openSheet(close => <SwapPicker currentExId={currentExId} onSwap={onSwap} routineId={routineId} close={close} />)
 
 /* ============================ exercise config ============================ */
 // Progression settings for one exercise (issue #17). Shown inside the config sheet because

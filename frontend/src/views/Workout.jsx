@@ -277,7 +277,7 @@ function Elapsed({ start }) {
 }
 
 /* ---------- one exercise block (reps: weight×reps · time: a held duration · cardio: duration+speed) ---------- */
-function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemoveSet, onStartTimed, onSwap }) {
+function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemoveSet, onStartTimed, onSwap, routineId }) {
   const S = useStore(s => s.S)
   const working = useUI(s => s.work)
   const entry = S.active.entries[entryIdx]
@@ -337,7 +337,7 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
     <div className="row between" style={{ marginBottom: 6 }}>
       <div style={{ fontSize: compact ? 17 : 20, fontWeight: 600, letterSpacing: '-.02em', textTransform: 'capitalize', lineHeight: 1.2 }}>{ex.n}</div>
       <div style={{ display: 'flex', gap: 4 }}>
-        {onSwap && <button className="iconbtn" aria-label={t('Switch exercise')} onClick={() => swapExerciseSheet(entry.id, onSwap)}><Icon name="shuffle" /></button>}
+        {onSwap && <button className="iconbtn" aria-label={t('Switch exercise')} onClick={() => swapExerciseSheet(entry.id, onSwap, routineId)}><Icon name="shuffle" /></button>}
         <button className="iconbtn" aria-label={t('Details')} onClick={() => exerciseDetailSheet(ex)}><Icon name="info" /></button>
       </div>
     </div>
@@ -601,7 +601,7 @@ function ActiveWorkout() {
                   {t('Exercise {0}', `${unitIdx + 1}${String.fromCharCode(65 + k)}`)}
                 </span>
               </div>
-              <ExerciseBlock entryIdx={idx} compact
+              <ExerciseBlock entryIdx={idx} compact routineId={A.routineId}
                 onToggle={i => toggle(idx, i)} onField={(i, f, v) => setField(idx, i, f, v)} onAddSet={() => addSet(idx)} onRemoveSet={() => removeSet(idx)} onStartTimed={i => startTimed(idx, i)}
                 onSwap={newEx => update(s => { s.active.entries[idx].id = newEx.id })} />
             </div>)}
@@ -610,7 +610,7 @@ function ActiveWorkout() {
       ) : A.entries[cur]?.kind === 'block' ? (
         <CardioStepBlock entryIdx={cur} />
       ) : (
-        <ExerciseBlock key={A.entries[cur]?.id} entryIdx={cur} onToggle={i => toggle(cur, i)} onField={(i, f, v) => setField(cur, i, f, v)} onAddSet={() => addSet(cur)} onRemoveSet={() => removeSet(cur)} onStartTimed={i => startTimed(cur, i)}
+        <ExerciseBlock key={A.entries[cur]?.id} entryIdx={cur} routineId={A.routineId} onToggle={i => toggle(cur, i)} onField={(i, f, v) => setField(cur, i, f, v)} onAddSet={() => addSet(cur)} onRemoveSet={() => removeSet(cur)} onStartTimed={i => startTimed(cur, i)}
           onSwap={newEx => update(s => { s.active.entries[cur].id = newEx.id })} />
       )}
     </> : <div className="empty"><div className="ico"><Icon name="shuffle" /></div>{t('Freestyle workout — add your first exercise.')}</div>}
