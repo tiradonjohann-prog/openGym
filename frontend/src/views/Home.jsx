@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { useUI } from '../store/useUI.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
@@ -245,6 +246,11 @@ function ProgrammeWeekCarousel({ S, prog }) {
   const scrollerRef = useRef(null)
   const [viewedWeek, setViewedWeek] = useState(prog.currentWeek)
   const trackedWeek = useRef(prog.currentWeek)
+  // Set right before a programmatic scroll starts, cleared once the scroll
+  // settles on it — while set, onScroll's intermediate events (a smooth
+  // scroll fires many) are ignored instead of bouncing viewedWeek back to
+  // wherever the scroll started from.
+  const scrollTarget = useRef(null)
 
   // Follow prog.currentWeek's auto-advance only if the user hadn't
   // manually scrolled away from the week that just got completed.
@@ -255,17 +261,26 @@ function ProgrammeWeekCarousel({ S, prog }) {
     }
   }, [prog.currentWeek])
 
-  const scrollToWeek = wk => {
+  const scrollToWeek = (wk, behavior) => {
     const el = scrollerRef.current
     if (!el) return
-    el.scrollTo({ left: (wk - 1) * el.clientWidth, behavior: 'smooth' })
+    scrollTarget.current = wk
+    el.scrollTo({ left: (wk - 1) * el.clientWidth, behavior })
   }
-  useEffect(() => { scrollToWeek(viewedWeek) }, [viewedWeek])
+  const mounted = useRef(false)
+  useEffect(() => {
+    scrollToWeek(viewedWeek, mounted.current ? 'smooth' : 'auto')
+    mounted.current = true
+  }, [viewedWeek])
 
   const onScroll = () => {
     const el = scrollerRef.current
     if (!el || !el.clientWidth) return
     const wk = Math.round(el.scrollLeft / el.clientWidth) + 1
+    if (scrollTarget.current != null) {
+      if (wk === scrollTarget.current) scrollTarget.current = null
+      return
+    }
     if (wk !== viewedWeek) setViewedWeek(wk)
   }
 
@@ -281,6 +296,7 @@ function ProgrammeWeekCarousel({ S, prog }) {
     if (state === 'done') {
       const w = workoutForProgSession(S.workouts, prog.id, weekNum, sessionIdx)
       if (w) workoutDetailSheet(w)
+      else useUI.getState().toast(t('Séance non retrouvée dans l\'historique'))
       return
     }
     if (S.active) { nav(activeRoute); return }
@@ -357,7 +373,7 @@ function ProgrammeWeekCarousel({ S, prog }) {
         })}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginTop: 10, paddingRight: 14 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 5, marginTop: 10, paddingRight: 14 }}>
         {Array.from({ length: prog.totalWeeks }, (_, i) => i + 1).map(wk => (
           <button
             key={wk}

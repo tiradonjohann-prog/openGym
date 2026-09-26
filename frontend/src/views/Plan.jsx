@@ -5,7 +5,7 @@ import { useUI } from '../store/useUI.js'
 import { DAYN, uid, isoOf } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { SPORTS, isCardioSport, defaultCardioBlocks, routineSubtitle } from '../lib/sports.js'
-import { isProgrammeComplete, completedWeekCount } from '../lib/programme.js'
+import { isProgrammeComplete, completedWeekCount, activeProgramme } from '../lib/programme.js'
 import { dayAssignSheet, loadStarterPlan, planToolsSheet, programmeCreateSheet, programmeEditSheet, deleteProgramme } from '../sheets.jsx'
 import { pickImage, isUserImage } from '../lib/imageUtils.js'
 import Icon from '../components/Icon.jsx'
@@ -45,6 +45,7 @@ export default function Plan() {
   const { openSheet } = useUI()
 
   const programmes = S.programmes || []
+  const hasActiveProgramme = activeProgramme(S) != null
   const [showClassic, setShowClassic] = useState(false)
 
   const addRoutine = () => {
@@ -102,8 +103,8 @@ export default function Plan() {
       )}
     </div>
 
-    {/* ── Week schedule grid (collapsed behind a toggle once programmes exist) ── */}
-    {programmes.length > 0 && !showClassic ? (
+    {/* ── Week schedule grid (collapsed behind a toggle once a programme is active) ── */}
+    {hasActiveProgramme && !showClassic ? (
       <div style={{ marginBottom: 24 }}>
         <button className="chip" onClick={() => setShowClassic(true)}>
           {t('Voir le planning classique')}
@@ -113,7 +114,7 @@ export default function Plan() {
     <div data-tuto="plan-week" style={{ marginBottom: 24 }}>
       <div className="row between" style={{ marginBottom: 4 }}>
         <h4 className="sec" style={{ margin: 0 }}>{t('Week schedule')}</h4>
-        {programmes.length > 0 && (
+        {hasActiveProgramme && (
           <button className="chip" style={{ fontSize: 12 }} onClick={() => setShowClassic(false)}>
             {t('Masquer')}
           </button>

@@ -11,7 +11,7 @@ import { t } from '../lib/i18n.js'
 import { bodyPartLabel, equipmentLabel, muscleLabel } from '../lib/exerciseLabels.js'
 import { api } from '../lib/api.js'
 import Media from '../components/Media.jsx'
-import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, swapExerciseSheet } from '../sheets.jsx'
+import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, swapExerciseSheet, confirmStartSheet } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
 import { nextPrescription, applyPrescription } from '../lib/progression.js'
@@ -242,7 +242,7 @@ function StartChooser() {
               )}
             </div>
           )}
-          <Button variant="primary" icon="play" onClick={() => startFlow(todayR.id)}>{t('Start {0}', todayR.name)}</Button>
+          <Button variant="primary" icon="play" onClick={() => confirmStartSheet(todayR, () => startFlow(todayR.id))}>{t('Start {0}', todayR.name)}</Button>
         </div>
       )
     })()}
@@ -251,7 +251,7 @@ function StartChooser() {
         const isCardio = r.sport && r.sport !== 'strength'
         const col = isCardio ? 'var(--teal)' : 'var(--acc)'
         return (
-          <div key={r.id} className="item" onClick={() => startFlow(r.id)}>
+          <div key={r.id} className="item" onClick={() => confirmStartSheet(r, () => startFlow(r.id))}>
             <span className="lrow-i" style={{ background: `color-mix(in srgb,${col} 18%,var(--surface-3))`, color: col }}>
               <Icon name={glyphOf(r.emoji)} />
             </span>

@@ -180,6 +180,8 @@ export default function CardioWorkout() {
         kcal,
         notes: notes.trim() || undefined,
         entries: [],
+        ...(A.programmeId != null ? { programmeId: A.programmeId, progWeek: A.progWeek, progSessionIdx: A.progSessionIdx ?? null } : {}),
+        ...(A.adHoc ? { adHoc: true } : {}),
       })
       s.active = null
     })
