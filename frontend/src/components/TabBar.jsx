@@ -1,6 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutine } from '../lib/history.js'
+import { activeProgramme, nextSession } from '../lib/programme.js'
+import { isCardioSport } from '../lib/sports.js'
+import { startFlowForProgramme } from '../sheets.jsx'
 import { todayISO } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import Icon from './Icon.jsx'
@@ -16,10 +19,15 @@ export default function TabBar({ onStart }) {
   const on = k => cur === k || (cur === 'history' && k === 'stats') || (cur === 'settings' && k === 'home')
 
   const startWorkout = () => {
-    if (!S.active) {
-      const r = effectiveRoutine(S, todayISO())
-      if (r && r.ex.length) { onStart(r.id); return }
+    if (S.active) {
+      nav(isCardioSport(S.active.sport) ? '/cardio' : '/workout')
+      return
     }
+    const prog = activeProgramme(S)
+    const ns = prog && nextSession(prog, S.routines)
+    if (ns) { startFlowForProgramme(prog.id, ns.weekNum, ns.sessionIdx); return }
+    const r = effectiveRoutine(S, todayISO())
+    if (r && r.ex.length) { onStart(r.id); return }
     nav('/workout')
   }
   const Tab = ({ k, icon, to, label }) => {
