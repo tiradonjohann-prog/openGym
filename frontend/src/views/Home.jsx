@@ -4,8 +4,9 @@ import { useStore } from '../store/useStore.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme } from '../sheets.jsx'
 import { isCardioSport } from '../lib/sports.js'
+import { activeProgramme, nextSession, completedWeekCount } from '../lib/programme.js'
 import { dayTotals } from '../lib/foodSearch.js'
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
@@ -238,6 +239,42 @@ export default function Home() {
     : <ClassicHome S={S} user={user} nav={nav} weekOffset={weekOffset} setWeekOffset={setWeekOffset} />
 }
 
+/* ── Clickable "next session" + progress card for the active programme ── */
+function NextSessionCard({ S, prog }) {
+  const ns = nextSession(prog, S.routines)
+  if (!ns) return null
+  const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
+  const nav = useNavigate()
+  const doneWeeks = completedWeekCount(prog)
+  const onClick = () => {
+    if (S.active) { nav(activeRoute); return }
+    startFlowForProgramme(prog.id, ns.weekNum, ns.sessionIdx)
+  }
+  return (
+    <div className="card tap" onClick={onClick} style={{
+      border: '1.5px solid color-mix(in srgb,var(--acc) 22%,transparent)',
+      background: 'color-mix(in srgb,var(--acc) 6%,var(--surface))',
+    }}>
+      <div className="row between" style={{ marginBottom: 8 }}>
+        <div className="small" style={{ textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 700, color: 'var(--acc)', fontSize: 11 }}>
+          {prog.name} · {t('Semaine {0}/{1}', ns.weekNum, prog.totalWeeks)}
+        </div>
+        <span className="tag acc" style={{ fontSize: 10, fontWeight: 700 }}>{doneWeeks}/{prog.totalWeeks}</span>
+      </div>
+      <div className="row" style={{ gap: 10, alignItems: 'center' }}>
+        <span className="lrow-i" style={{ background: S.active ? 'var(--orange)' : 'var(--acc)' }}>
+          <Icon name={S.active ? 'timer' : ns.routine ? glyphOf(ns.routine.emoji) : 'dumbbell'} />
+        </span>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div className="lbl2">{t('Prochaine séance')}</div>
+          <div className="ttl">{ns.routine ? ns.routine.name : t('Séance')}</div>
+        </div>
+        <span className="tag resume pop">{S.active ? t('Resume') : t('Start')}</span>
+      </div>
+    </div>
+  )
+}
+
 /* ── Programme-based home screen ── */
 function ProgrammeHome({ S, user, nav }) {
   const today = new Date()
@@ -272,6 +309,8 @@ function ProgrammeHome({ S, user, nav }) {
           ))}
         </div>
       </div>
+
+      {(() => { const prog = activeProgramme(S); return prog ? <NextSessionCard S={S} prog={prog} /> : null })()}
 
       <SmartNudge S={S} />
       <LastWorkoutCard S={S} />
