@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, addAdHocSessionSheet } from '../sheets.jsx'
 import { isCardioSport } from '../lib/sports.js'
-import { activeProgramme, nextSession, completedWeekCount, sessionStates } from '../lib/programme.js'
+import { activeProgramme, nextSession, completedWeekCount, sessionStates, workoutForProgSession } from '../lib/programme.js'
 import { dayTotals } from '../lib/foodSearch.js'
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
@@ -239,44 +239,136 @@ export default function Home() {
     : <ClassicHome S={S} user={user} nav={nav} weekOffset={weekOffset} setWeekOffset={setWeekOffset} />
 }
 
-/* ── Clickable "next session" + progress card for the active programme ── */
-function NextSessionCard({ S, prog }) {
-  // Hook order must never depend on data — nav is called unconditionally,
-  // before the early return below, even though it's only used when ns exists.
+/* ── Swipeable per-week session carousel for the active programme ── */
+function ProgrammeWeekCarousel({ S, prog }) {
   const nav = useNavigate()
-  const ns = nextSession(prog, S.routines)
-  if (!ns) return null
-  const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
-  const doneWeeks = completedWeekCount(prog)
-  const weekStates = sessionStates(prog, ns.weekNum)
-  const doneThisWeek = weekStates.filter(s => s === 'done').length
-  const onClick = () => {
-    if (S.active) { nav(activeRoute); return }
-    startFlowForProgramme(prog.id, ns.weekNum, ns.sessionIdx)
+  const scrollerRef = useRef(null)
+  const [viewedWeek, setViewedWeek] = useState(prog.currentWeek)
+  const trackedWeek = useRef(prog.currentWeek)
+
+  // Follow prog.currentWeek's auto-advance only if the user hadn't
+  // manually scrolled away from the week that just got completed.
+  useEffect(() => {
+    if (prog.currentWeek !== trackedWeek.current) {
+      setViewedWeek(v => (v === trackedWeek.current ? prog.currentWeek : v))
+      trackedWeek.current = prog.currentWeek
+    }
+  }, [prog.currentWeek])
+
+  const scrollToWeek = wk => {
+    const el = scrollerRef.current
+    if (!el) return
+    el.scrollTo({ left: (wk - 1) * el.clientWidth, behavior: 'smooth' })
   }
+  useEffect(() => { scrollToWeek(viewedWeek) }, [viewedWeek])
+
+  const onScroll = () => {
+    const el = scrollerRef.current
+    if (!el || !el.clientWidth) return
+    const wk = Math.round(el.scrollLeft / el.clientWidth) + 1
+    if (wk !== viewedWeek) setViewedWeek(wk)
+  }
+
+  const doneWeeks = completedWeekCount(prog)
+  const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
+  // sessionStates() marks the first non-done slot 'next' independently for
+  // every week — only the programme's one true next session (across all
+  // weeks) should wear the "Prochaine" badge; every other week's own
+  // first-incomplete slot is just another 'upcoming' (grey) tile.
+  const trueNext = nextSession(prog, S.routines)
+
+  const tileClick = (routine, weekNum, sessionIdx, state) => {
+    if (state === 'done') {
+      const w = workoutForProgSession(S.workouts, prog.id, weekNum, sessionIdx)
+      if (w) workoutDetailSheet(w)
+      return
+    }
+    if (S.active) { nav(activeRoute); return }
+    if (!routine) return
+    confirmStartSheet(routine, () => startFlowForProgramme(prog.id, weekNum, sessionIdx))
+  }
+
   return (
-    <div className="card tap" onClick={onClick} style={{
+    <div className="card" style={{
       border: '1.5px solid color-mix(in srgb,var(--acc) 22%,transparent)',
       background: 'color-mix(in srgb,var(--acc) 6%,var(--surface))',
+      padding: '14px 0 14px 14px',
     }}>
-      <div className="row between" style={{ marginBottom: 8 }}>
+      <div className="row between" style={{ marginBottom: 8, paddingRight: 14 }}>
         <div className="small" style={{ textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 700, color: 'var(--acc)', fontSize: 11 }}>
-          {prog.name} · {t('Semaine {0}/{1}', ns.weekNum, prog.totalWeeks)}
+          {prog.name}
         </div>
         <span className="tag acc" style={{ fontSize: 10, fontWeight: 700 }}>{doneWeeks}/{prog.totalWeeks}</span>
       </div>
-      <div className="small muted" style={{ marginBottom: 8 }}>
-        {t('{0}/{1} séances cette semaine', doneThisWeek, weekStates.length)}
+
+      <div
+        ref={scrollerRef}
+        onScroll={onScroll}
+        style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
+      >
+        {Array.from({ length: prog.totalWeeks }, (_, i) => i + 1).map(wk => {
+          const states = sessionStates(prog, wk)
+          const adHocThisWeek = S.workouts.filter(w => w.programmeId === prog.id && w.progWeek === wk && w.adHoc)
+          return (
+            <div key={wk} style={{ flex: '0 0 100%', scrollSnapAlign: 'start', paddingRight: 14, boxSizing: 'border-box' }}>
+              <div className="small muted" style={{ fontWeight: 600, marginBottom: 8 }}>
+                {t('Semaine {0}/{1}', wk, prog.totalWeeks)}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {prog.routineIds.map((routineId, i) => {
+                  const routine = S.routines.find(r => r.id === routineId)
+                  const isTrueNext = trueNext && trueNext.weekNum === wk && trueNext.sessionIdx === i
+                  const state = states[i] === 'done' ? 'done' : isTrueNext ? 'next' : 'upcoming'
+                  const color = state === 'done' ? 'var(--green)' : state === 'next' ? 'var(--yellow)' : 'var(--label-4)'
+                  return (
+                    <div
+                      key={i}
+                      className="tile colored tap"
+                      style={{ '--card-color': color, width: 78, textAlign: 'center', cursor: 'pointer', padding: '10px 6px' }}
+                      onClick={() => tileClick(routine, wk, i, state)}
+                    >
+                      <Icon name={state === 'done' ? 'check' : routine ? glyphOf(routine.emoji) : 'dumbbell'} style={{ fontSize: 17 }} />
+                      <div className="small capitalize" style={{ fontWeight: 600, marginTop: 4, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {routine ? routine.name : t('Séance')}
+                      </div>
+                      {state === 'next' && <div style={{ fontSize: 9, fontWeight: 700, marginTop: 2 }}>{t('Prochaine')}</div>}
+                    </div>
+                  )
+                })}
+                {adHocThisWeek.map(w => (
+                  <div
+                    key={w.id}
+                    className="tile colored tap"
+                    style={{ '--card-color': 'var(--green)', width: 78, textAlign: 'center', cursor: 'pointer', padding: '10px 6px' }}
+                    onClick={() => workoutDetailSheet(w)}
+                  >
+                    <Icon name="check" style={{ fontSize: 17 }} />
+                    <div className="small capitalize" style={{ fontWeight: 600, marginTop: 4, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {w.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button className="chip" style={{ marginTop: 10 }} onClick={() => addAdHocSessionSheet(prog, wk)}>
+                {t('+ Ajouter une séance')}
+              </button>
+            </div>
+          )
+        })}
       </div>
-      <div className="row" style={{ gap: 10, alignItems: 'center' }}>
-        <span className="lrow-i" style={{ background: S.active ? 'var(--orange)' : 'var(--acc)' }}>
-          <Icon name={S.active ? 'timer' : ns.routine ? glyphOf(ns.routine.emoji) : 'dumbbell'} />
-        </span>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div className="lbl2">{t('Prochaine séance')}</div>
-          <div className="ttl">{ns.routine ? ns.routine.name : t('Séance')}</div>
-        </div>
-        <span className="tag resume pop">{S.active ? (S.active.pausedAt ? t('En pause') : t('Resume')) : t('Start')}</span>
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginTop: 10, paddingRight: 14 }}>
+        {Array.from({ length: prog.totalWeeks }, (_, i) => i + 1).map(wk => (
+          <button
+            key={wk}
+            onClick={() => setViewedWeek(wk)}
+            aria-label={t('Semaine {0}', wk)}
+            style={{
+              width: 6, height: 6, borderRadius: '50%', border: 'none', padding: 0,
+              background: wk === viewedWeek ? 'var(--acc)' : 'var(--surface-3)', flexShrink: 0,
+            }}
+          />
+        ))}
       </div>
     </div>
   )
@@ -317,7 +409,7 @@ function ProgrammeHome({ S, user, nav }) {
         </div>
       </div>
 
-      {(() => { const prog = activeProgramme(S); return prog ? <NextSessionCard S={S} prog={prog} /> : null })()}
+      {(() => { const prog = activeProgramme(S); return prog ? <ProgrammeWeekCarousel S={S} prog={prog} /> : null })()}
 
       <SmartNudge S={S} />
       <LastWorkoutCard S={S} />
