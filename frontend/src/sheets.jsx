@@ -1324,6 +1324,33 @@ function ConfirmStart({ routine, onConfirm, close }) {
 }
 export const confirmStartSheet = (routine, onConfirm) =>
   ui().openSheet(close => <ConfirmStart routine={routine} onConfirm={onConfirm} close={close} />, { kind: 'center' })
+
+function AddAdHocSession({ prog, weekNum, close }) {
+  const st = useStore(s => s.S)
+  return <>
+    <h3>{t('Ajouter une séance')}</h3>
+    <div className="small muted" style={{ marginBottom: 10 }}>
+      {t('Semaine {0}/{1}', weekNum, prog.totalWeeks)}
+    </div>
+    <div className="list">
+      {st.routines.map(r => (
+        <div key={r.id} className="item" onClick={() => {
+          close()
+          confirmStartSheet(r, () => startFlow(r.id, { programmeId: prog.id, progWeek: weekNum, adHoc: true }))
+        }}>
+          <span className="lrow-i" style={isCardioSport(r.sport) ? { background: 'var(--teal)' } : undefined}>
+            <Icon name={isCardioSport(r.sport) ? (SPORTS[r.sport]?.icon || 'bolt') : glyphOf(r.emoji)} />
+          </span>
+          <div className="grow"><div className="tt">{r.name}</div><div className="ss">{routineSubtitle(r)}</div></div>
+          <Icon name="chevronRight" className="chev" />
+        </div>
+      ))}
+      {st.routines.length === 0 && <div className="empty">{t('Aucune séance dans votre bibliothèque.')}</div>}
+    </div>
+  </>
+}
+export const addAdHocSessionSheet = (prog, weekNum) =>
+  ui().openSheet(close => <AddAdHocSession prog={prog} weekNum={weekNum} close={close} />)
 export function beginWorkout(routineId, bw, progCtx = null) {
   const st = S()
   const r = routineId ? st.routines.find(x => x.id === routineId) : null
