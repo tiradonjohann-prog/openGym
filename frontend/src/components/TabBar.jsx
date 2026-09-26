@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore.js'
 import { effectiveRoutine } from '../lib/history.js'
 import { activeProgramme, nextSession } from '../lib/programme.js'
 import { isCardioSport } from '../lib/sports.js'
-import { startFlowForProgramme } from '../sheets.jsx'
+import { startFlowForProgramme, pauseWorkout, resumeWorkout, confirmStartSheet } from '../sheets.jsx'
 import { todayISO } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import Icon from './Icon.jsx'
@@ -20,14 +20,19 @@ export default function TabBar({ onStart }) {
 
   const startWorkout = () => {
     if (S.active) {
-      nav(isCardioSport(S.active.sport) ? '/cardio' : '/workout')
+      if (S.active.pausedAt) {
+        resumeWorkout()
+        nav(isCardioSport(S.active.sport) ? '/cardio' : '/workout')
+      } else {
+        pauseWorkout()
+      }
       return
     }
     const prog = activeProgramme(S)
     const ns = prog && nextSession(prog, S.routines)
-    if (ns) { startFlowForProgramme(prog.id, ns.weekNum, ns.sessionIdx); return }
+    if (ns && ns.routine) { confirmStartSheet(ns.routine, () => startFlowForProgramme(prog.id, ns.weekNum, ns.sessionIdx)); return }
     const r = effectiveRoutine(S, todayISO())
-    if (r && r.ex.length) { onStart(r.id); return }
+    if (r && r.ex.length) { confirmStartSheet(r, () => onStart(r.id)); return }
     nav('/workout')
   }
   const Tab = ({ k, icon, to, label }) => {

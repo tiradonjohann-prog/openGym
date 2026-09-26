@@ -11,7 +11,7 @@ import { t } from '../lib/i18n.js'
 import { bodyPartLabel, equipmentLabel, muscleLabel } from '../lib/exerciseLabels.js'
 import { api } from '../lib/api.js'
 import Media from '../components/Media.jsx'
-import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, swapExerciseSheet, pauseWorkout, resumeWorkout } from '../sheets.jsx'
+import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, swapExerciseSheet } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
 import { nextPrescription, applyPrescription } from '../lib/progression.js'
@@ -526,13 +526,6 @@ function ActiveWorkout() {
           <Elapsed start={A.start} pausedAt={A.pausedAt} pausedMs={A.pausedMs} /> · {t('{0} sets', done + '/' + total)}{!S.simpleMode && volume > 0 ? ' · ' + fmtNum(Math.round(volume)) + ' ' + S.unit : ''}
         </div>
       </div>
-      <button
-        className="iconbtn"
-        aria-label={A.pausedAt ? t('Resume') : t('Pause')}
-        onClick={() => (A.pausedAt ? resumeWorkout() : pauseWorkout())}
-      >
-        <Icon name={A.pausedAt ? 'play' : 'pause'} />
-      </button>
       <button className="iconbtn" style={{ color: 'var(--acc)' }} aria-label={t('Finish')} onClick={finishWorkout}><Icon name="check" /></button>
     </div>
     <div className="wprog"><i style={{ width: (total ? done / total * 100 : 0) + '%' }} /></div>
