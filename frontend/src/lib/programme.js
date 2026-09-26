@@ -50,7 +50,15 @@ export function activeProgramme(S) {
 
 export function nextSession(prog, routines) {
   if (!prog || prog.paused || isProgrammeComplete(prog)) return null
-  for (let week = prog.currentWeek; week <= prog.totalWeeks; week++) {
+  // Search from week 1 rather than trusting prog.currentWeek: currentWeek can
+  // go stale (past totalWeeks, or an editing operation can leave an earlier
+  // week newly incomplete). A week before currentWeek with no *recorded*
+  // progress is trusted as already completed — currentWeek only advances
+  // past a finished week — so it's skipped; a week with recorded-but-
+  // incomplete progress is not, which is what catches the stale case without
+  // reopening every untouched earlier week.
+  for (let week = 1; week <= prog.totalWeeks; week++) {
+    if (week < prog.currentWeek && !prog.weekProgress?.[String(week)]) continue
     const sessionIdx = nextSessionIdx(prog, week)
     if (sessionIdx === -1) continue
     const routineId = prog.routineIds[sessionIdx]

@@ -241,10 +241,12 @@ export default function Home() {
 
 /* ── Clickable "next session" + progress card for the active programme ── */
 function NextSessionCard({ S, prog }) {
+  // Hook order must never depend on data — nav is called unconditionally,
+  // before the early return below, even though it's only used when ns exists.
+  const nav = useNavigate()
   const ns = nextSession(prog, S.routines)
   if (!ns) return null
   const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
-  const nav = useNavigate()
   const doneWeeks = completedWeekCount(prog)
   const weekStates = sessionStates(prog, ns.weekNum)
   const doneThisWeek = weekStates.filter(s => s === 'done').length

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep, elapsedMs } from './history.js'
+import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep, elapsedMs, swapRoutineExerciseAt } from './history.js'
 import { EXDB } from './exercises.js'
 
 // Real ids out of the shipped catalogue, so the body-part fallback is exercised for real.
@@ -417,5 +417,36 @@ describe('elapsedMs', () => {
 
   it('treats missing pausedAt/pausedMs as zero (backward compatible with old S.active shapes)', () => {
     expect(elapsedMs({ start }, start + 1000)).toBe(1000)
+  })
+})
+
+describe('swapRoutineExerciseAt (review finding 3)', () => {
+  it('rewrites the exercise at the given position in a plain (r.ex) routine', () => {
+    const routine = { ex: [{ id: 'a' }, { id: 'b' }] }
+    expect(swapRoutineExerciseAt(routine, 1, 'c')).toBe(true)
+    expect(routine.ex).toEqual([{ id: 'a' }, { id: 'c' }])
+  })
+
+  it('rewrites the exercise at the given position in a hybrid (r.items) routine, skipping block entries by position only', () => {
+    const routine = { items: [{ kind: 'ex', id: 'a' }, { kind: 'block', type: 'run' }, { kind: 'ex', id: 'b' }] }
+    expect(swapRoutineExerciseAt(routine, 2, 'c')).toBe(true)
+    expect(routine.items[2]).toEqual({ kind: 'ex', id: 'c' })
+  })
+
+  it('is positional, not id-matched: rewrites the second occurrence of a repeated exercise without touching the first', () => {
+    const routine = { ex: [{ id: 'a' }, { id: 'a' }] }
+    expect(swapRoutineExerciseAt(routine, 1, 'c')).toBe(true)
+    expect(routine.ex).toEqual([{ id: 'a' }, { id: 'c' }])
+  })
+
+  it('returns false and changes nothing when the position holds a block, not an exercise', () => {
+    const routine = { items: [{ kind: 'block', type: 'run' }] }
+    expect(swapRoutineExerciseAt(routine, 0, 'c')).toBe(false)
+    expect(routine.items).toEqual([{ kind: 'block', type: 'run' }])
+  })
+
+  it('returns false for an out-of-range index or a missing routine, without throwing', () => {
+    expect(swapRoutineExerciseAt({ ex: [{ id: 'a' }] }, 5, 'c')).toBe(false)
+    expect(swapRoutineExerciseAt(null, 0, 'c')).toBe(false)
   })
 })

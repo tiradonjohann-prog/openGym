@@ -3,7 +3,7 @@ import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { EXDB, EXIDX, BODYPARTS, isCardio, isBodyweightEq, allExercises, equipmentOf } from './lib/exercises.js'
 import { fmtDate, fmtNum, fmtVol, fmtDur, durPart, todayISO, uid, exCount, DAYN, MONTHS_LONG, ACCENTS } from './lib/format.js'
-import { lastEntryFor, bestWeightFor, buildSets, effectiveRoutineId, workoutVolume, setsDone, setsDoneActive, lastBW, supersetUnits, unitOf, setLabel, defaultConfig, cleanupSg, modeOf, effortOf, isBw, isPerSide, sideReps, exLine } from './lib/history.js'
+import { lastEntryFor, bestWeightFor, buildSets, effectiveRoutineId, workoutVolume, setsDone, setsDoneActive, lastBW, supersetUnits, unitOf, setLabel, defaultConfig, cleanupSg, modeOf, effortOf, isBw, isPerSide, sideReps, exLine, swapRoutineExerciseAt } from './lib/history.js'
 import { beep, vibrate } from './lib/sound.js'
 import { t, instrFor, getLang, INSTR_LANGS } from './lib/i18n.js'
 import { muscleLabel, bodyPartLabel, equipmentLabel } from './lib/exerciseLabels.js'
@@ -472,7 +472,7 @@ function ExerciseDetail({ ex, close }) {
               key={e.id}
               className="tap"
               style={{ flexShrink: 0, width: 60, textAlign: 'center', cursor: 'pointer' }}
-              onClick={() => exerciseDetailSheet(e)}
+              onClick={() => { close(); exerciseDetailSheet(e) }}
             >
               <Thumb ex={e} />
               <div className="small capitalize" style={{ fontSize: 11, lineHeight: 1.25, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -674,19 +674,14 @@ function ExercisePicker({ onPick, close }) {
 export const exercisePicker = onPick => ui().openSheet(close => <ExercisePicker onPick={onPick} close={close} />)
 
 /* ============================ exercise swap ============================ */
-function SwapScopeDialog({ newEx, current, routineId, onSwap, close }) {
+function SwapScopeDialog({ newEx, current, routineId, entryIdx, onSwap, close }) {
   const applyAlways = () => {
+    let applied = false
     update(s => {
       const r = s.routines.find(x => x.id === routineId)
-      if (!r) return
-      if (r.items) {
-        const item = r.items.find(x => x.kind === 'ex' && x.id === current.id)
-        if (item) item.id = newEx.id
-      } else if (r.ex) {
-        const item = r.ex.find(x => x.id === current.id)
-        if (item) item.id = newEx.id
-      }
+      applied = swapRoutineExerciseAt(r, entryIdx, newEx.id)
     })
+    if (!applied) toast(t('Routine introuvable — changement appliqué à cette séance seulement'))
     close()
     onSwap(newEx)
   }
@@ -701,7 +696,7 @@ function SwapScopeDialog({ newEx, current, routineId, onSwap, close }) {
     <Button variant="ghost" onClick={applyOnce}>{t('Cette séance seulement')}</Button>
   </div>
 }
-function SwapPicker({ currentExId, onSwap, routineId, close }) {
+function SwapPicker({ currentExId, onSwap, routineId, entryIdx, close }) {
   const st = useStore(s => s.S)
   const current = EXDB[currentExId] || allExercises(st).find(e => e.id === currentExId) || { n: currentExId, bp: '', eq: '' }
   const all = allExercises(st).filter(e => e.id !== currentExId)
@@ -710,10 +705,10 @@ function SwapPicker({ currentExId, onSwap, routineId, close }) {
     .filter(e => e.score > 0)
     .sort((a, b) => b.score - a.score)
   const pick = newEx => {
-    if (!routineId || S().simpleMode) { close(); onSwap(newEx); return }
+    if (!routineId) { close(); onSwap(newEx); return }
     close()
     ui().openSheet(closeScope => (
-      <SwapScopeDialog newEx={newEx} current={current} routineId={routineId} onSwap={onSwap} close={closeScope} />
+      <SwapScopeDialog newEx={newEx} current={current} routineId={routineId} entryIdx={entryIdx} onSwap={onSwap} close={closeScope} />
     ), { kind: 'center' })
   }
   const showAll = () => { close(); exercisePicker(newEx => pick(newEx)) }
@@ -739,8 +734,8 @@ function SwapPicker({ currentExId, onSwap, routineId, close }) {
     <Button icon="list" onClick={showAll}>{t('Browse all exercises')}</Button>
   </>
 }
-export const swapExerciseSheet = (currentExId, onSwap, routineId = null) =>
-  ui().openSheet(close => <SwapPicker currentExId={currentExId} onSwap={onSwap} routineId={routineId} close={close} />)
+export const swapExerciseSheet = (currentExId, onSwap, routineId = null, entryIdx = null) =>
+  ui().openSheet(close => <SwapPicker currentExId={currentExId} onSwap={onSwap} routineId={routineId} entryIdx={entryIdx} close={close} />)
 
 /* ============================ exercise config ============================ */
 // Progression settings for one exercise (issue #17). Shown inside the config sheet because
@@ -2032,7 +2027,10 @@ function ProgrammeWeeks({ prog, close }) {
     <div className="list">
       {prog.routineIds.map((routineId, i) => {
         const routine = st.routines.find(r => r.id === routineId)
-        const state = states[i]
+        // "next"/"done" only mean something on the programme's actual current week —
+        // sessionStates marks the first non-done index 'next' regardless of which
+        // week is being *viewed*, so a future week must not borrow that badge.
+        const state = week === prog.currentWeek ? states[i] : (states[i] === 'done' ? 'done' : 'upcoming')
         const b = badge[state]
         return (
           <div key={i} className="item" style={{ opacity: state === 'upcoming' ? 0.6 : 1 }}>

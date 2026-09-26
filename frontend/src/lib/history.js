@@ -204,6 +204,22 @@ export function buildSets(S, cfg) {
   }
   return sets
 }
+// Rewrites the exercise at a fixed position in a routine (`r.items` for hybrid
+// routines, `r.ex` otherwise) to a new exercise id. Positional, not id-matched:
+// a session's `active.entries[i]` is always built 1:1 from the same routine's
+// `items`/`ex` at index i (see beginWorkout), so the position is stable even
+// when the exercise appearing there has already been swapped once this session,
+// or when the same exercise id appears more than once in the routine. Returns
+// true if the routine was actually updated, false otherwise (caller should
+// surface that rather than pretend the change landed).
+export function swapRoutineExerciseAt(routine, entryIdx, newExId) {
+  if (!routine) return false
+  const list = routine.items || routine.ex
+  const item = list && list[entryIdx]
+  if (!item || item.kind === 'block') return false
+  item.id = newExId
+  return true
+}
 // Wall-clock elapsed time for an active session, excluding paused spans.
 // `active.pausedAt` (timestamp | null) marks an open pause; `active.pausedMs`
 // accumulates every *closed* pause. Works whether currently paused or not.

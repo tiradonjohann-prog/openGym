@@ -55,3 +55,20 @@ describe('nextSession', () => {
     })
   })
 })
+
+describe('nextSession — stale currentWeek (review finding 2)', () => {
+  it('still finds an earlier incomplete week when currentWeek has drifted past totalWeeks after an edit', () => {
+    // weeks 1-3 were complete under a 2-session/week programme; the programme was
+    // then edited to 3 sessions/week and shortened to 3 weeks, leaving week 2 only
+    // 2/3 done — but currentWeek (never touched by the edit) still says 4.
+    const prog = {
+      currentWeek: 4,
+      totalWeeks: 3,
+      routineIds: ['a', 'b', 'c'],
+      weekProgress: { 1: [true, true, true], 2: [true, true, false], 3: [] },
+    }
+    expect(nextSession(prog, [])).toEqual({
+      routineId: 'c', weekNum: 2, sessionIdx: 2, routine: null,
+    })
+  })
+})
