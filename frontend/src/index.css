@@ -71,28 +71,32 @@
 }
 
 :root[data-theme="light"] {
-  /* warm oat — not the default iOS cold grey */
-  --bg:        #F5F0EA;
-  --bg-el:     #FAF6F1;
+  /* premium glass light (Phase 1 visual redesign) */
+  --bg:        #EEF1F6;
+  --bg-el:     #F7F9FC;
   --surface:   #FFFFFF;
-  --surface-2: #ECE7DF;
-  --surface-3: #E3DDD6;
+  --surface-2: #E4E8F0;
+  --surface-3: #D8DEE9;
 
-  /* warm near-black + warm brown mid-tones */
-  --label:     #1C1812;
-  --label-2:   rgba(58,46,28,.62);
-  --label-3:   rgba(58,46,28,.32);
+  --label:     #12141C;
+  --label-2:   #6B7280;
+  --label-3:   #97A1B5;
   --label-4:   rgba(58,46,28,.15);
 
-  --sep:       rgba(58,46,28,.13);
-  --sep-op:    rgba(58,46,28,.08);
+  --sep:       rgba(15,23,42,.08);
+  --sep-op:    rgba(15,23,42,.06);
 
   /* slightly warmer palette for light mode — same hue family as dark, just brighter */
-  --blue:#0071E3; --green:#30A88E; --red:#FF3B30; --orange:#F07800;
-  --yellow:#E6A800; --teal:#28B0C7; --indigo:#5856D6; --pink:#FF2D55;
-  --purple:#AF52DE; --mint:#30A88E; --brown:#A2845E; --grey:#8E8E93;
-  --acc-2:#2D8A75;
+  --blue:#0071E3; --green:#0D9488; --red:#FF3B30; --orange:#D97706;
+  --yellow:#E6A800; --teal:#28B0C7; --indigo:#4F46E5; --pink:#FF2D55;
+  --purple:#AF52DE; --mint:#0D9488; --brown:#A2845E; --grey:#8E8E93;
+  --acc-2:#0B7C71;
   --on-acc:#000000;
+
+  /* glass surface (Phase 1 visual redesign) */
+  --glass-fill: #FFFFFF;
+  --glass-border: rgba(15,23,42,.07);
+  --glass-highlight: rgba(255,255,255,.9);
 }
 
 /* accents */
