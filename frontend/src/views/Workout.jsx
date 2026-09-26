@@ -344,7 +344,7 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
     <div className="row between" style={{ marginBottom: 6 }}>
       <div style={{ fontSize: compact ? 17 : 20, fontWeight: 600, letterSpacing: '-.02em', textTransform: 'capitalize', lineHeight: 1.2 }}>{ex.n}</div>
       <div style={{ display: 'flex', gap: 4 }}>
-        {onSwap && <button className="iconbtn" aria-label={t('Switch exercise')} onClick={() => swapExerciseSheet(entry.id, onSwap, routineId)}><Icon name="shuffle" /></button>}
+        {onSwap && <button className="iconbtn" aria-label={t('Switch exercise')} onClick={() => swapExerciseSheet(entry.id, onSwap, routineId, entryIdx)}><Icon name="shuffle" /></button>}
         <button className="iconbtn" aria-label={t('Details')} onClick={() => exerciseDetailSheet(ex)}><Icon name="info" /></button>
       </div>
     </div>
