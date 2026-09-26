@@ -24,7 +24,7 @@ import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS } from './lib/progression.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
 import { pickImage, isUserImage } from './lib/imageUtils.js'
-import { isCardioSport, isHybrid, SPORTS, BLOCK_TYPES, blockSummary, estimateBlockKcal, defaultCardioBlocks } from './lib/sports.js'
+import { isCardioSport, isHybrid, SPORTS, BLOCK_TYPES, blockSummary, estimateBlockKcal, defaultCardioBlocks, routineSubtitle } from './lib/sports.js'
 import { sessionStates, isWeekComplete, isProgrammeComplete, rewindProgrammeForDeletedWorkout } from './lib/programme.js'
 import { calcStrengthKcal } from './lib/cardio.js'
 import { CardioForm } from './views/nutrition/CardioEntry.jsx'
@@ -1310,6 +1310,20 @@ export function startFlowForProgramme(programmeId, weekNum, sessionIdx) {
   const routineId = prog.routineIds[sessionIdx]
   startFlow(routineId, { programmeId, progWeek: weekNum, progSessionIdx: sessionIdx })
 }
+function ConfirmStart({ routine, onConfirm, close }) {
+  return <div style={{ textAlign: 'center', padding: '4px 0' }}>
+    <span className="lrow-i" style={{ margin: '0 auto 10px', background: isCardioSport(routine.sport) ? 'var(--teal)' : 'var(--acc)' }}>
+      <Icon name={isCardioSport(routine.sport) ? (SPORTS[routine.sport]?.icon || 'bolt') : glyphOf(routine.emoji)} />
+    </span>
+    <h3 style={{ marginBottom: 4 }}>{routine.name}</h3>
+    <div className="muted small" style={{ marginBottom: 18 }}>{routineSubtitle(routine)}</div>
+    <button className="btn primary" onClick={() => { close(); onConfirm() }}>{t('Lancer')}</button>
+    <div style={{ height: 8 }} />
+    <Button variant="ghost" onClick={close}>{t('Annuler')}</Button>
+  </div>
+}
+export const confirmStartSheet = (routine, onConfirm) =>
+  ui().openSheet(close => <ConfirmStart routine={routine} onConfirm={onConfirm} close={close} />, { kind: 'center' })
 export function beginWorkout(routineId, bw, progCtx = null) {
   const st = S()
   const r = routineId ? st.routines.find(x => x.id === routineId) : null

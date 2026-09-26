@@ -2,7 +2,7 @@
 // MET values from Ainsworth et al. 2011 (same source as cardio.js).
 // Formula: kcal = MET × weightKg × durationHours
 
-import { uid } from './format.js'
+import { uid, exCount } from './format.js'
 import { t } from './i18n.js'
 
 export const SPORTS = {
@@ -117,6 +117,20 @@ export function defaultCardioBlocks(sport) {
 
 export function isHybrid(r) {
   return Array.isArray(r?.items)
+}
+
+export function routineSubtitle(r) {
+  if (isCardioSport(r.sport)) {
+    const min = routineTotalDuration(r.blocks || [])
+    const sportLabel = t(SPORTS[r.sport]?.label || r.sport)
+    return min ? `${sportLabel} \xB7 ${min} min` : sportLabel
+  }
+  if (isHybrid(r)) {
+    const nEx = (r.items || []).filter(x => x.kind === 'ex').length
+    const nBlocks = (r.items || []).filter(x => x.kind === 'block').length
+    return `${exCount(nEx)} + ${nBlocks} bloc${nBlocks > 1 ? 's' : ''} cardio`
+  }
+  return exCount(r.ex?.length ?? 0)
 }
 
 export function hybridExItems(r) {

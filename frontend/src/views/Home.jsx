@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet } from '../sheets.jsx'
 import { isCardioSport } from '../lib/sports.js'
 import { activeProgramme, nextSession, completedWeekCount, sessionStates } from '../lib/programme.js'
 import { dayTotals } from '../lib/foodSearch.js'
@@ -407,7 +407,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
   const bwPoints = S.bodyweight.slice(-30).map(b => ({ t: b.t || new Date(b.d).getTime(), y: b.w, d: b.d }))
 
   const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
-  const onToday = () => { if (S.active) nav(activeRoute); else if (routine) startFlow(routine.id); else dayOverrideSheet(todayISO()) }
+  const onToday = () => { if (S.active) nav(activeRoute); else if (routine) confirmStartSheet(routine, () => startFlow(routine.id)); else dayOverrideSheet(todayISO()) }
 
   return <div className="narrow">
     <div className="hdr" data-tuto="home-header">

@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { DAYN, uid, exCount, isoOf } from '../lib/format.js'
+import { DAYN, uid, isoOf } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { SPORTS, isCardioSport, defaultCardioBlocks, routineTotalDuration, isHybrid } from '../lib/sports.js'
+import { SPORTS, isCardioSport, defaultCardioBlocks, routineSubtitle } from '../lib/sports.js'
 import { isProgrammeComplete, completedWeekCount } from '../lib/programme.js'
 import { dayAssignSheet, loadStarterPlan, planToolsSheet, programmeCreateSheet, programmeEditSheet, deleteProgramme } from '../sheets.jsx'
 import { pickImage, isUserImage } from '../lib/imageUtils.js'
@@ -35,20 +35,6 @@ function SportPicker({ close, onCreate }) {
       ))}
     </div>
   </>
-}
-
-function routineSubtitle(r) {
-  if (isCardioSport(r.sport)) {
-    const min = routineTotalDuration(r.blocks || [])
-    const sportLabel = t(SPORTS[r.sport]?.label || r.sport)
-    return min ? `${sportLabel} \xB7 ${min} min` : sportLabel
-  }
-  if (isHybrid(r)) {
-    const nEx = (r.items || []).filter(x => x.kind === 'ex').length
-    const nBlocks = (r.items || []).filter(x => x.kind === 'block').length
-    return `${exCount(nEx)} + ${nBlocks} bloc${nBlocks > 1 ? 's' : ''} cardio`
-  }
-  return exCount(r.ex?.length ?? 0)
 }
 
 export default function Plan() {
