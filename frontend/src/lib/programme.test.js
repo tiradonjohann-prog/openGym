@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { activeProgramme, nextSession } from './programme.js'
+import { activeProgramme, nextSession, workoutForProgSession } from './programme.js'
 
 const routine = (id, name = id) => ({ id, name, ex: [] })
 
@@ -70,5 +70,25 @@ describe('nextSession — stale currentWeek (review finding 2)', () => {
     expect(nextSession(prog, [])).toEqual({
       routineId: 'c', weekNum: 2, sessionIdx: 2, routine: null,
     })
+  })
+})
+
+describe('workoutForProgSession', () => {
+  const workouts = [
+    { id: 'w1', programmeId: 'p1', progWeek: 1, progSessionIdx: 0 },
+    { id: 'w2', programmeId: 'p1', progWeek: 1, progSessionIdx: 1 },
+    { id: 'w3', programmeId: 'p1', progWeek: 2, progSessionIdx: 0 },
+    { id: 'w4' }, // freestyle workout, no programme fields at all
+  ]
+
+  it('finds the workout matching programme id, week and session index exactly', () => {
+    expect(workoutForProgSession(workouts, 'p1', 1, 1)).toBe(workouts[1])
+    expect(workoutForProgSession(workouts, 'p1', 2, 0)).toBe(workouts[2])
+  })
+
+  it('returns null when nothing matches, including for a freestyle workout with no programme fields', () => {
+    expect(workoutForProgSession(workouts, 'p1', 3, 0)).toBe(null)
+    expect(workoutForProgSession(workouts, 'p-other', 1, 0)).toBe(null)
+    expect(workoutForProgSession([], 'p1', 1, 0)).toBe(null)
   })
 })

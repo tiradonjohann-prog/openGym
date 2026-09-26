@@ -43,6 +43,12 @@ export function nextSessionIdx(prog, weekNum) {
   return states.indexOf('next')
 }
 
+export function workoutForProgSession(workouts, programmeId, weekNum, sessionIdx) {
+  return workouts.find(w =>
+    w.programmeId === programmeId && w.progWeek === weekNum && w.progSessionIdx === sessionIdx
+  ) || null
+}
+
 export function activeProgramme(S) {
   const list = S.programmes || []
   return list.find(p => !p.paused && !isProgrammeComplete(p)) || null

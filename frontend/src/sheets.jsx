@@ -1583,6 +1583,8 @@ function doFinishWorkout() {
     id: A.id, d: A.d, start: A.start + pausedMs, end: Date.now(), routineId: A.routineId, name: A.name, bw: A.bw,
     entries: A.entries.filter(e => e.kind !== 'block').map(e => ({ id: e.id, sets: e.sets, topW: e.topW || null, target: e.target || null })).filter(e => (e.sets || []).some(s => s.done)),
     prs,
+    ...(A.programmeId != null ? { programmeId: A.programmeId, progWeek: A.progWeek, progSessionIdx: A.progSessionIdx ?? null } : {}),
+    ...(A.adHoc ? { adHoc: true } : {}),
     ...(A.hybrid ? {
       cardioBlocks: A.entries.filter(e => e.kind === 'block' && e.done).map(e => ({
         sport: e.sport, type: e.type, duration: e.duration, distKm: e.distKm || null, kcal: e.kcal || null, notes: e.notes || null,
