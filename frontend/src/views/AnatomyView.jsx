@@ -12,6 +12,7 @@ import { focusMesh, dezoom } from '../lib/cameraUtils.js'
 import { exerciseDetailSheet, confirmSheet } from '../sheets.jsx'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
+import { Button } from '../components/ui.jsx'
 import { dragGuard } from '../lib/dragGuard.js'
 
 export function hasWebGL() {
@@ -67,6 +68,7 @@ export default function AnatomyView() {
   // confirming), the heatmap view is done — free exploration from then on.
   const [heatmapDismissed, setHeatmapDismissed] = useState(false)
   const effectiveHeatmap = heatmapDismissed ? null : heatmap
+  const [shown, setShown] = useState(30)
 
   const handleMuscleClick = useCallback((muscleKey, mesh) => {
     const inExercise = effectiveHeatmap && (effectiveHeatmap[muscleKey] ?? 0) > 0
@@ -78,12 +80,17 @@ export default function AnatomyView() {
         cancelText: t('Cancel'),
         onConfirm: () => {
           setHeatmapDismissed(true)
+          setShown(30)
           setSelected({ muscleKey, mesh })
         },
       })
       return
     }
-    setSelected(prev => (prev?.muscleKey === muscleKey ? null : { muscleKey, mesh }))
+    setSelected(prev => {
+      if (prev?.muscleKey === muscleKey) return null
+      setShown(30)
+      return { muscleKey, mesh }
+    })
   }, [effectiveHeatmap])
   const deselect = useCallback(() => setSelected(null), [])
 
@@ -162,12 +169,12 @@ export default function AnatomyView() {
             </button>
           </div>
           <div className="small muted" style={{ marginBottom: 10 }}>
-            {list.length > 30
-              ? t('Showing top {0} of {1} exercises', Math.min(list.length, 30), list.length)
+            {list.length > shown
+              ? t('Showing top {0} of {1} exercises', shown, list.length)
               : t('{0} exercises target this muscle', list.length)}
           </div>
           <div className="list">
-            {list.slice(0, 30).map(ex => (
+            {list.slice(0, shown).map(ex => (
               <div key={ex.id} className="item" onClick={() => exerciseDetailSheet(ex)}>
                 <div className="grow">
                   <div className="tt capitalize">{ex.n}</div>
@@ -178,6 +185,9 @@ export default function AnatomyView() {
             ))}
             {list.length === 0 && <div className="empty">{t('No exercises found for this muscle.')}</div>}
           </div>
+          {list.length > shown && (
+            <><div style={{ height: 10 }} /><Button onClick={() => setShown(s => s + 30)}>{t('Show more')}</Button></>
+          )}
         </div>
       )}
     </div>

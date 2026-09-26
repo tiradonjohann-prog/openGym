@@ -1342,10 +1342,14 @@ input.num.imc-input{
   flex:0 0 auto;max-height:45vh;overflow-y:auto;
   background:var(--surface);border-top:var(--hair) solid var(--sep-op);
   border-radius:var(--r-xl) var(--r-xl) 0 0;
-  padding:14px 16px calc(16px + var(--sab));
+  padding:14px 16px calc(128px + var(--sab));
   box-shadow:0 -12px 30px -14px rgba(0,0,0,.4);
 }
-.anatomy-panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.anatomy-panel-hdr{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;
+  position:sticky;top:0;z-index:1;
+  background:var(--surface);padding:2px 0 6px;margin-top:-2px;
+}
 .anatomy-panel-hdr h3{margin:0}
 
 /* activation-heatmap color legend, shown over the 3D canvas in exercise mode */
