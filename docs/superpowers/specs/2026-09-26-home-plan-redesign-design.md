@@ -33,6 +33,12 @@ Confirmed with the user:
   only (no freestyle/build-as-you-go option for this flow).
 - The classic day-of-week grid is collapsed behind a "Voir le planning
   classique" toggle on Plan when a programme is active, not removed.
+- **Sessions within and across weeks can be done in any order, including
+  starting a future week's session before the current week is finished.**
+  This explicitly **supersedes** the sequential-lock behavior confirmed
+  earlier in the original 8-point round (§8 there) — that ruling is
+  overridden by this later, more specific instruction. The week/session
+  labeled "prochaine" is now a *suggestion* (visual only), never a gate.
 
 ## Goals
 
@@ -104,48 +110,82 @@ changes. The pause icon button inside `Workout.jsx`'s header is removed —
 this tab-bar button is now the only pause control, reachable from any
 screen.
 
-## 3. Home: consolidated programme card with weekly checklist
+## 3. Home: consolidated programme card with a swipeable weekly tile grid
 
-Replaces the current `NextSessionCard` (from the previous branch) with a
-richer card, still rendered only when `activeProgramme(S)` returns a
-programme:
+Replaces the current `NextSessionCard` (from the previous branch) **and**
+retires the previous branch's read-only `programmeWeeksSheet`/calendar-icon
+entry point on `ProgrammeCard` (Task 11 there) — this new card is both the
+week browser and the launcher, so a second, separate, read-only UI for the
+same concept would just be a second place to keep in sync. Still rendered
+only when `activeProgramme(S)` returns a programme.
 
 ```
-┌─────────────────────────────────────┐
-│ PROGRAMME MAMAN · Semaine 3/8   6/8  │  ← name · week counter, completed-weeks badge
-│ ▓▓▓▓▓▓░░░░░░░░░░░░░░░░  (progress bar)│
-├─────────────────────────────────────┤
-│ ☑ Push Day              12 sept.     │  ← done: checkmark, dimmed, tap → workout detail
-│ ☑ Pull Day              14 sept.     │
-│ ▶ Legs Day          [Prochaine]      │  ← next: highlighted, tap → confirm-start (§4)
-│ ○ Extra: Yoga (ajoutée)  —           │  ← ad-hoc, if any this week — shown once logged
-│ + Ajouter une séance                 │  ← opens routine picker (§3.1)
-└─────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│ PROGRAMME MAMAN                        6/8 │  ← name, completed-weeks badge (outer header)
+│ ▓▓▓▓▓▓░░░░░░░░░░░░░░░░  (overall progress) │
+├───────────────────────────────────────────┤
+│ Semaine 3/8                                │  ← viewed week's own header
+│ ┌────────┐ ┌────────┐ ┌────────┐ ┌───────┐│
+│ │  Push   │ │  Pull   │ │  Legs   │ │ Core  ││  ← one tile per session this week
+│ │   ✓     │ │   ✓     │ │ ▶ Proch.│ │       ││
+│ │  vert   │ │  vert   │ │  jaune  │ │  gris ││
+│ └────────┘ └────────┘ └────────┘ └───────┘│
+│ + Ajouter une séance                       │
+├───────────────────────────────────────────┤
+│         ‹  •  •  ○  •  •  •  •  •  ›       │  ← week dots, swipe left/right
+└───────────────────────────────────────────┘
 ```
 
-- Rows for `prog.routineIds` in order, state per `sessionStates(prog,
-  currentWeek)` (already exists): `done` → checkmark + dimmed + date of
-  completion (look up the matching `S.workouts` entry by `programmeId`/`progWeek`/`progSessionIdx`);
-  `next` → highlighted, tappable, opens confirm-start; `upcoming` → plain,
-  not tappable (matches today's `ProgrammeWeeks` read-only convention for
-  non-current sessions).
-- Ad-hoc rows (this week's `S.workouts` with matching `progWeek`, `adHoc:
-  true`) appended after the fixed rows, always shown as done (they only
-  exist once logged — there's no "planned ad-hoc" state).
-- When the last fixed-slot checkbox is checked (i.e. `doFinishWorkout`'s
-  existing auto-advance fires), the card re-renders against the new
-  `currentWeek` automatically — no special transition code needed, this
-  falls out of `nextSession`/`sessionStates` being called fresh each render.
+- **Outer header** (static, not part of the swipe): programme name +
+  overall `completedWeeks/totalWeeks` badge + progress bar — unchanged
+  from the previous branch's card.
+- **Swipeable body**: one page per training week, `1..prog.totalWeeks`
+  (`prog.totalWeeks` — an explicit *training*-week count, not calendar
+  weeks; the page index is exactly `weekNum` already used everywhere in
+  `lib/programme.js`, no new concept needed). Horizontal swipe/scroll
+  between pages; small dot indicators below the card show position and
+  are tappable to jump. Each page's own header reads "Semaine
+  `{weekNum}`/`{prog.totalWeeks}`".
+- **Session tiles**, one per `prog.routineIds` entry for the viewed week,
+  laid out in a wrapping row/grid. State per `sessionStates(prog, weekNum)`
+  (already exists, unchanged) maps to tile style — **all three states are
+  tappable now**, not just "done" and "next":
+  - `done` → green fill/border, checkmark, tap opens `workoutDetailSheet`
+    for the matching `S.workouts` entry (looked up by `programmeId`/`progWeek`/`progSessionIdx`
+    — new pure helper `workoutForProgSession(S, programmeId, weekNum,
+    sessionIdx)`). Deleting from there already reopens the slot (§1) —
+    the tile flips back to yellow/grey on the next render, no extra code.
+  - `next` (first incomplete session, whichever week it's in) → yellow
+    fill/border, "Prochaine séance" badge, tap opens confirm-start (§4)
+    for that session.
+  - `upcoming` (every other not-done session, this week or any other) →
+    grey fill/border, no badge, **still tappable** — opens the same
+    confirm-start sheet for that specific session. This is what makes
+    starting a future week's session, or picking a different session than
+    the suggested one, possible — see the Context section's confirmed
+    early-start behavior.
+- **Ad-hoc tiles**: this week's `S.workouts` with matching `progWeek` and
+  `adHoc: true` are appended after the fixed tiles, always green/done
+  (they only exist once logged).
+- **Auto-advance follows the view**: a `viewedWeek` local state initializes
+  to `prog.currentWeek`. When `prog.currentWeek` changes (the existing
+  auto-advance in `doFinishWorkout` fires) *and* the user hadn't manually
+  swiped away from the previously-current week, `viewedWeek` updates to
+  track it — the carousel follows you into the new week automatically. If
+  the user had manually navigated to a different week, their position is
+  left alone (they're intentionally browsing elsewhere).
 
 ### 3.1 Adding a spontaneous session
 
-"+ Ajouter une séance" opens `exercisePicker`-style routine list (reuse the
-existing routine-picking list pattern from `AddToRoutine`/`ExercisePicker`,
-scoped to `S.routines` instead of exercises) filtered to non-cardio-only
-exclusions none needed — any routine type is fine. Picking one calls:
+"+ Ajouter une séance" (present on every week page, not just the current
+one — you can log an extra session against whichever week you're viewing)
+opens `exercisePicker`-style routine list (reuse the existing
+routine-picking list pattern from `AddToRoutine`/`ExercisePicker`, scoped
+to `S.routines` instead of exercises) — any routine type is fine. Picking
+one calls:
 
 ```js
-startFlow(routineId, { programmeId: prog.id, progWeek: prog.currentWeek, adHoc: true })
+startFlow(routineId, { programmeId: prog.id, progWeek: viewedWeek, adHoc: true })
 ```
 
 (no `progSessionIdx` — this is the signal that keeps it out of
@@ -166,7 +206,8 @@ called directly (`startFlow(routineId)` / `startFlowForProgramme(...)`).
   target routine/programme session first (unchanged resolution logic),
   then opens `confirmStartSheet` instead of calling `onStart`/`startFlowForProgramme`
   directly.
-- Home's programme-card "next" row and "+ Ajouter une séance" (§3, §3.1).
+- Home's programme-card tiles (`next` **and** `upcoming` states alike —
+  any tappable tile) and "+ Ajouter une séance" (§3, §3.1).
 - Home's classic-mode "today" row (`ClassicHome`, unchanged resolution,
   now funnels through the same confirm sheet) — kept consistent rather
   than leaving classic mode as the one path that still launches instantly.
@@ -193,10 +234,17 @@ Reorders `Plan.jsx`'s sections and collapses the day-of-week grid:
 `programmeEditSheet(prog)` to `nav('/plan')` followed by opening that same
 sheet — a one-line change, conditional on not already being on `/plan`
 (check `useLocation().pathname` so tapping a card already on Plan doesn't
-double-navigate). The calendar/weeks-browser button added in the previous
-branch (Task 11) is unaffected — it keeps opening `programmeWeeksSheet`
-directly, no navigation needed since it's already a read-only viewer, not
-an edit entry point.
+double-navigate).
+
+**Retiring the Task 11 read-only week browser**: the previous branch's
+calendar-icon button on `ProgrammeCard` and the `programmeWeeksSheet`/`ProgrammeWeeks`
+component it opened are removed — §3's swipeable card on Home is now the
+one place that browses *and* acts on any week's sessions, so keeping the
+old read-only sheet around would just be a second, divergent UI for the
+same data (it still enforces the now-superseded "only the current week's
+next session is actionable" rule). `ProgrammeCard` goes back to a single
+tap target (the nav-to-Plan behavior above) plus its existing delete
+button — no second icon button.
 
 ---
 
@@ -216,9 +264,10 @@ that predates these fields simply skips the rewind logic (fields are
 ## Testing
 
 Consistent with the previous branch's approach — `lib/*.js` pure logic
-gets Vitest coverage (the delete-rewind logic's core decision of *whether*
-and *how far* to rewind `currentWeek` should be extracted as a pure
-function and tested the same way `nextSession` was); UI changes (the
-consolidated card, confirm sheet, tab-bar state machine, Plan's collapsed
-grid) are verified via `npm run build` + manual walkthrough, per this
-codebase's existing convention of no component-level test infrastructure.
+gets Vitest coverage: the delete-rewind decision (*whether* and *how far*
+to rewind `currentWeek`, §1) and `workoutForProgSession` (§3's done-tile
+lookup) should both be extracted as pure functions and tested the same way
+`nextSession` was. UI changes (the swipeable card, tile states, confirm
+sheet, tab-bar state machine, Plan's collapsed grid) are verified via
+`npm run build` + manual walkthrough, per this codebase's existing
+convention of no component-level test infrastructure.
