@@ -6,7 +6,7 @@ import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from 
 import { t, dateLocale } from '../lib/i18n.js'
 import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme } from '../sheets.jsx'
 import { isCardioSport } from '../lib/sports.js'
-import { activeProgramme, nextSession, completedWeekCount } from '../lib/programme.js'
+import { activeProgramme, nextSession, completedWeekCount, sessionStates } from '../lib/programme.js'
 import { dayTotals } from '../lib/foodSearch.js'
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
@@ -246,6 +246,8 @@ function NextSessionCard({ S, prog }) {
   const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
   const nav = useNavigate()
   const doneWeeks = completedWeekCount(prog)
+  const weekStates = sessionStates(prog, ns.weekNum)
+  const doneThisWeek = weekStates.filter(s => s === 'done').length
   const onClick = () => {
     if (S.active) { nav(activeRoute); return }
     startFlowForProgramme(prog.id, ns.weekNum, ns.sessionIdx)
@@ -260,6 +262,9 @@ function NextSessionCard({ S, prog }) {
           {prog.name} · {t('Semaine {0}/{1}', ns.weekNum, prog.totalWeeks)}
         </div>
         <span className="tag acc" style={{ fontSize: 10, fontWeight: 700 }}>{doneWeeks}/{prog.totalWeeks}</span>
+      </div>
+      <div className="small muted" style={{ marginBottom: 8 }}>
+        {t('{0}/{1} séances cette semaine', doneThisWeek, weekStates.length)}
       </div>
       <div className="row" style={{ gap: 10, alignItems: 'center' }}>
         <span className="lrow-i" style={{ background: S.active ? 'var(--orange)' : 'var(--acc)' }}>
