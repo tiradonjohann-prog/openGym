@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep } from './history.js'
+import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep, elapsedMs } from './history.js'
 import { EXDB } from './exercises.js'
 
 // Real ids out of the shipped catalogue, so the body-part fallback is exercised for real.
@@ -394,5 +394,28 @@ describe('workoutVolume', () => {
   it('leaves an unloaded bodyweight set at zero volume rather than inventing a number', () => {
     const w = { entries: [{ id: BW, target: { bodyweight: true }, sets: [{ w: 0, r: 20, done: true }] }] }
     expect(workoutVolume(w)).toBe(0)
+  })
+})
+
+describe('elapsedMs', () => {
+  const start = 1_000_000
+
+  it('counts straight through when never paused', () => {
+    expect(elapsedMs({ start }, start + 5000)).toBe(5000)
+  })
+
+  it('freezes at the moment it was paused', () => {
+    const active = { start, pausedAt: start + 3000, pausedMs: 0 }
+    expect(elapsedMs(active, start + 9000)).toBe(3000)
+  })
+
+  it('excludes a completed pause once resumed', () => {
+    // paused for 2000ms total, then 4000ms more of real time passed
+    const active = { start, pausedAt: null, pausedMs: 2000 }
+    expect(elapsedMs(active, start + 2000 + 4000)).toBe(4000)
+  })
+
+  it('treats missing pausedAt/pausedMs as zero (backward compatible with old S.active shapes)', () => {
+    expect(elapsedMs({ start }, start + 1000)).toBe(1000)
   })
 })

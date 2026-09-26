@@ -204,6 +204,14 @@ export function buildSets(S, cfg) {
   }
   return sets
 }
+// Wall-clock elapsed time for an active session, excluding paused spans.
+// `active.pausedAt` (timestamp | null) marks an open pause; `active.pausedMs`
+// accumulates every *closed* pause. Works whether currently paused or not.
+export function elapsedMs(active, now = Date.now()) {
+  const pausedMs = active.pausedMs || 0
+  const clockNow = active.pausedAt || now
+  return clockNow - active.start - pausedMs
+}
 export function workoutVolume(w) {
   let v = 0
   w.entries.forEach(e => (e.sets || []).forEach(s => { if (s.done) v += (s.w || 0) * (s.r || 0) }))

@@ -1482,6 +1482,17 @@ function HybridMissingDataSheet({ missingEntries, close, onSaveAnyway }) {
   )
 }
 
+export function pauseWorkout() {
+  update(s => { if (s.active && !s.active.pausedAt) s.active.pausedAt = Date.now() })
+}
+export function resumeWorkout() {
+  update(s => {
+    if (s.active && s.active.pausedAt) {
+      s.active.pausedMs = (s.active.pausedMs || 0) + (Date.now() - s.active.pausedAt)
+      s.active.pausedAt = null
+    }
+  })
+}
 export function finishWorkout() {
   const A = S().active
   if (!A) return
@@ -1546,8 +1557,9 @@ function doFinishWorkout() {
     ).entries()].map(([r, wt]) => ({ r, w: wt })) : []
     return { id, kinds: [...kinds], repBests }
   })
+  const pausedMs = A.pausedAt ? (A.pausedMs || 0) + (Date.now() - A.pausedAt) : (A.pausedMs || 0)
   const w = {
-    id: A.id, d: A.d, start: A.start, end: Date.now(), routineId: A.routineId, name: A.name, bw: A.bw,
+    id: A.id, d: A.d, start: A.start + pausedMs, end: Date.now(), routineId: A.routineId, name: A.name, bw: A.bw,
     entries: A.entries.filter(e => e.kind !== 'block').map(e => ({ id: e.id, sets: e.sets, topW: e.topW || null, target: e.target || null })).filter(e => (e.sets || []).some(s => s.done)),
     prs,
     ...(A.hybrid ? {
