@@ -684,7 +684,7 @@ function SwapPicker({ currentExId, onSwap, routineId, close }) {
     .filter(e => e.score > 0)
     .sort((a, b) => b.score - a.score)
   const pick = newEx => {
-    if (!routineId) { close(); onSwap(newEx); return }
+    if (!routineId || S().simpleMode) { close(); onSwap(newEx); return }
     close()
     ui().openSheet(closeScope => (
       <SwapScopeDialog newEx={newEx} current={current} routineId={routineId} onSwap={onSwap} close={closeScope} />

@@ -523,7 +523,7 @@ function ActiveWorkout() {
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontWeight: 600 }}>{A.name}</div>
         <div className="sub">
-          <Elapsed start={A.start} pausedAt={A.pausedAt} pausedMs={A.pausedMs} /> · {t('{0} sets', done + '/' + total)}{volume > 0 ? ' · ' + fmtNum(Math.round(volume)) + ' ' + S.unit : ''}
+          <Elapsed start={A.start} pausedAt={A.pausedAt} pausedMs={A.pausedMs} /> · {t('{0} sets', done + '/' + total)}{!S.simpleMode && volume > 0 ? ' · ' + fmtNum(Math.round(volume)) + ' ' + S.unit : ''}
         </div>
       </div>
       <button
