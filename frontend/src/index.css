@@ -18,38 +18,47 @@
 
 /* ---------------------------------------------------------------- tokens -- */
 :root {
-  /* surfaces — Ganbaru warm dark (not pure OLED black) */
-  --bg:        #252526;
-  --bg-el:     #2e2e2f;   /* elevated backdrop (sheets, bars) */
+  /* surfaces — premium glass dark (Phase 1 visual redesign) */
+  --bg:        #090D16;
+  --bg-el:     #0E1526;   /* elevated backdrop (sheets, bars) */
   --surface:   #333334;   /* card / grouped-list fill */
-  --surface-2: #3c3c3d;   /* pressed + nested fill */
-  --surface-3: #474748;   /* controls (segmented track, switch off) */
+  --surface-2: #111826;   /* pressed + nested fill */
+  --surface-3: #161F33;   /* controls (segmented track, switch off) */
 
   /* text */
-  --label:     #ffffff;
-  --label-2:   rgba(235,235,245,.60);
-  --label-3:   rgba(235,235,245,.32);
-  --label-4:   rgba(235,235,245,.18);
+  --label:     #E7ECF5;
+  --label-2:   #8492AE;
+  --label-3:   #5B6B85;
+  --label-4:   #4D5C77;
 
   /* lines */
   --sep:       rgba(255,255,255,.10);
   --sep-op:    rgba(255,255,255,.07);
   --hair:      .5px;
 
-  /* system palette — --green is Ganbaru mint (used by the default lime accent) */
-  --blue:#0a84ff; --green:#5cbfa4; --red:#ff453a; --orange:#ff9f0a;
-  --yellow:#ffd60a; --teal:#40c8e0; --indigo:#5e5ce6; --pink:#ff375f;
-  --purple:#bf5af2; --mint:#5cbfa4; --brown:#ac8e68; --grey:#8e8e93;
+  /* system palette — --green is the default mint accent */
+  --blue:#0a84ff; --green:#7DEFD9; --red:#ff453a; --orange:#FFB454;
+  --yellow:#ffd60a; --teal:#40c8e0; --indigo:#8C93F8; --pink:#ff375f;
+  --purple:#bf5af2; --mint:#7DEFD9; --brown:#ac8e68; --grey:#8e8e93;
 
   /* accent (per-account, synced) */
   --acc:  var(--green);
-  --acc-2:#3d9e88;
-  --on-acc:#000000;
+  --acc-2:#5FCDB6;
+  --on-acc:#06110E;
   --acc-soft: color-mix(in srgb, var(--acc) 18%, transparent);
   --acc-line: color-mix(in srgb, var(--acc) 40%, transparent);
 
+  /* glass surface (Phase 1 visual redesign) */
+  --glass-fill: rgba(255,255,255,.035);
+  --glass-border: rgba(255,255,255,.09);
+  --glass-highlight: rgba(255,255,255,.05);
+
+  /* typography (Phase 1 visual redesign) */
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+
   /* geometry */
-  --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:22px; --r-card:14px;
+  --r-sm:8px; --r:12px; --r-lg:16px; --r-xl:22px; --r-card:16px;
   --pad:16px;
   --icon-stroke:1.7;
 
