@@ -42,3 +42,24 @@ export function nextSessionIdx(prog, weekNum) {
   const states = sessionStates(prog, weekNum)
   return states.indexOf('next')
 }
+
+export function activeProgramme(S) {
+  const list = S.programmes || []
+  return list.find(p => !p.paused && !isProgrammeComplete(p)) || null
+}
+
+export function nextSession(prog, routines) {
+  if (!prog || prog.paused || isProgrammeComplete(prog)) return null
+  for (let week = prog.currentWeek; week <= prog.totalWeeks; week++) {
+    const sessionIdx = nextSessionIdx(prog, week)
+    if (sessionIdx === -1) continue
+    const routineId = prog.routineIds[sessionIdx]
+    return {
+      routineId,
+      weekNum: week,
+      sessionIdx,
+      routine: routines.find(r => r.id === routineId) || null,
+    }
+  }
+  return null
+}
