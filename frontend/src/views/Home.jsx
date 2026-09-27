@@ -5,7 +5,7 @@ import { useUI } from '../store/useUI.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, bwTrend, weekDayVolumes, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, addAdHocSessionSheet } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, addAdHocSessionSheet, resumeWorkout } from '../sheets.jsx'
 import { isCardioSport } from '../lib/sports.js'
 import { activeProgramme, nextSession, completedWeekCount, sessionStates, workoutForProgSession } from '../lib/programme.js'
 import { dayTotals } from '../lib/foodSearch.js'
@@ -408,6 +408,7 @@ function ProgrammeWeekCarousel({ S, prog }) {
 function ProgrammeHome({ S, user, nav }) {
   const today = new Date()
   const programmes = S.programmes || []
+  const [weekBrowserOpen, setWeekBrowserOpen] = useState(false)
 
   return (
     <div className="narrow">
@@ -482,7 +483,65 @@ function ProgrammeHome({ S, user, nav }) {
         </div>
       </div>
 
-      {(() => { const prog = activeProgramme(S); return prog ? <ProgrammeWeekCarousel S={S} prog={prog} /> : null })()}
+      {(() => {
+        const prog = activeProgramme(S)
+        if (!prog) return null
+        const ns = nextSession(prog, S.routines)
+        const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            <SectionHead title={t('Prochaine séance')} action={weekBrowserOpen ? t('Masquer') : t('Voir les semaines')} onAction={() => setWeekBrowserOpen(o => !o)} />
+            {S.active ? (
+              <div className="card" style={{
+                border: '1.5px solid color-mix(in srgb,var(--orange) 32%,transparent)',
+                background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 7%,var(--glass-fill)),var(--glass-fill))',
+                padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.6px', color: 'var(--orange)', textTransform: 'uppercase' }}>
+                  {S.active.pausedAt ? t('En pause') : t('Séance en cours')}
+                </div>
+                <div className="font-display" style={{ fontWeight: 700, fontSize: 19 }}>{S.active.name}</div>
+                <button className="btn cta" onClick={() => { if (S.active.pausedAt) { resumeWorkout(); nav(activeRoute) } else nav(activeRoute) }}>
+                  <Icon name={S.active.pausedAt ? 'play' : 'timer'} />
+                  <span>{S.active.pausedAt ? t('Reprendre') : t('Continuer')}</span>
+                </button>
+              </div>
+            ) : ns && ns.routine ? (
+              <div style={{
+                position: 'relative', border: '1px solid color-mix(in srgb,var(--acc) 32%,transparent)', borderRadius: 18,
+                background: 'linear-gradient(165deg,color-mix(in srgb,var(--acc) 7%,var(--glass-fill)),var(--glass-fill))',
+                padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
+                boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
+              }}>
+                <div className="row between">
+                  <div className="row" style={{ gap: 6 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--acc)', display: 'inline-block' }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.6px', color: 'var(--acc)', textTransform: 'uppercase' }}>
+                      {t('Prochaine')} · {ns.routine.name}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <div className="font-display" style={{ fontWeight: 700, fontSize: 19 }}>{ns.routine.name}</div>
+                  {ns.routine.ex?.length > 0 && (
+                    <div style={{ fontSize: 11.5, color: 'var(--label-2)', marginTop: 2 }}>{t('{0} exercises', ns.routine.ex.length)}</div>
+                  )}
+                </div>
+                <button className="btn cta" onClick={() => confirmStartSheet(ns.routine, () => startFlowForProgramme(prog.id, ns.weekNum, ns.sessionIdx))}>
+                  <Icon name="play" />
+                  <span>{t('Démarrer la séance')}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="card" style={{ padding: 16, textAlign: 'center' }}>
+                <div className="font-display" style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{t('Programme terminé')}</div>
+                <div className="muted small">{t('Toutes les séances de ce programme ont été complétées.')}</div>
+              </div>
+            )}
+            {weekBrowserOpen && <ProgrammeWeekCarousel S={S} prog={prog} />}
+          </div>
+        )
+      })()}
 
       <SmartNudge S={S} />
       <LastWorkoutCard S={S} />
