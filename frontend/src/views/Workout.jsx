@@ -193,7 +193,7 @@ function StartChooser() {
   const others = S.routines.filter(r => r !== todayRaw && hasContent(r))
   return <div className="narrow">
     <div className="hdr">
-      <div><h1>{t("Start workout")}</h1><div className="sub">{t(DAYN[new Date().getDay()])} — {todayR ? t("today is {0}", todayR.name) : t("rest day, but no one's stopping you")}</div></div>
+      <div><h1 className="font-display">{t("Start workout")}</h1><div className="sub">{t(DAYN[new Date().getDay()])} — {todayR ? t("today is {0}", todayR.name) : t("rest day, but no one's stopping you")}</div></div>
       <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
     </div>
     {todayR && (() => {
@@ -207,47 +207,50 @@ function StartChooser() {
         }}>
           {/* accent glow orb */}
           <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: `radial-gradient(circle,color-mix(in srgb,var(--acc) 22%,transparent),transparent 70%)`, pointerEvents: 'none' }} />
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--acc)', marginBottom: 3 }}>
-                {t("Today's plan")}{todayOvr ? ' · ' + t('rescheduled') : ''}
+          <div className="hairline" />
+          <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--acc)', marginBottom: 3 }}>
+                  {t("Today's plan")}{todayOvr ? ' · ' + t('rescheduled') : ''}
+                </div>
+                <div className="font-display" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.15 }}>{todayR.name}</div>
+                <div className="muted small" style={{ marginTop: 2 }}>{exCount(todayR.ex?.length ?? 0)}</div>
               </div>
-              <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.02em', lineHeight: 1.15 }}>{todayR.name}</div>
-              <div className="muted small" style={{ marginTop: 2 }}>{exCount(todayR.ex?.length ?? 0)}</div>
+              <div style={{ width: 48, height: 48, borderRadius: 14, fontSize: 26, flexShrink: 0, background: 'var(--acc)', color: 'var(--on-acc)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px -2px color-mix(in srgb,var(--acc) 50%,transparent)' }}>
+                <Icon name={glyphOf(todayR.emoji)} />
+              </div>
             </div>
-            <div style={{ width: 48, height: 48, borderRadius: 14, fontSize: 26, flexShrink: 0, background: 'var(--acc)', color: 'var(--on-acc)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px -2px color-mix(in srgb,var(--acc) 50%,transparent)' }}>
-              <Icon name={glyphOf(todayR.emoji)} />
-            </div>
+            {/* Exercise preview chips */}
+            {exSlice.length > 0 && (
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 14 }}>
+                {exSlice.map(e => {
+                  const ex = exOr(e.id || e)
+                  const col = bpColorOf(ex)
+                  return (
+                    <span key={e.id || e} style={{
+                      fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+                      background: `color-mix(in srgb,${col} 14%,var(--surface-2))`,
+                      color: col,
+                      border: `1px solid color-mix(in srgb,${col} 22%,transparent)`,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120,
+                    }}>{ex.n}</span>
+                  )
+                })}
+                {(todayR.ex?.length ?? 0) > 4 && (
+                  <span style={{ fontSize: 11, fontWeight: 500, padding: '3px 8px', borderRadius: 6, background: 'var(--surface-2)', color: 'var(--label-3)' }}>
+                    +{(todayR.ex?.length ?? 0) - 4}
+                  </span>
+                )}
+              </div>
+            )}
+            <Button variant="cta" icon="play" style={{ position: 'relative' }} onClick={() => confirmStartSheet(todayR, () => startFlow(todayR.id))}>{t('Start {0}', todayR.name)}</Button>
           </div>
-          {/* Exercise preview chips */}
-          {exSlice.length > 0 && (
-            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 14 }}>
-              {exSlice.map(e => {
-                const ex = exOr(e.id || e)
-                const col = bpColorOf(ex)
-                return (
-                  <span key={e.id || e} style={{
-                    fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
-                    background: `color-mix(in srgb,${col} 14%,var(--surface-2))`,
-                    color: col,
-                    border: `1px solid color-mix(in srgb,${col} 22%,transparent)`,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120,
-                  }}>{ex.n}</span>
-                )
-              })}
-              {(todayR.ex?.length ?? 0) > 4 && (
-                <span style={{ fontSize: 11, fontWeight: 500, padding: '3px 8px', borderRadius: 6, background: 'var(--surface-2)', color: 'var(--label-3)' }}>
-                  +{(todayR.ex?.length ?? 0) - 4}
-                </span>
-              )}
-            </div>
-          )}
-          <Button variant="primary" icon="play" onClick={() => confirmStartSheet(todayR, () => startFlow(todayR.id))}>{t('Start {0}', todayR.name)}</Button>
         </div>
       )
     })()}
     {others.length > 0 && <><h4 className="sec">{t('Autres séances')}</h4>
-      <div className="list">{others.map(r => {
+      <div className="list seance-others">{others.map(r => {
         const isCardio = r.sport && r.sport !== 'strength'
         const col = isCardio ? 'var(--teal)' : 'var(--acc)'
         return (
@@ -342,7 +345,7 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
   return <>
     <Media ex={ex} key={entry.id} compact={compact} minimizable />
     <div className="row between" style={{ marginBottom: 6 }}>
-      <div style={{ fontSize: compact ? 17 : 20, fontWeight: 600, letterSpacing: '-.02em', textTransform: 'capitalize', lineHeight: 1.2 }}>{ex.n}</div>
+      <div className="font-display" style={{ fontSize: compact ? 17 : 20, fontWeight: 600, letterSpacing: '-.02em', textTransform: 'capitalize', lineHeight: 1.2 }}>{ex.n}</div>
       <div style={{ display: 'flex', gap: 4 }}>
         {onSwap && <button className="iconbtn" aria-label={t('Switch exercise')} onClick={() => swapExerciseSheet(entry.id, onSwap, routineId, entryIdx)}><Icon name="shuffle" /></button>}
         <button className="iconbtn" aria-label={t('Details')} onClick={() => exerciseDetailSheet(ex)}><Icon name="info" /></button>
@@ -521,7 +524,7 @@ function ActiveWorkout() {
     <div className="hdr">
       <button className="iconbtn" aria-label={t('Discard')} onClick={() => confirmSheet({ title: t('Discard workout?'), message: t('The sets you logged in this session will be lost.'), confirmText: t('Discard'), danger: true, onConfirm: () => { update(s => { s.active = null }); stopRest(); nav('/home') } })}><Icon name="xmark" /></button>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontWeight: 600 }}>{A.name}</div>
+        <div className="font-display" style={{ fontWeight: 600 }}>{A.name}</div>
         <div className="sub">
           <Elapsed start={A.start} pausedAt={A.pausedAt} pausedMs={A.pausedMs} /> · {t('{0} sets', done + '/' + total)}{!S.simpleMode && volume > 0 ? ' · ' + fmtNum(Math.round(volume)) + ' ' + S.unit : ''}
         </div>
@@ -684,7 +687,7 @@ function ActiveWorkout() {
         return (e.sets?.length ?? 0) > 0 && (e.sets || []).every(s => s.done)
       }).length
       const allDone = A.entries.length > 0 && exDone === A.entries.length
-      return <button key={allDone ? 'done' : 'early'} className={allDone ? 'btn primary finish-cta' : 'btn ghost dim'} onClick={finishWorkout}>
+      return <button key={allDone ? 'done' : 'early'} style={allDone ? { position: 'relative' } : undefined} className={allDone ? 'btn cta finish-cta' : 'btn ghost dim'} onClick={finishWorkout}>
         {allDone ? t('Finish workout') : t('Finish workout early · {0} exercises', exDone + '/' + A.entries.length)}
       </button>
     })()}

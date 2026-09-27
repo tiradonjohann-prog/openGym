@@ -648,6 +648,11 @@ input.num::-webkit-inner-spin-button{display:none}
 .ck.on svg{stroke:var(--on-acc)}
 
 /* ------------------------------------------------------------- workout --- */
+/* Glass tokens for the "Autres séances" rows, scoped to this list only —
+   bare .item is shared app-wide (Library, History, Settings), out of scope
+   for this pass. Higher specificity than ".item" (2 classes vs 1) wins
+   regardless of source order. */
+.seance-others .item{background:var(--glass-fill);border-color:var(--glass-border);box-shadow:inset 0 1px 0 var(--glass-highlight)}
 .wprog{height:5px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-bottom:16px}
 .wprog i{display:block;height:100%;background:linear-gradient(90deg,var(--acc-2),var(--acc));border-radius:99px;transition:width var(--med) var(--ease);box-shadow:2px 0 10px -1px color-mix(in srgb,var(--acc) 55%,transparent)}
 .ex-dots{display:flex;gap:4px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
@@ -696,6 +701,9 @@ input.num::-webkit-inner-spin-button{display:none}
   display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex:none;
   transition:background var(--fast),color var(--fast);
 }
+/* Glass tokens, scoped to this screen's set-rows only (bare .stp is shared
+   with Settings' numeric steppers, out of scope for this pass). */
+.setrow .stp{background:var(--glass-fill);border:1px solid var(--glass-border)}
 .setrow .stp.w{flex:1.4;min-width:0}
 .setrow .stp.r{flex:1;min-width:0}
 .setrow .stp.eff{flex:1.1;min-width:0}
@@ -1054,7 +1062,8 @@ input.num::-webkit-inner-spin-button{display:none}
 .item.in-ss{box-shadow:inset 3px 0 0 var(--acc)}
 .ss-card{
   border-radius:var(--r-lg);overflow:hidden;padding:0;margin-bottom:12px;
-  background:var(--surface);border:2.5px solid var(--acc);
+  background:var(--glass-fill);border:2.5px solid var(--acc);
+  box-shadow:inset 0 1px 0 var(--glass-highlight);
   animation:cardIn var(--med) var(--ease);
 }
 .ss-hd{
