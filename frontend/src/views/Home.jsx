@@ -321,7 +321,7 @@ function ProgrammeWeekCarousel({ S, prog }) {
   return (
     <div className="card" style={{
       border: '1.5px solid color-mix(in srgb,var(--acc) 22%,transparent)',
-      background: 'color-mix(in srgb,var(--acc) 6%,var(--surface))',
+      background: 'linear-gradient(165deg,color-mix(in srgb,var(--acc) 6%,var(--glass-fill)),var(--glass-fill))',
       padding: '14px 0 14px 14px',
     }}>
       <div className="row between" style={{ marginBottom: 8, paddingRight: 14 }}>
