@@ -51,9 +51,13 @@ export default function TabBar({ onStart }) {
       <Tab k="home" icon="house" to="/home" label={t('Home')} />
       <Tab k="plan" icon="calendar" to="/plan" label={t('Plan')} />
       <Tab k="anatomy" icon="cube" to="/anatomy" label={t('3D')} />
-      <button className={'start' + (S.active ? ' rec' : '')} onClick={startWorkout}>
+      <button
+        className={'start' + (S.active ? ' rec' : '')}
+        onClick={startWorkout}
+        aria-label={S.active ? (S.active.pausedAt ? t('Reprendre') : t('Pause')) : t('Start')}
+      >
         <span className="cir"><Icon name={S.active ? (S.active.pausedAt ? 'play' : 'pause') : 'dumbbell'} /></span>
-        <span>{S.active ? (S.active.pausedAt ? t('Reprendre') : t('Pause')) : t('Start')}</span>
+        <span className="lbl">{S.active ? (S.active.pausedAt ? t('Reprendre') : t('Pause')) : t('Start')}</span>
       </button>
       <Tab k="stats" icon="chart" to="/stats" label={t('Stats')} />
       <Tab k="library" icon="list" to="/library" label={t('Exercises')} />
