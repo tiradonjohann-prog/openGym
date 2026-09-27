@@ -640,6 +640,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
   const today = new Date()
   const routine = effectiveRoutine(S, todayISO())
   const [bannerOff, setBannerOff] = useState(() => localStorage.getItem('banner_prog') === '1')
+  const [weekViewOpen, setWeekViewOpen] = useState(false)
   const dismissBanner = () => { localStorage.setItem('banner_prog', '1'); setBannerOff(true) }
   const todayOvr = S.dayPlan[todayISO()] !== undefined
   const { bw, delta, trendDir, totalDelta, firstBW } = bwTrend(S)
@@ -743,14 +744,19 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
       </div>
     )}
 
-    <div className="card" data-tuto="home-week">
-      <div className="row between" style={{ marginBottom: 8 }}>
-        <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w - 1)} aria-label={t('Previous week')}><Icon name="chevronLeft" /></button>
-        <div className="small muted" style={{ fontWeight: 500 }}>{wkLabel}</div>
-        <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w + 1)} aria-label={t('Next week')}><Icon name="chevronRight" /></button>
-      </div>
-      <div className="week">{strip}</div>
-      <div className="today-row" data-tuto="home-today" onClick={onToday} style={S.active ? { background: 'color-mix(in srgb,var(--orange) 8%,var(--surface-2))' } : undefined}>
+    <SectionHead title={t('Cette semaine')} action={weekViewOpen ? t('Masquer') : t('Voir les semaines')} onAction={() => setWeekViewOpen(o => !o)} />
+    <div data-tuto="home-week">
+      {weekViewOpen && (
+        <div className="card">
+          <div className="row between" style={{ marginBottom: 8 }}>
+            <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w - 1)} aria-label={t('Previous week')}><Icon name="chevronLeft" /></button>
+            <div className="small muted" style={{ fontWeight: 500 }}>{wkLabel}</div>
+            <button className="iconbtn" style={{ width: 30, height: 30, fontSize: 15 }} onClick={() => setWeekOffset(w => w + 1)} aria-label={t('Next week')}><Icon name="chevronRight" /></button>
+          </div>
+          <div className="week">{strip}</div>
+        </div>
+      )}
+      <div className="card tap" data-tuto="home-today" onClick={onToday} style={S.active ? { background: 'color-mix(in srgb,var(--orange) 8%,var(--surface-2))' } : undefined}>
         <div className="row" style={{ gap: 9, minWidth: 0 }}>
           <span className="lrow-i" style={{ background: S.active ? 'var(--orange)' : routine ? 'var(--acc)' : 'var(--surface-3)' }}>
             <Icon name={S.active ? 'timer' : routine ? glyphOf(routine.emoji) : 'moon'} />
