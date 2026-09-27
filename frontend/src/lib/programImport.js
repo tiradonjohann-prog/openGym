@@ -128,7 +128,12 @@ function parseRows(rows, exercises = EXDB) {
     cardioRepCol   = colOf('intervalles')
     cardioWorkCol  = colOf('travail s', 'travail')
     cardioRestCol  = colOf('recup s', 'recup', 'recuperation s')
-    imageUrlCol    = colOf('image url', 'image programme', 'image', 'cover')
+    // "image programme" deliberately excluded — colOf's partial-match
+    // fallback would let it collide with the "Programme" column (name is a
+    // substring of that keyword), silently setting the cover imageUrl to
+    // the program's own name on every import (a real bug hit while writing
+    // this test). "image url"/"image"/"cover" don't collide with anything.
+    imageUrlCol    = colOf('image url', 'image', 'cover')
     // Deliberately not just "type" — colOf's partial-match fallback would let a
     // bare "type" collide with the "type cardio"/"type bloc" keywords above.
     typeCol        = colOf('type exercice', 'exercise type')

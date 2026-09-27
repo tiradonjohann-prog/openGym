@@ -86,6 +86,22 @@ describe('parseProgramCSV — column detection', () => {
   })
 })
 
+describe('parseProgramCSV — image URL column detection', () => {
+  it('does not mistake the Programme column for an image URL column', () => {
+    // No dedicated image column in this header — imageUrlCol must stay
+    // unresolved rather than colliding with column 0 (Programme) via
+    // colOf's partial-match fallback (the keyword "image programme"
+    // contains "programme" as a substring — a real bug hit in production:
+    // every import silently set the programme's cover imageUrl to its own
+    // name string).
+    const csv = makeCSV([
+      'Programme Maman,Push,1,1,chest,Barbell Bench Press,,4,,90',
+    ])
+    const { programImageUrl } = parseProgramCSV(csv, MOCK_DB)
+    expect(programImageUrl).toBeNull()
+  })
+})
+
 describe('parseProgramCSV — Type column (reps vs time)', () => {
   it('defaults to mode "reps" and reads the Répétitions column as reps when Type is blank', () => {
     const csv = makeCSVWithType([
