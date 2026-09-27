@@ -172,8 +172,9 @@ export default function AnatomyView() {
 
       {selected && (
         <div className="anatomy-panel">
+          <div className="anatomy-panel-handle" />
           <div className="anatomy-panel-hdr">
-            <h3>{muscleLabel(selected.muscleKey)}</h3>
+            <h3 className="font-display">{muscleLabel(selected.muscleKey)}</h3>
             <button className="iconbtn" onClick={deselect} aria-label={t('Close')}>
               <Icon name="xmark" />
             </button>
@@ -188,8 +189,8 @@ export default function AnatomyView() {
               <div key={ex.id} className="item" onClick={() => exerciseDetailSheet(ex)}>
                 <div className="grow">
                   <div className="tt capitalize">{ex.n}</div>
-                  <div className="ss">{ex.exercise_muscles[selected.muscleKey]}%</div>
                 </div>
+                <span className="anatomy-pct-pill">{ex.exercise_muscles[selected.muscleKey]}%</span>
                 <Icon name="chevronRight" className="chev" />
               </div>
             ))}

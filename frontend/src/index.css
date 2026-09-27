@@ -1396,17 +1396,23 @@ input.num.imc-input{
 .anatomy-canvas-wrap{position:relative;flex:1;min-height:0;min-width:0}
 .anatomy-panel{
   flex:0 0 auto;max-height:45vh;overflow-y:auto;
-  background:var(--surface);border-top:var(--hair) solid var(--sep-op);
+  background:var(--glass-fill);border-top:1px solid var(--glass-border);
   border-radius:var(--r-xl) var(--r-xl) 0 0;
-  padding:14px 16px calc(128px + var(--sab));
-  box-shadow:0 -12px 30px -14px rgba(0,0,0,.4);
+  padding:8px 16px calc(128px + var(--sab));
+  box-shadow:inset 0 1px 0 var(--glass-highlight),0 -12px 30px -14px rgba(0,0,0,.4);
 }
+.anatomy-panel-handle{width:34px;height:4px;border-radius:2px;background:var(--label-4);opacity:.4;margin:0 auto 10px}
 .anatomy-panel-hdr{
   display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;
   position:sticky;top:0;z-index:1;
-  background:var(--surface);padding:2px 0 6px;margin-top:-2px;
+  background:var(--glass-fill);padding:2px 0 6px;margin-top:-2px;
 }
 .anatomy-panel-hdr h3{margin:0}
+.anatomy-pct-pill{
+  flex:none;font-size:10px;font-weight:700;color:var(--acc);
+  background:color-mix(in srgb,var(--acc) 14%,transparent);
+  border-radius:999px;padding:3px 8px;
+}
 
 /* activation-heatmap color legend, shown over the 3D canvas in exercise mode */
 .anatomy-legend{
@@ -1451,7 +1457,8 @@ input.num.imc-input{
   .anatomy-body{flex-direction:row}
   .anatomy-panel{
     flex:0 0 340px;max-height:none;height:100%;
-    border-top:none;border-left:var(--hair) solid var(--sep-op);
+    border-top:none;border-left:1px solid var(--glass-border);
     border-radius:0;box-shadow:-12px 0 30px -14px rgba(0,0,0,.4);
   }
+  .anatomy-panel-handle{display:none}
 }
