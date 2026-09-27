@@ -108,14 +108,24 @@ export default function AnatomyView() {
 
   return (
     <div className="anatomy-view">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 14px' }}>
+        <button className="iconbtn" onClick={() => nav(-1)} aria-label={t('Back')}>
+          <Icon name="chevronLeft" />
+        </button>
+        <div style={{ textAlign: 'center' }}>
+          <div className="font-display" style={{ fontWeight: 700, fontSize: 15 }}>{t('Explorateur 3D')}</div>
+          <div style={{ fontSize: 10.5, color: 'var(--label-3)', marginTop: 1 }}>{t('Sélectionne un muscle')}</div>
+        </div>
+        <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}>
+          <Icon name="gear" />
+        </button>
+      </div>
+      <div className="anatomy-body">
       <div
         className="anatomy-canvas-wrap"
         onPointerDown={e => dragGuard.start(e.clientX, e.clientY)}
         onPointerMove={e => dragGuard.check(e.clientX, e.clientY)}
       >
-        <button className="iconbtn" style={{ position: 'absolute', top: 12, left: 12, zIndex: 2 }} onClick={() => nav(-1)} aria-label={t('Back')}>
-          <Icon name="chevronLeft" />
-        </button>
         {effectiveHeatmap && (
           <div className="anatomy-legend">
             <div className="anatomy-legend-bar" />
@@ -190,6 +200,7 @@ export default function AnatomyView() {
           )}
         </div>
       )}
+      </div>
     </div>
   )
 }
