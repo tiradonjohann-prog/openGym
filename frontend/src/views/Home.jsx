@@ -240,6 +240,20 @@ export default function Home() {
     : <ClassicHome S={S} user={user} nav={nav} weekOffset={weekOffset} setWeekOffset={setWeekOffset} />
 }
 
+// ── Mockup-style section header: title + a small right-aligned action ──
+function SectionHead({ title, action, onAction }) {
+  return (
+    <div className="row between" style={{ marginBottom: 2 }}>
+      <h3 className="font-display" style={{ margin: 0, fontSize: 14, fontWeight: 700, letterSpacing: '.002em' }}>{title}</h3>
+      {action && (
+        <button className="iconbtn" style={{ width: 'auto', height: 'auto', padding: 0, fontSize: 11, fontWeight: 600, color: 'var(--acc)' }} onClick={onAction}>
+          {action}
+        </button>
+      )}
+    </div>
+  )
+}
+
 /* ── Swipeable per-week session carousel for the active programme ── */
 function ProgrammeWeekCarousel({ S, prog }) {
   const nav = useNavigate()
@@ -408,6 +422,49 @@ function ProgrammeHome({ S, user, nav }) {
           <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
         </div>
       </div>
+
+      {(() => {
+        const prog = activeProgramme(S)
+        const wk = prog ? sessionStates(prog, prog.currentWeek) : []
+        const doneThisWeek = wk.filter(s => s === 'done').length
+        const totalThisWeek = wk.length
+        const pct = totalThisWeek ? Math.round((doneThisWeek / totalThisWeek) * 100) : 0
+        const { bw, trendDir, delta } = bwTrend(S)
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="card" style={{ padding: '12px 13px', marginBottom: 0 }}>
+              <div className="small" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 6 }}>
+                <span className="font-display" style={{ fontSize: 25, fontWeight: 700 }}>{doneThisWeek}</span>
+                {totalThisWeek > 0 && <span style={{ fontSize: 13, color: 'var(--label-3)', fontWeight: 600 }}>/ {totalThisWeek}</span>}
+              </div>
+              <div style={{ height: 3, background: 'var(--surface-3)', borderRadius: 999, marginTop: 9, overflow: 'hidden' }}>
+                <div style={{ width: pct + '%', height: '100%', background: 'var(--acc)' }} />
+              </div>
+            </div>
+            <div className="card tap" style={{ padding: '12px 13px', marginBottom: 0 }} onClick={() => bwSheet()}>
+              <div className="small" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Poids')}</div>
+              {bw ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
+                    <span className="font-display" style={{ fontSize: 25, fontWeight: 700 }}>{fmtNum(bw.w)}</span>
+                    <span style={{ fontSize: 11, color: 'var(--label-3)', fontWeight: 600 }}>{S.unit}</span>
+                    {trendDir && trendDir !== 'stable' && (
+                      <Icon name={trendDir === 'up' ? 'arrowUp' : 'arrowDown'} style={{ fontSize: 11, marginLeft: 2, color: bwDeltaColor(delta, bw.w) }} />
+                    )}
+                  </div>
+                  <div style={{ fontSize: 9.5, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+                </>
+              ) : (
+                <>
+                  <div className="font-display" style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{t('Aucune pesée')}</div>
+                  <div style={{ fontSize: 9.5, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+                </>
+              )}
+            </div>
+          </div>
+        )
+      })()}
 
       <div style={{ marginBottom: 8 }}>
         <div className="small" style={{
