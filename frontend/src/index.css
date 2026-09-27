@@ -1079,15 +1079,8 @@ input.num::-webkit-inner-spin-button{display:none}
 }
 
 /* --- home: today's session row --- */
-.today-row{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin-top:12px;padding:12px 14px;border-radius:var(--r);background:var(--surface-2);
-  transition:background var(--fast);width:100%;text-align:left;
-}
-.today-row:active{background:var(--surface-3)}
-@media(hover:hover){.today-row:hover{background:var(--surface-3)}}
-.today-row .lbl2{font-size:11px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:var(--label-3)}
-.today-row .ttl{
+.lbl2{font-size:11px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:var(--label-3)}
+.ttl{
   font-weight:500;font-size:17px;line-height:1.25;text-transform:capitalize;
   letter-spacing:-.012em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;
 }

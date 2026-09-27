@@ -20,7 +20,7 @@ import { TutorialButton } from '../components/TutorialOverlay.jsx'
 import { HOME_STEPS } from '../lib/tutorials.js'
 
 // ── Compact nutrition widget for home screen ──────────────────────────────────
-function NutriWidget({ S, nav }) {
+function NutriWidget({ S, nav, withHeader }) {
   const target = S.nutrition?.targetKcal
   const log = S.nutritionLog || {}
   const totals = dayTotals(log, todayISO())
@@ -29,7 +29,7 @@ function NutriWidget({ S, nav }) {
   const remaining = target - totals.kcal
   const over = remaining < 0
   const barColor = over ? 'var(--orange)' : pct > 0.85 ? 'var(--green)' : 'var(--acc)'
-  return (
+  const widget = (
     <div
       className="card tap"
       style={{ padding: '12px 14px', marginBottom: 0 }}
@@ -60,6 +60,13 @@ function NutriWidget({ S, nav }) {
           {totals.fat   > 0 && <span className="small" style={{ color: 'var(--nut-fat)',   fontWeight: 600 }}>{totals.fat}g L</span>}
         </div>
       )}
+    </div>
+  )
+  if (!withHeader) return widget
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+      <SectionHead title={t('Nutrition')} action={t('Ajouter')} onAction={() => nav('/nutrition')} />
+      {widget}
     </div>
   )
 }
@@ -485,7 +492,21 @@ function ProgrammeHome({ S, user, nav }) {
 
       {(() => {
         const prog = activeProgramme(S)
-        if (!prog) return null
+        if (!prog) {
+          // Every programme is paused or complete — reachable whenever
+          // programmes.length > 0 (the only way ProgrammeHome renders at
+          // all), unlike the "Programme terminé" branch below which needs
+          // a mid-programme prog with no sessions left, in practice unreachable.
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              <SectionHead title={t('Prochaine séance')} />
+              <div className="card" style={{ padding: 16, textAlign: 'center' }}>
+                <div className="font-display" style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{t('Aucun programme actif')}</div>
+                <div className="muted small">{t('Reprends un programme en pause ou choisis-en un nouveau ci-dessus.')}</div>
+              </div>
+            </div>
+          )
+        }
         const ns = nextSession(prog, S.routines)
         const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
         return (
@@ -579,12 +600,7 @@ function ProgrammeHome({ S, user, nav }) {
       <SmartNudge S={S} />
       <LastWorkoutCard S={S} />
 
-      {(S.nutrition?.targetKcal) && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-          <SectionHead title={t('Nutrition')} action={t('Ajouter')} onAction={() => nav('/nutrition')} />
-          <NutriWidget S={S} nav={nav} />
-        </div>
-      )}
+      <NutriWidget S={S} nav={nav} withHeader />
 
       {/* Quick-log buttons: poids corporel + mensurations */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
