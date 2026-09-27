@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep, elapsedMs, swapRoutineExerciseAt } from './history.js'
+import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep, elapsedMs, swapRoutineExerciseAt, weekDayVolumes, bwTrend } from './history.js'
 import { EXDB } from './exercises.js'
 
 // Real ids out of the shipped catalogue, so the body-part fallback is exercised for real.
@@ -448,5 +448,73 @@ describe('swapRoutineExerciseAt (review finding 3)', () => {
   it('returns false for an out-of-range index or a missing routine, without throwing', () => {
     expect(swapRoutineExerciseAt({ ex: [{ id: 'a' }] }, 5, 'c')).toBe(false)
     expect(swapRoutineExerciseAt(null, 0, 'c')).toBe(false)
+  })
+})
+
+describe('weekDayVolumes', () => {
+  it('buckets each workout into its weekday slot, Monday-first', () => {
+    const today = new Date()
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+    const isoAt = offset => {
+      const d = new Date(monday)
+      d.setDate(monday.getDate() + offset)
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+    }
+    const mkWorkout = (d, w, r) => ({ d, entries: [{ sets: [{ done: true, w, r }] }] })
+    const S = {
+      workouts: [
+        mkWorkout(isoAt(0), 100, 5),   // Monday: 500
+        mkWorkout(isoAt(0), 20, 5),    // Monday, second workout same day: +100 = 600
+        mkWorkout(isoAt(3), 50, 10),   // Thursday: 500
+      ],
+    }
+    const result = weekDayVolumes(S)
+    expect(result).toHaveLength(7)
+    expect(result[0]).toBe(600)
+    expect(result[3]).toBe(500)
+    expect(result[1]).toBe(0)
+  })
+
+  it('returns all zeros when there are no workouts this week', () => {
+    expect(weekDayVolumes({ workouts: [] })).toEqual([0, 0, 0, 0, 0, 0, 0])
+  })
+
+  it('ignores workouts from other weeks', () => {
+    const S = { workouts: [{ d: '2020-01-01', entries: [{ sets: [{ done: true, w: 100, r: 10 }] }] }] }
+    expect(weekDayVolumes(S)).toEqual([0, 0, 0, 0, 0, 0, 0])
+  })
+})
+
+describe('bwTrend', () => {
+  it('returns all nulls with no entries', () => {
+    expect(bwTrend({ bodyweight: [] })).toEqual({
+      bw: null, prevBW: null, delta: null, trendDir: null, totalDelta: null, firstBW: null,
+    })
+  })
+
+  it('has no trend with a single entry', () => {
+    const S = { bodyweight: [{ d: '2026-09-01', w: 80 }] }
+    const r = bwTrend(S)
+    expect(r.bw.w).toBe(80)
+    expect(r.delta).toBeNull()
+    expect(r.trendDir).toBeNull()
+  })
+
+  it('classifies a small change as stable (under 0.3)', () => {
+    const S = { bodyweight: [{ d: '2026-09-01', w: 80 }, { d: '2026-09-02', w: 80.2 }] }
+    expect(bwTrend(S).trendDir).toBe('stable')
+  })
+
+  it('classifies a gain as up and a loss as down', () => {
+    const up = { bodyweight: [{ d: '2026-09-01', w: 80 }, { d: '2026-09-02', w: 81 }] }
+    const down = { bodyweight: [{ d: '2026-09-01', w: 80 }, { d: '2026-09-02', w: 79 }] }
+    expect(bwTrend(up).trendDir).toBe('up')
+    expect(bwTrend(down).trendDir).toBe('down')
+  })
+
+  it('computes totalDelta from the very first entry, rounded to 1 decimal', () => {
+    const S = { bodyweight: [{ d: '2026-09-01', w: 80 }, { d: '2026-09-10', w: 78.55 }] }
+    expect(bwTrend(S).totalDelta).toBe(-1.5)
   })
 })

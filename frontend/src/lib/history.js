@@ -233,6 +233,22 @@ export function workoutVolume(w) {
   w.entries.forEach(e => (e.sets || []).forEach(s => { if (s.done) v += (s.w || 0) * (s.r || 0) }))
   return v
 }
+// Per-day trained volume for the current week (Monday-first). Both the
+// weekly total and the daily bars on Home's "Progression récente" card are
+// derived from this one array so they can never drift apart.
+export function weekDayVolumes(S) {
+  const today = new Date()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    const iso = isoOf(d)
+    return S.workouts
+      .filter(w => w.d === iso)
+      .reduce((sum, w) => sum + workoutVolume(w), 0)
+  })
+}
 export function setsDone(w) {
   let n = 0
   w.entries.forEach(e => (e.sets || []).forEach(s => { if (s.done) n++ }))
@@ -244,6 +260,19 @@ export function setsDoneActive(A) {
   return n
 }
 export const lastBW = S => (S.bodyweight.length ? S.bodyweight[S.bodyweight.length - 1] : null)
+
+// Weight-trend snapshot shared by Home's weight mini-stat (both variants)
+// and the full body-weight card — one calculation, not duplicated per screen.
+export function bwTrend(S) {
+  const bw = lastBW(S)
+  if (!bw) return { bw: null, prevBW: null, delta: null, trendDir: null, totalDelta: null, firstBW: null }
+  const prevBW = S.bodyweight.length > 1 ? S.bodyweight[S.bodyweight.length - 2] : null
+  const delta = prevBW ? bw.w - prevBW.w : null
+  const firstBW = S.bodyweight.length > 1 ? S.bodyweight[0] : null
+  const totalDelta = firstBW ? Math.round((bw.w - firstBW.w) * 10) / 10 : null
+  const trendDir = delta === null ? null : Math.abs(delta) < 0.3 ? 'stable' : delta > 0 ? 'up' : 'down'
+  return { bw, prevBW, delta, trendDir, totalDelta, firstBW }
+}
 
 // Group consecutive items sharing a superset id (sg) into "units" of indices.
 // items may be routine exercises ({sg}) or active-workout entries ({sg}).
