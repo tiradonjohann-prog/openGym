@@ -4,8 +4,8 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { DAYN, uid, isoOf } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { SPORTS, isCardioSport, defaultCardioBlocks, routineSubtitle } from '../lib/sports.js'
-import { isProgrammeComplete, completedWeekCount, activeProgramme } from '../lib/programme.js'
+import { SPORTS, isCardioSport, defaultCardioBlocks, routineTotalDuration } from '../lib/sports.js'
+import { isProgrammeComplete, completedWeekCount, activeProgramme, addRoutineToProgramme } from '../lib/programme.js'
 import { dayAssignSheet, loadStarterPlan, planToolsSheet, programmeCreateSheet, programmeEditSheet, deleteProgramme } from '../sheets.jsx'
 import { pickImage, isUserImage } from '../lib/imageUtils.js'
 import Icon from '../components/Icon.jsx'
@@ -14,7 +14,6 @@ import { TutorialButton } from '../components/TutorialOverlay.jsx'
 import { PLAN_STEPS } from '../lib/tutorials.js'
 import { glyphOf, DEFAULT_GLYPH } from '../lib/glyphs.js'
 import ProgrammeCard from '../components/ProgrammeCard.jsx'
-import RoutineCard from '../components/RoutineCard.jsx'
 
 const DAYN_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 
@@ -36,6 +35,72 @@ function SportPicker({ close, onCreate }) {
       ))}
     </div>
   </>
+}
+
+function routineTileSubtitle(r) {
+  if (isCardioSport(r.sport)) {
+    const min = routineTotalDuration(r.blocks || [])
+    const label = t(SPORTS[r.sport]?.label || r.sport)
+    return min ? `${label} · ${min} min` : label
+  }
+  const n = r.ex?.length || r.items?.filter(i => i.kind === 'ex').length || 0
+  return `${n} ${t('exercices')}`
+}
+
+function RoutineLibraryRow({ routines, nav, onAddToProgramme, canAdd }) {
+  return (
+    <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 10, paddingBottom: 2 }}>
+      {routines.map(r => {
+        const isCardio = isCardioSport(r.sport)
+        const color = isCardio ? 'var(--teal)' : 'var(--acc)'
+        const icon = isCardio ? (SPORTS[r.sport]?.icon || 'bolt') : glyphOf(r.emoji)
+        const hasImg = !!r.imageUrl
+        return (
+          <div key={r.id} style={{ flex: '0 0 160px', scrollSnapAlign: 'start' }}>
+            <div style={{
+              position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden',
+              border: `2px solid color-mix(in srgb,${color} 40%,transparent)`,
+              background: hasImg ? 'var(--surface-2)' : `linear-gradient(135deg,color-mix(in srgb,${color} 22%,var(--surface-2)),var(--surface-3))`,
+            }}>
+              {hasImg ? (
+                <img src={r.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 8, boxSizing: 'border-box' }} />
+              ) : (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name={icon} style={{ fontSize: 34, color, opacity: .45 }} />
+                </div>
+              )}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 45%,rgba(0,0,0,.65) 100%)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 9px' }}>
+                <div className="capitalize" style={{ fontWeight: 700, fontSize: 12.5, lineHeight: 1.25, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 4px rgba(0,0,0,.5)' }}>
+                  {r.name}
+                </div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.75)', marginTop: 1, textShadow: '0 1px 3px rgba(0,0,0,.5)' }}>
+                  {routineTileSubtitle(r)}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 6, marginTop: 7 }}>
+              <button
+                className="chip"
+                style={{ flex: 1, fontSize: 11, padding: '7px 4px', textAlign: 'center' }}
+                onClick={() => nav('/plan/r/' + r.id)}
+              >
+                {t('Consulter')}
+              </button>
+              <button
+                className="chip"
+                disabled={!canAdd}
+                style={{ flex: 1, fontSize: 11, padding: '7px 4px', textAlign: 'center', opacity: canAdd ? 1 : .4 }}
+                onClick={() => canAdd && onAddToProgramme(r)}
+              >
+                {t('+ Programme')}
+              </button>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 export default function Plan() {
@@ -218,18 +283,24 @@ export default function Plan() {
 
     {/* ── Routines list ── */}
     <div data-tuto="plan-routines">
-      <div className="row between" style={{ marginBottom: 10 }}>
-        <h4 className="sec" style={{ margin: 0 }}>{t('Bibliothèque de séances')}</h4>
-        <Button size="sm" variant="tinted" icon="plus" onClick={addRoutine}>{t('Créer séance')}</Button>
-      </div>
+      <h4 className="sec" style={{ margin: '0 0 10px' }}>{t('Bibliothèque de séances')}</h4>
+      <button className="btn cta blue" style={{ marginBottom: 14 }} onClick={addRoutine}>
+        <Icon name="plus" />
+        <span>{t('Créer une séance')}</span>
+      </button>
       {S.routines.length ? (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
-          {S.routines.map(r => (
-            <div key={r.id} style={{ width: 'calc(50% - 5px)', flexShrink: 0 }}>
-              <RoutineCard routine={r} />
-            </div>
-          ))}
-        </div>
+        <RoutineLibraryRow
+          routines={S.routines}
+          nav={nav}
+          canAdd={hasActiveProgramme}
+          onAddToProgramme={r => {
+            update(s => {
+              const prog = activeProgramme(s)
+              if (prog) addRoutineToProgramme(prog, r.id)
+            })
+            useUI.getState().toast(t('Ajouté au programme'))
+          }}
+        />
       ) : (
         <>
           <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('Aucun entrainement pour l\'instant.')}<br />{t('Créez-en un ou chargez le plan de démarrage.')}</div>
