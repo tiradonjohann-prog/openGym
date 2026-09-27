@@ -678,6 +678,41 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
       </div>
     </div>
 
+    {!S.simpleMode && (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="card" style={{ padding: '12px 13px', marginBottom: 0 }}>
+          <div className="small" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 6 }}>
+            <span className="font-display" style={{ fontSize: 25, fontWeight: 700 }}>{wThisWeek}</span>
+            {plannedPerWeek > 0 && <span style={{ fontSize: 13, color: 'var(--label-3)', fontWeight: 600 }}>/ {plannedPerWeek}</span>}
+          </div>
+          <div style={{ height: 3, background: 'var(--surface-3)', borderRadius: 999, marginTop: 9, overflow: 'hidden' }}>
+            <div style={{ width: (plannedPerWeek ? Math.min(100, Math.round((wThisWeek / plannedPerWeek) * 100)) : 0) + '%', height: '100%', background: 'var(--acc)' }} />
+          </div>
+        </div>
+        <div className="card tap" style={{ padding: '12px 13px', marginBottom: 0 }} onClick={() => bwSheet()}>
+          <div className="small" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Poids')}</div>
+          {bw ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
+                <span className="font-display" style={{ fontSize: 25, fontWeight: 700 }}>{fmtNum(bw.w)}</span>
+                <span style={{ fontSize: 11, color: 'var(--label-3)', fontWeight: 600 }}>{S.unit}</span>
+                {trendDir && trendDir !== 'stable' && (
+                  <Icon name={trendDir === 'up' ? 'arrowUp' : 'arrowDown'} style={{ fontSize: 11, marginLeft: 2, color: bwDeltaColor(delta, bw.w) }} />
+                )}
+              </div>
+              <div style={{ fontSize: 9.5, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+            </>
+          ) : (
+            <>
+              <div className="font-display" style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{t('Aucune pesée')}</div>
+              <div style={{ fontSize: 9.5, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+            </>
+          )}
+        </div>
+      </div>
+    )}
+
     {/* ── Beginner mode: large "today" CTA ── */}
     {S.simpleMode && (
       <div className="card" style={{ padding: '24px 16px', textAlign: 'center' }}>
