@@ -543,6 +543,39 @@ function ProgrammeHome({ S, user, nav }) {
         )
       })()}
 
+      {(() => {
+        const volumes = weekDayVolumes(S)
+        const total = volumes.reduce((a, b) => a + b, 0)
+        const max = Math.max(...volumes, 1)
+        const isFirstEver = S.workouts.length === 0
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            <SectionHead title={t('Progression récente')} action={t('Détails')} onAction={() => nav('/stats')} />
+            <div className="card" style={{ padding: 14 }}>
+              <div className="row between" style={{ alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Volume cette semaine')}</div>
+                  <div className="font-display" style={{ fontSize: 20, marginTop: 5 }}>
+                    {total > 0 ? fmtNum(total) : '—'} <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--label-3)' }}>{S.unit === 'lb' ? 'lb' : 'kg'}</span>
+                  </div>
+                </div>
+                {isFirstEver && <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--acc)', background: 'color-mix(in srgb,var(--acc) 12%,transparent)', borderRadius: 999, padding: '4px 9px' }}>{t('1re séance')}</span>}
+              </div>
+              <div style={{ display: 'flex', gap: 5, marginTop: 12, alignItems: 'flex-end', height: 36 }}>
+                {volumes.map((v, i) => (
+                  <div key={i} style={{
+                    flex: 1,
+                    height: Math.max(4, Math.round((v / max) * 36)),
+                    borderRadius: 5,
+                    background: v > 0 ? 'color-mix(in srgb,var(--acc) 55%,transparent)' : 'var(--surface-3)',
+                  }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       <SmartNudge S={S} />
       <LastWorkoutCard S={S} />
 
