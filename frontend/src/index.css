@@ -21,7 +21,7 @@
   /* surfaces — premium glass dark (Phase 1 visual redesign) */
   --bg:        #090D16;
   --bg-el:     #0E1526;   /* elevated backdrop (sheets, bars) */
-  --surface:   #333334;   /* card / grouped-list fill */
+  --surface:   #101A2B;   /* card / grouped-list fill (non-.card consumers) */
   --surface-2: #111826;   /* pressed + nested fill */
   --surface-3: #161F33;   /* controls (segmented track, switch off) */
 
@@ -52,6 +52,7 @@
   --glass-fill: rgba(255,255,255,.035);
   --glass-border: rgba(255,255,255,.09);
   --glass-highlight: rgba(255,255,255,.05);
+  --glass-shadow: 0 0 transparent; /* valid no-op shadow — 'none' isn't legal inside a comma-list */
 
   /* typography (Phase 1 visual redesign) */
   --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -97,10 +98,11 @@
   --glass-fill: #FFFFFF;
   --glass-border: rgba(15,23,42,.07);
   --glass-highlight: rgba(255,255,255,.9);
+  --glass-shadow: 0 1px 3px rgba(15,23,42,.06), 0 1px 1px rgba(15,23,42,.04);
 }
 
 /* accents */
-:root[data-accent="lime"]  { --acc:var(--green);  --acc-2:#3d9e88; --on-acc:#000 }
+:root[data-accent="lime"]  { --acc:var(--green) }
 :root[data-accent="sky"]   { --acc:var(--blue);   --acc-2:#0060df; --on-acc:#fff }
 :root[data-accent="orange"]{ --acc:var(--orange); --acc-2:#c76b00; --on-acc:#000 }
 :root[data-accent="violet"]{ --acc:var(--purple); --acc-2:#8944ab; --on-acc:#fff }
@@ -133,6 +135,7 @@ input,select,textarea{font:inherit;color:var(--label);letter-spacing:inherit}
 img{max-width:100%}
 a{color:var(--acc);text-decoration:none}
 :focus{outline:none}
+.font-display{font-family:var(--font-display)}
 :focus-visible{outline:2.5px solid var(--acc);outline-offset:2px;border-radius:inherit}
 button,.chip,.tile,.item,.wday,.cal-d,.swatch,.hm-c,.lrow,.seg button,.stp button,.sld
 {-webkit-user-select:none;user-select:none}
@@ -217,7 +220,7 @@ h4.sec{
   background:var(--glass-fill);border-radius:var(--r-card);
   padding:16px;margin-bottom:12px;
   border:1px solid var(--glass-border);
-  box-shadow:inset 0 1px 0 var(--glass-highlight);
+  box-shadow:inset 0 1px 0 var(--glass-highlight),var(--glass-shadow);
 }
 .card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1}
 .card.tap,.card.tappable{cursor:pointer;transition:background var(--fast),transform var(--fast),box-shadow var(--fast)}
@@ -327,7 +330,7 @@ h4.sec{
   backdrop-filter:saturate(160%) blur(20px);-webkit-backdrop-filter:saturate(160%) blur(20px);
   border-top:var(--hair) solid var(--sep-op);
 }
-:root[data-theme="light"] #tabbar{background:rgba(245,240,234,.90)}
+:root[data-theme="light"] #tabbar{background:color-mix(in srgb,var(--bg-el) 90%,transparent)}
 #tabbar button{
   flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
   color:var(--label-3);font-size:10px;font-weight:500;letter-spacing:.005em;
