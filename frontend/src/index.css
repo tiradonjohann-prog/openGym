@@ -1405,7 +1405,9 @@ input.num.imc-input{
 .anatomy-panel-hdr{
   display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;
   position:sticky;top:0;z-index:1;
-  background:var(--glass-fill);padding:2px 0 6px;margin-top:-2px;
+  /* opaque, not --glass-fill (only ~3.5% alpha in dark mode) — this header
+     is sticky over a scrolling list and must actually mask rows behind it */
+  background:var(--bg-el);padding:2px 0 6px;margin-top:-2px;
 }
 .anatomy-panel-hdr h3{margin:0}
 .anatomy-pct-pill{

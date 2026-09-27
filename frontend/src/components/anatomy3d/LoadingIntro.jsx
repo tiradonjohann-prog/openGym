@@ -1,4 +1,12 @@
-import { useRive, Layout, Fit, Alignment } from '@rive-app/react-webgl2'
+import { useRive, Layout, Fit, Alignment, RuntimeLoader } from '@rive-app/react-webgl2'
+
+// By default the Rive runtime fetches its ~2.2MB WASM binary from unpkg.com
+// at runtime — a third-party CDN dependency the app doesn't otherwise have,
+// uncacheable by our own-origin-only service worker (public/sw.js), and
+// unusable offline in the Capacitor builds. Self-host it instead, from a
+// static copy of node_modules/@rive-app/webgl2/rive.wasm in public/rive/.
+// Must run before the first useRive() call below.
+RuntimeLoader.setWasmUrl('/rive/rive.wasm')
 
 // Full-screen Rive animation shown for a fixed duration while the 3D screen
 // opens — AnatomyView owns the 5s timer, this component just plays.

@@ -115,13 +115,13 @@ export default function AnatomyView() {
 
   return (
     <div className="anatomy-view">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: 'calc(var(--sat) + 12px) 14px 12px' }}>
         <button className="iconbtn" onClick={() => nav(-1)} aria-label={t('Back')}>
           <Icon name="chevronLeft" />
         </button>
         <div style={{ textAlign: 'center' }}>
-          <div className="font-display" style={{ fontWeight: 700, fontSize: 15 }}>{t('Explorateur 3D')}</div>
-          <div style={{ fontSize: 10.5, color: 'var(--label-3)', marginTop: 1 }}>{t('Sélectionne un muscle')}</div>
+          <div className="font-display" style={{ fontWeight: 700, fontSize: 15 }}>{t('3D Explorer')}</div>
+          <div style={{ fontSize: 10.5, color: 'var(--label-3)', marginTop: 1 }}>{t('Select a muscle')}</div>
         </div>
         <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}>
           <Icon name="gear" />
