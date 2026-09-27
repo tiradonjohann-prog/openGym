@@ -1608,8 +1608,11 @@ function doFinishWorkout() {
   if (!A) return
 
   // Collect PR info from flags stored on each set by prs.js during the workout.
+  // Cardio blocks (kind:'block') have no .sets — they carry done/distKm/kcal
+  // instead, and can never produce a strength PR — so they're skipped here,
+  // the same way workoutVolume() and the w.entries build below already do.
   const prByEx = {} // exId → Set<'weight'|'reprange'|'e1rm'>
-  A.entries.forEach(e => {
+  A.entries.filter(e => e.kind !== 'block').forEach(e => {
     e.sets.filter(s => s.done && s.pr).forEach(s => {
       if (!prByEx[e.id]) prByEx[e.id] = new Set()
       prByEx[e.id].add(s.pr)
