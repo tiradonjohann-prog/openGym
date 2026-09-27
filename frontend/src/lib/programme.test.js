@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { activeProgramme, nextSession, workoutForProgSession, rewindProgrammeForDeletedWorkout } from './programme.js'
+import { activeProgramme, nextSession, workoutForProgSession, rewindProgrammeForDeletedWorkout, addRoutineToProgramme } from './programme.js'
 
 const routine = (id, name = id) => ({ id, name, ex: [] })
 
@@ -125,5 +125,45 @@ describe('rewindProgrammeForDeletedWorkout', () => {
     const prog = { currentWeek: 2, totalWeeks: 8, routineIds: ['a'], weekProgress: { 2: [true] } }
     expect(rewindProgrammeForDeletedWorkout(prog, 2, null)).toBe(false)
     expect(prog.weekProgress['2']).toEqual([true])
+  })
+})
+
+describe('addRoutineToProgramme', () => {
+  it('appends the routine id to routineIds', () => {
+    const prog = { totalWeeks: 2, routineIds: ['a'], weekProgress: {} }
+    addRoutineToProgramme(prog, 'b')
+    expect(prog.routineIds).toEqual(['a', 'b'])
+  })
+
+  it('backfills the new slot as done for weeks that were already fully complete', () => {
+    const prog = { totalWeeks: 2, routineIds: ['a'], weekProgress: { 1: [true], 2: [false] } }
+    addRoutineToProgramme(prog, 'b')
+    expect(prog.weekProgress['1']).toEqual([true, true])  // week 1 was complete — backfilled
+    expect(prog.weekProgress['2']).toEqual([false])        // week 2 wasn't — untouched, new slot absent (falsy/pending)
+  })
+
+  it('does not mutate weekProgress for a week that had no entry at all (never started, not complete)', () => {
+    const prog = { totalWeeks: 3, routineIds: ['a'], weekProgress: { 1: [true] } }
+    addRoutineToProgramme(prog, 'b')
+    expect(prog.weekProgress['3']).toBeUndefined()
+  })
+
+  it('handles totalWeeks: 0 without throwing and without backfilling anything', () => {
+    const prog = { totalWeeks: 0, routineIds: ['a'], weekProgress: {} }
+    expect(() => addRoutineToProgramme(prog, 'b')).not.toThrow()
+    expect(prog.routineIds).toEqual(['a', 'b'])
+    expect(prog.weekProgress).toEqual({})
+  })
+
+  it('allows adding a routine id that is already present (a routine can occur twice a week)', () => {
+    const prog = { totalWeeks: 1, routineIds: ['a'], weekProgress: {} }
+    addRoutineToProgramme(prog, 'a')
+    expect(prog.routineIds).toEqual(['a', 'a'])
+  })
+
+  it('initializes weekProgress when the programme had none at all', () => {
+    const prog = { totalWeeks: 1, routineIds: ['a'] }
+    expect(() => addRoutineToProgramme(prog, 'b')).not.toThrow()
+    expect(prog.routineIds).toEqual(['a', 'b'])
   })
 })

@@ -58,6 +58,28 @@ export function rewindProgrammeForDeletedWorkout(prog, progWeek, progSessionIdx)
   return true
 }
 
+// Re-adds a routine to the programme's weekly rotation (e.g. after the user
+// removes then reconsiders, or wants a routine twice a week). Weeks that were
+// already fully completed before this call are backfilled so the new slot
+// doesn't retroactively reopen them — only the current and future weeks show
+// it as a pending session.
+export function addRoutineToProgramme(prog, routineId) {
+  const wasCompleteByWeek = {}
+  for (let w = 1; w <= prog.totalWeeks; w++) wasCompleteByWeek[w] = isWeekComplete(prog, w)
+
+  prog.routineIds = [...prog.routineIds, routineId]
+  const newIndex = prog.routineIds.length - 1
+
+  prog.weekProgress = prog.weekProgress || {}
+  for (let w = 1; w <= prog.totalWeeks; w++) {
+    if (!wasCompleteByWeek[w]) continue
+    const key = String(w)
+    const done = prog.weekProgress[key] ? [...prog.weekProgress[key]] : []
+    done[newIndex] = true
+    prog.weekProgress[key] = done
+  }
+}
+
 export function activeProgramme(S) {
   const list = S.programmes || []
   return list.find(p => !p.paused && !isProgrammeComplete(p)) || null
