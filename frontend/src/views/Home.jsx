@@ -5,9 +5,9 @@ import { useUI } from '../store/useUI.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, bwTrend, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, addAdHocSessionSheet, resumeWorkout } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, resumeWorkout } from '../sheets.jsx'
 import { isCardioSport } from '../lib/sports.js'
-import { activeProgramme, nextSession, completedWeekCount, sessionStates, workoutForProgSession } from '../lib/programme.js'
+import { activeProgramme, nextSession, sessionStates, workoutForProgSession } from '../lib/programme.js'
 import { dayTotals } from '../lib/foodSearch.js'
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
@@ -304,7 +304,6 @@ function ProgrammeWeekCarousel({ S, prog }) {
     if (wk !== viewedWeek) setViewedWeek(wk)
   }
 
-  const doneWeeks = completedWeekCount(prog)
   const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
   // sessionStates() marks the first non-done slot 'next' independently for
   // every week — only the programme's one true next session (across all
@@ -334,7 +333,7 @@ function ProgrammeWeekCarousel({ S, prog }) {
         <div className="small" style={{ textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 700, color: 'var(--acc)', fontSize: 11 }}>
           {prog.name}
         </div>
-        <span className="tag acc" style={{ fontSize: 10, fontWeight: 700 }}>{doneWeeks}/{prog.totalWeeks}</span>
+        <span className="tag acc" style={{ fontSize: 10, fontWeight: 700 }}>{t('Semaine {0}/{1}', viewedWeek, prog.totalWeeks)}</span>
       </div>
 
       <div
@@ -348,47 +347,72 @@ function ProgrammeWeekCarousel({ S, prog }) {
           const adHocThisWeek = S.workouts.filter(w => w.programmeId === prog.id && w.progWeek === wk && w.adHoc)
           return (
             <div key={wk} style={{ flex: '0 0 100%', scrollSnapAlign: 'start', paddingRight: 14, boxSizing: 'border-box' }}>
-              <div className="small muted" style={{ fontWeight: 600, marginBottom: 8 }}>
-                {t('Semaine {0}/{1}', wk, prog.totalWeeks)}
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(92px, 140px))', justifyContent: 'center', gap: 10 }}>
                 {prog.routineIds.map((routineId, i) => {
                   const routine = S.routines.find(r => r.id === routineId)
                   const isTrueNext = trueNext && trueNext.weekNum === wk && trueNext.sessionIdx === i
                   const state = states[i] === 'done' ? 'done' : isTrueNext ? 'next' : 'upcoming'
                   const color = state === 'done' ? 'var(--green)' : state === 'next' ? 'var(--yellow)' : 'var(--label-4)'
+                  const hasImg = !!routine?.imageUrl
                   return (
                     <div
                       key={i}
-                      className="tile colored tap"
-                      style={{ '--card-color': color, width: 78, textAlign: 'center', cursor: 'pointer', padding: '10px 6px' }}
+                      className="tap"
+                      style={{
+                        position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
+                        border: `2px solid color-mix(in srgb,${color} 45%,transparent)`,
+                        background: hasImg ? 'var(--surface-2)' : `linear-gradient(135deg,color-mix(in srgb,${color} 22%,var(--surface-2)),var(--surface-3))`,
+                      }}
                       onClick={() => tileClick(routine, wk, i, state)}
                     >
-                      <Icon name={state === 'done' ? 'check' : routine ? glyphOf(routine.emoji) : 'dumbbell'} style={{ fontSize: 17 }} />
-                      <div className="small capitalize" style={{ fontWeight: 600, marginTop: 4, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {routine ? routine.name : t('Séance')}
+                      {hasImg ? (
+                        <img src={routine.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 8, boxSizing: 'border-box' }} />
+                      ) : (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name={routine ? glyphOf(routine.emoji) : 'dumbbell'} style={{ fontSize: 30, color, opacity: .45 }} />
+                        </div>
+                      )}
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 45%,rgba(0,0,0,.65) 100%)', pointerEvents: 'none' }} />
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 9px' }}>
+                        <div className="capitalize" style={{ fontWeight: 700, fontSize: 12, lineHeight: 1.25, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 4px rgba(0,0,0,.5)' }}>
+                          {routine ? routine.name : t('Séance')}
+                        </div>
+                        {state === 'next' && <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--yellow)', marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,.5)' }}>{t('Prochaine')}</div>}
                       </div>
-                      {state === 'next' && <div style={{ fontSize: 9, fontWeight: 700, marginTop: 2 }}>{t('Prochaine')}</div>}
+                      {state === 'done' && (
+                        <div style={{ position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: '50%', background: 'var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="check" style={{ fontSize: 11, color: '#06110E' }} />
+                        </div>
+                      )}
                     </div>
                   )
                 })}
                 {adHocThisWeek.map(w => (
                   <div
                     key={w.id}
-                    className="tile colored tap"
-                    style={{ '--card-color': 'var(--green)', width: 78, textAlign: 'center', cursor: 'pointer', padding: '10px 6px' }}
+                    className="tap"
+                    style={{
+                      position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
+                      border: '2px solid color-mix(in srgb,var(--green) 45%,transparent)',
+                      background: 'linear-gradient(135deg,color-mix(in srgb,var(--green) 22%,var(--surface-2)),var(--surface-3))',
+                    }}
                     onClick={() => workoutDetailSheet(w)}
                   >
-                    <Icon name="check" style={{ fontSize: 17 }} />
-                    <div className="small capitalize" style={{ fontWeight: 600, marginTop: 4, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {w.name}
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="figureRun" style={{ fontSize: 30, color: 'var(--green)', opacity: .45 }} />
+                    </div>
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 45%,rgba(0,0,0,.65) 100%)', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 9px' }}>
+                      <div className="capitalize" style={{ fontWeight: 700, fontSize: 12, lineHeight: 1.25, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 4px rgba(0,0,0,.5)' }}>
+                        {w.name}
+                      </div>
+                    </div>
+                    <div style={{ position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: '50%', background: 'var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="check" style={{ fontSize: 11, color: '#06110E' }} />
                     </div>
                   </div>
                 ))}
               </div>
-              <button className="chip" style={{ marginTop: 10 }} onClick={() => addAdHocSessionSheet(prog, wk)}>
-                {t('+ Ajouter une séance')}
-              </button>
             </div>
           )
         })}
