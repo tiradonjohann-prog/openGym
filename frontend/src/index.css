@@ -333,6 +333,11 @@ h4.sec{
   background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.025) 0px,rgba(255,255,255,.025) 1px,transparent 1px,transparent 7px);
 }
 
+/* Horizontally-scrollable rows whose own dot indicators already signal "swipe to see
+   more" — the native scrollbar track is redundant chrome under that. */
+.no-scrollbar{scrollbar-width:none;-ms-overflow-style:none}
+.no-scrollbar::-webkit-scrollbar{display:none}
+
 /* ----------------------------------------------------------- tab bar ----- */
 #tabbar{
   position:fixed;left:0;right:0;bottom:0;z-index:50;

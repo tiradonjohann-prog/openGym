@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, bwTrend, weekDayVolumes, setsDoneActive } from '../lib/history.js'
+import { effectiveRoutine, effectiveRoutineId, streakWeeks, bwTrend, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
 import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, addAdHocSessionSheet, resumeWorkout } from '../sheets.jsx'
@@ -13,7 +13,6 @@ import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import { glyphOf } from '../lib/glyphs.js'
-import ProgrammeCard from '../components/ProgrammeCard.jsx'
 import { SasoianMark, SasoianWordmark } from '../components/SasoianLogo.jsx'
 import { bwReminderDue, measReminderDue } from '../lib/reminders.js'
 import { TutorialButton } from '../components/TutorialOverlay.jsx'
@@ -341,6 +340,7 @@ function ProgrammeWeekCarousel({ S, prog }) {
       <div
         ref={scrollerRef}
         onScroll={onScroll}
+        className="no-scrollbar"
         style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
       >
         {Array.from({ length: prog.totalWeeks }, (_, i) => i + 1).map(wk => {
@@ -414,7 +414,6 @@ function ProgrammeWeekCarousel({ S, prog }) {
 /* ── Programme-based home screen ── */
 function ProgrammeHome({ S, user, nav }) {
   const today = new Date()
-  const programmes = S.programmes || []
   const [weekBrowserOpen, setWeekBrowserOpen] = useState(false)
 
   return (
@@ -439,56 +438,45 @@ function ProgrammeHome({ S, user, nav }) {
         const pct = totalThisWeek ? Math.round((doneThisWeek / totalThisWeek) * 100) : 0
         const { bw, trendDir, delta } = bwTrend(S)
         return (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div className="card" style={{ padding: '12px 13px', marginBottom: 0 }}>
-              <div className="small" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 6 }}>
-                <span className="font-display" style={{ fontSize: 25, fontWeight: 700 }}>{doneThisWeek}</span>
-                {totalThisWeek > 0 && <span style={{ fontSize: 13, color: 'var(--label-3)', fontWeight: 600 }}>/ {totalThisWeek}</span>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            <div className="card" style={{ padding: '11px 12px', marginBottom: 0 }}>
+              <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
+                <span className="font-display" style={{ fontSize: 21, fontWeight: 700 }}>{doneThisWeek}</span>
+                {totalThisWeek > 0 && <span style={{ fontSize: 12, color: 'var(--label-3)', fontWeight: 600 }}>/ {totalThisWeek}</span>}
               </div>
-              <div style={{ height: 3, background: 'var(--surface-3)', borderRadius: 999, marginTop: 9, overflow: 'hidden' }}>
+              <div style={{ height: 3, background: 'var(--surface-3)', borderRadius: 999, marginTop: 8, overflow: 'hidden' }}>
                 <div style={{ width: pct + '%', height: '100%', background: 'var(--acc)' }} />
               </div>
             </div>
-            <div className="card tap" style={{ padding: '12px 13px', marginBottom: 0 }} onClick={() => bwSheet()}>
-              <div className="small" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Poids')}</div>
+            <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={() => bwSheet()}>
+              <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Poids')}</div>
               {bw ? (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
-                    <span className="font-display" style={{ fontSize: 25, fontWeight: 700 }}>{fmtNum(bw.w)}</span>
-                    <span style={{ fontSize: 11, color: 'var(--label-3)', fontWeight: 600 }}>{S.unit}</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginTop: 6 }}>
+                    <span className="font-display" style={{ fontSize: 21, fontWeight: 700 }}>{fmtNum(bw.w)}</span>
+                    <span style={{ fontSize: 10, color: 'var(--label-3)', fontWeight: 600 }}>{S.unit}</span>
                     {trendDir && trendDir !== 'stable' && (
-                      <Icon name={trendDir === 'up' ? 'arrowUp' : 'arrowDown'} style={{ fontSize: 11, marginLeft: 2, color: bwDeltaColor(delta, bw.w) }} />
+                      <Icon name={trendDir === 'up' ? 'arrowUp' : 'arrowDown'} style={{ fontSize: 10, marginLeft: 1, color: bwDeltaColor(delta, bw.w) }} />
                     )}
                   </div>
-                  <div style={{ fontSize: 9.5, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+                  <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
                 </>
               ) : (
                 <>
-                  <div className="font-display" style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{t('Aucune pesée')}</div>
-                  <div style={{ fontSize: 9.5, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+                  <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Aucune pesée')}</div>
+                  <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
                 </>
               )}
+            </div>
+            <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={measurementsSheet}>
+              <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Measurements')}</div>
+              <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Log')}</div>
+              <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
             </div>
           </div>
         )
       })()}
-
-      <div style={{ marginBottom: 8 }}>
-        <div className="small" style={{
-          textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700,
-          marginBottom: 10, color: 'var(--acc)', fontSize: 11,
-        }}>
-          {t('My programmes')}
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
-          {programmes.map(prog => (
-            <div key={prog.id} style={{ width: 'calc(50% - 5px)', flexShrink: 0 }}>
-              <ProgrammeCard prog={prog} />
-            </div>
-          ))}
-        </div>
-      </div>
 
       {(() => {
         const prog = activeProgramme(S)
@@ -564,72 +552,6 @@ function ProgrammeHome({ S, user, nav }) {
         )
       })()}
 
-      <NutriWidget S={S} nav={nav} withHeader />
-
-      {(() => {
-        const volumes = weekDayVolumes(S)
-        const total = volumes.reduce((a, b) => a + b, 0)
-        const max = Math.max(...volumes, 1)
-        const isFirstEver = S.workouts.length === 0
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            <SectionHead title={t('Progression récente')} action={t('Détails')} onAction={() => nav('/stats')} />
-            <div className="card" style={{ padding: 14 }}>
-              <div className="row between" style={{ alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Volume cette semaine')}</div>
-                  <div className="font-display" style={{ fontSize: 20, marginTop: 5 }}>
-                    {total > 0 ? fmtNum(total) : '—'} <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--label-3)' }}>{S.unit === 'lb' ? 'lb' : 'kg'}</span>
-                  </div>
-                </div>
-                {isFirstEver && <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--acc)', background: 'color-mix(in srgb,var(--acc) 12%,transparent)', borderRadius: 999, padding: '4px 9px' }}>{t('1re séance')}</span>}
-              </div>
-              <div style={{ display: 'flex', gap: 5, marginTop: 12, alignItems: 'flex-end', height: 36 }}>
-                {volumes.map((v, i) => (
-                  <div key={i} style={{
-                    flex: 1,
-                    height: Math.max(4, Math.round((v / max) * 36)),
-                    borderRadius: 5,
-                    background: v > 0 ? 'color-mix(in srgb,var(--acc) 55%,transparent)' : 'var(--surface-3)',
-                  }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )
-      })()}
-
-      <SmartNudge S={S} />
-      <LastWorkoutCard S={S} />
-
-      {/* Quick-log buttons: poids corporel + mensurations */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
-        <button
-          className="card tap"
-          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-          onClick={() => bwSheet()}
-        >
-          <Icon name="scale" style={{ fontSize: 18, color: 'var(--blue)', flexShrink: 0 }} />
-          <div style={{ minWidth: 0, overflow: 'hidden' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label-2)' }}>{t('Body weight')}</div>
-            {lastBW(S)
-              ? <div style={{ fontSize: 12, color: 'var(--label-4)', marginTop: 1 }}>{fmtNum(lastBW(S).w)} {S.unit}</div>
-              : <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{t('Log')}</div>}
-          </div>
-        </button>
-        <button
-          className="card tap"
-          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-          onClick={measurementsSheet}
-        >
-          <Icon name="ruler" style={{ fontSize: 18, color: 'var(--teal)', flexShrink: 0 }} />
-          <div style={{ minWidth: 0, overflow: 'hidden' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label-2)' }}>{t('Measurements')}</div>
-            <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{t('Log')}</div>
-          </div>
-        </button>
-      </div>
-
       {/* Ad-hoc activity CTA — same .btn.cta shimmer family as "Démarrer la séance", in
           the orange accent so the two calls-to-action read as visually distinct, plus
           the mockup's hairline texture on the surrounding card. */}
@@ -638,7 +560,7 @@ function ProgrammeHome({ S, user, nav }) {
         border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
         background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
         padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
-        boxShadow: 'inset 0 1px 0 var(--glass-highlight)', marginTop: 8,
+        boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
       }}>
         <div className="hairline" />
         <div style={{ position: 'relative' }}>
@@ -650,6 +572,11 @@ function ProgrammeHome({ S, user, nav }) {
           <span>{t('Log activity')}</span>
         </button>
       </div>
+
+      <NutriWidget S={S} nav={nav} withHeader />
+
+      <SmartNudge S={S} />
+      <LastWorkoutCard S={S} />
     </div>
   )
 }
@@ -699,36 +626,41 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
     </div>
 
     {!S.simpleMode && (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <div className="card" style={{ padding: '12px 13px', marginBottom: 0 }}>
-          <div className="small" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 6 }}>
-            <span className="font-display" style={{ fontSize: 25, fontWeight: 700 }}>{wThisWeek}</span>
-            {plannedPerWeek > 0 && <span style={{ fontSize: 13, color: 'var(--label-3)', fontWeight: 600 }}>/ {plannedPerWeek}</span>}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+        <div className="card" style={{ padding: '11px 12px', marginBottom: 0 }}>
+          <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
+            <span className="font-display" style={{ fontSize: 21, fontWeight: 700 }}>{wThisWeek}</span>
+            {plannedPerWeek > 0 && <span style={{ fontSize: 12, color: 'var(--label-3)', fontWeight: 600 }}>/ {plannedPerWeek}</span>}
           </div>
-          <div style={{ height: 3, background: 'var(--surface-3)', borderRadius: 999, marginTop: 9, overflow: 'hidden' }}>
+          <div style={{ height: 3, background: 'var(--surface-3)', borderRadius: 999, marginTop: 8, overflow: 'hidden' }}>
             <div style={{ width: (plannedPerWeek ? Math.min(100, Math.round((wThisWeek / plannedPerWeek) * 100)) : 0) + '%', height: '100%', background: 'var(--acc)' }} />
           </div>
         </div>
-        <div className="card tap" style={{ padding: '12px 13px', marginBottom: 0 }} onClick={() => bwSheet()}>
-          <div className="small" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Poids')}</div>
+        <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={() => bwSheet()}>
+          <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Poids')}</div>
           {bw ? (
             <>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
-                <span className="font-display" style={{ fontSize: 25, fontWeight: 700 }}>{fmtNum(bw.w)}</span>
-                <span style={{ fontSize: 11, color: 'var(--label-3)', fontWeight: 600 }}>{S.unit}</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginTop: 6 }}>
+                <span className="font-display" style={{ fontSize: 21, fontWeight: 700 }}>{fmtNum(bw.w)}</span>
+                <span style={{ fontSize: 10, color: 'var(--label-3)', fontWeight: 600 }}>{S.unit}</span>
                 {trendDir && trendDir !== 'stable' && (
-                  <Icon name={trendDir === 'up' ? 'arrowUp' : 'arrowDown'} style={{ fontSize: 11, marginLeft: 2, color: bwDeltaColor(delta, bw.w) }} />
+                  <Icon name={trendDir === 'up' ? 'arrowUp' : 'arrowDown'} style={{ fontSize: 10, marginLeft: 1, color: bwDeltaColor(delta, bw.w) }} />
                 )}
               </div>
-              <div style={{ fontSize: 9.5, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+              <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
             </>
           ) : (
             <>
-              <div className="font-display" style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{t('Aucune pesée')}</div>
-              <div style={{ fontSize: 9.5, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+              <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Aucune pesée')}</div>
+              <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
             </>
           )}
+        </div>
+        <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={measurementsSheet}>
+          <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Measurements')}</div>
+          <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Log')}</div>
+          <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
         </div>
       </div>
     )}
@@ -822,48 +754,6 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
     )}
 
     <NutriWidget S={S} nav={nav} />
-
-    {/* Quick-log buttons: poids corporel + mensurations */}
-    <div data-tuto="home-quicklog" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-      <button
-        className="card tap"
-        style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-          background: 'linear-gradient(135deg,color-mix(in srgb,var(--blue) 9%,var(--surface)),var(--surface))',
-          border: '1px solid color-mix(in srgb,var(--blue) 20%,transparent)',
-          cursor: 'pointer', textAlign: 'left', width: '100%',
-        }}
-        onClick={e => { e.stopPropagation(); bwSheet() }}
-      >
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in srgb,var(--blue) 15%,transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Icon name="scale" style={{ fontSize: 17, color: 'var(--blue)' }} />
-        </div>
-        <div style={{ minWidth: 0, overflow: 'hidden' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label-2)' }}>{t('Body weight')}</div>
-          {bw
-            ? <div style={{ fontSize: 12, color: 'var(--blue)', fontWeight: 600, marginTop: 1 }}>{fmtNum(bw.w)} {S.unit}</div>
-            : <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{t('Log')}</div>}
-        </div>
-      </button>
-      <button
-        className="card tap"
-        style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-          background: 'linear-gradient(135deg,color-mix(in srgb,var(--teal) 9%,var(--surface)),var(--surface))',
-          border: '1px solid color-mix(in srgb,var(--teal) 20%,transparent)',
-          cursor: 'pointer', textAlign: 'left', width: '100%',
-        }}
-        onClick={measurementsSheet}
-      >
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: 'color-mix(in srgb,var(--teal) 15%,transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Icon name="ruler" style={{ fontSize: 17, color: 'var(--teal)' }} />
-        </div>
-        <div style={{ minWidth: 0, overflow: 'hidden' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label-2)' }}>{t('Measurements')}</div>
-          <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>{t('Log')}</div>
-        </div>
-      </button>
-    </div>
 
     <div className="card tap" data-tuto="home-bw" onClick={() => nav('/bodyweight')}>
       <div className="row between" style={{ marginBottom: 6 }}>

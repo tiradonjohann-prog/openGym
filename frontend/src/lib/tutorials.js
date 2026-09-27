@@ -27,11 +27,6 @@ export const HOME_STEPS = [
     text: () => t('Log your weight daily — ideally fasted and after using the toilet for consistent readings. Tap the graph to see your full history.'),
   },
   {
-    selector: '[data-tuto="home-quicklog"]',
-    title: () => t('Quick log'),
-    text: () => t('Log your body weight or body measurements in one tap. The more regularly you track, the more accurate your progress data becomes.'),
-  },
-  {
     selector: '[data-tuto="home-streak"]',
     title: () => t('Streak'),
     text: () => t('Your consecutive training weeks. The arc shows how much of this week\'s sessions you\'ve completed vs. planned.'),
