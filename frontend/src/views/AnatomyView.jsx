@@ -1,11 +1,12 @@
 // frontend/src/views/AnatomyView.jsx
-import { Suspense, useCallback, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import { useStore } from '../store/useStore.js'
 import { AnatomyModel, FallbackMesh } from '../components/anatomy3d/AnatomyModel.jsx'
+import LoadingIntro from '../components/anatomy3d/LoadingIntro.jsx'
 import { exercisesTargeting } from '../lib/anatomy3d.js'
 import { muscleLabel } from '../lib/exerciseLabels.js'
 import { focusMesh, dezoom } from '../lib/cameraUtils.js'
@@ -70,6 +71,12 @@ export default function AnatomyView() {
   const effectiveHeatmap = heatmapDismissed ? null : heatmap
   const [shown, setShown] = useState(30)
 
+  const [showIntro, setShowIntro] = useState(true)
+  useEffect(() => {
+    const id = setTimeout(() => setShowIntro(false), 5000)
+    return () => clearTimeout(id)
+  }, [])
+
   const handleMuscleClick = useCallback((muscleKey, mesh) => {
     const inExercise = effectiveHeatmap && (effectiveHeatmap[muscleKey] ?? 0) > 0
     if (effectiveHeatmap && !inExercise) {
@@ -126,6 +133,7 @@ export default function AnatomyView() {
         onPointerDown={e => dragGuard.start(e.clientX, e.clientY)}
         onPointerMove={e => dragGuard.check(e.clientX, e.clientY)}
       >
+        {showIntro && <LoadingIntro />}
         {effectiveHeatmap && (
           <div className="anatomy-legend">
             <div className="anatomy-legend-bar" />
