@@ -564,6 +564,8 @@ function ProgrammeHome({ S, user, nav }) {
         )
       })()}
 
+      <NutriWidget S={S} nav={nav} withHeader />
+
       {(() => {
         const volumes = weekDayVolumes(S)
         const total = volumes.reduce((a, b) => a + b, 0)
@@ -600,8 +602,6 @@ function ProgrammeHome({ S, user, nav }) {
       <SmartNudge S={S} />
       <LastWorkoutCard S={S} />
 
-      <NutriWidget S={S} nav={nav} withHeader />
-
       {/* Quick-log buttons: poids corporel + mensurations */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
         <button
@@ -630,23 +630,26 @@ function ProgrammeHome({ S, user, nav }) {
         </button>
       </div>
 
-      {/* Log activity CTA */}
-      <button
-        className="lrow tap"
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-          background: 'var(--orange)', borderRadius: 14, padding: '14px 16px',
-          border: 'none', cursor: 'pointer', marginTop: 8,
-        }}
-        onClick={cardioLogSheet}
-      >
-        <Icon name="figureRun" style={{ fontSize: 20, color: '#fff', flexShrink: 0 }} />
-        <span style={{ flex: 1, textAlign: 'left' }}>
-          <span style={{ display: 'block', fontWeight: 700, fontSize: 15, color: '#fff' }}>{t('Log activity')}</span>
-          <span style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,.75)', marginTop: 1 }}>{t('Running, cycling, swimming…')}</span>
-        </span>
-        <Icon name="chevronRight" style={{ color: 'rgba(255,255,255,.6)', fontSize: 16 }} />
-      </button>
+      {/* Ad-hoc activity CTA — same .btn.cta shimmer family as "Démarrer la séance", in
+          the orange accent so the two calls-to-action read as visually distinct, plus
+          the mockup's hairline texture on the surrounding card. */}
+      <div style={{
+        position: 'relative', overflow: 'hidden', borderRadius: 18,
+        border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
+        background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
+        padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
+        boxShadow: 'inset 0 1px 0 var(--glass-highlight)', marginTop: 8,
+      }}>
+        <div className="hairline" />
+        <div style={{ position: 'relative' }}>
+          <div className="font-display" style={{ fontWeight: 700, fontSize: 16 }}>{t('Activité supplémentaire')}</div>
+          <div style={{ fontSize: 11.5, color: 'var(--label-2)', marginTop: 2 }}>{t('Running, cycling, swimming…')}</div>
+        </div>
+        <button className="btn cta orange" style={{ position: 'relative' }} onClick={cardioLogSheet}>
+          <Icon name="figureRun" />
+          <span>{t('Log activity')}</span>
+        </button>
+      </div>
     </div>
   )
 }
@@ -946,23 +949,24 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
       </div>
     )}
 
-    {/* ── Log activity CTA ── */}
-    <button
-      data-tuto="home-activity"
-      className="lrow tap"
-      style={{
-        width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-        background: 'var(--orange)', borderRadius: 14, padding: '14px 16px',
-        border: 'none', cursor: 'pointer',
-      }}
-      onClick={cardioLogSheet}
-    >
-      <Icon name="figureRun" style={{ fontSize: 20, color: '#fff', flexShrink: 0 }} />
-      <span style={{ flex: 1, textAlign: 'left' }}>
-        <span style={{ display: 'block', fontWeight: 700, fontSize: 15, color: '#fff' }}>{t('Log activity')}</span>
-        <span style={{ display: 'block', fontSize: 12, color: 'rgba(255,255,255,.75)', marginTop: 1 }}>{t('Running, cycling, swimming…')}</span>
-      </span>
-      <Icon name="chevronRight" style={{ color: 'rgba(255,255,255,.6)', fontSize: 16 }} />
-    </button>
+    {/* ── Ad-hoc activity CTA — same .btn.cta shimmer family as the workout
+         start flow, orange accent + hairline texture, matching ProgrammeHome ── */}
+    <div data-tuto="home-activity" style={{
+      position: 'relative', overflow: 'hidden', borderRadius: 18,
+      border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
+      background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
+      padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
+      boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
+    }}>
+      <div className="hairline" />
+      <div style={{ position: 'relative' }}>
+        <div className="font-display" style={{ fontWeight: 700, fontSize: 16 }}>{t('Activité supplémentaire')}</div>
+        <div style={{ fontSize: 11.5, color: 'var(--label-2)', marginTop: 2 }}>{t('Running, cycling, swimming…')}</div>
+      </div>
+      <button className="btn cta orange" style={{ position: 'relative' }} onClick={cardioLogSheet}>
+        <Icon name="figureRun" />
+        <span>{t('Log activity')}</span>
+      </button>
+    </div>
   </div>
 }

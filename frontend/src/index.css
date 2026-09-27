@@ -319,7 +319,19 @@ h4.sec{
   animation:cta-sweep 4.5s ease-in-out infinite;
 }
 @media(prefers-reduced-motion:reduce){.btn.cta::before{animation:none}}
+.btn.cta.orange{
+  background:linear-gradient(160deg,#FFC08A,#F0863D);
+  color:#2B1200;
+  box-shadow:0 8px 20px -6px color-mix(in srgb,var(--orange) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.5);
+}
 .btn:disabled{opacity:.32;pointer-events:none}
+
+/* Subtle diagonal-hairline texture overlay, ported from the mockup's .cf-hairline —
+   sits on a position:relative + overflow:hidden card, matches the card's own radius. */
+.hairline{
+  position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.025) 0px,rgba(255,255,255,.025) 1px,transparent 1px,transparent 7px);
+}
 
 /* ----------------------------------------------------------- tab bar ----- */
 #tabbar{
