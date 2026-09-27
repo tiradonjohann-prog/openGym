@@ -45,20 +45,23 @@ export default function TabBar({ onStart }) {
     if (r && r.ex.length) { confirmStartSheet(r, () => onStart(r.id)); return }
     nav('/workout')
   }
-  const Tab = ({ k, icon, to, label, onPointerDown }) => {
+  const Tab = ({ k, icon, to, label, onPointerDown, hideLabel }) => {
     const active = on(k)
     return (
-      <button className={active ? 'on' : ''} onPointerDown={onPointerDown} onClick={() => nav(to)}>
+      <button className={active ? 'on' : ''} onPointerDown={onPointerDown} onClick={() => nav(to)} aria-label={label}>
         {active
-          ? <span className="tab-pill"><Icon name={icon} /><span>{label}</span></span>
-          : <><Icon name={icon} /><span>{label}</span></>}
+          ? <span className="tab-pill"><Icon name={icon} />{!hideLabel && <span>{label}</span>}</span>
+          : <><Icon name={icon} />{!hideLabel && <span>{label}</span>}</>}
       </button>
     )
   }
 
   return (
     <nav id="tabbar">
-      <Tab k="home" icon="house" to="/home" label={t('Home')} />
+      {/* Icon only — six tabs plus the center Start button don't all fit
+          labeled on a phone-width bar; "Home" is the one every user already
+          recognizes by the house icon alone. */}
+      <Tab k="home" icon="house" to="/home" label={t('Home')} hideLabel />
       <Tab k="plan" icon="calendar" to="/plan" label={t('Plan')} />
       <Tab
         k="anatomy" icon="cube" to="/anatomy" label={t('3D')}
@@ -73,7 +76,7 @@ export default function TabBar({ onStart }) {
         <span className="lbl">{S.active ? (S.active.pausedAt ? t('Reprendre') : t('Pause')) : t('Start')}</span>
       </button>
       <Tab k="stats" icon="chart" to="/stats" label={t('Stats')} />
-      <Tab k="library" icon="list" to="/library" label={t('Exercises')} />
+      <Tab k="library" icon="list" to="/library" label={t('Exos')} />
       <Tab k="nutrition" icon="utensils" to="/nutrition" label={t('Nutrition')} />
     </nav>
   )
