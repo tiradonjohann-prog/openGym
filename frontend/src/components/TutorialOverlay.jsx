@@ -300,25 +300,23 @@ export default function TutorialOverlay({ steps, onEnd }) {
   )
 }
 
-// Convenience trigger button — small ? icon
+// Convenience trigger button — "Tutoriel" pill
 export function TutorialButton({ steps, label }) {
   const [active, setActive] = useState(false)
   if (!steps || !steps.length) return null
   return <>
     <button
       data-tutorial-btn
+      className="chip"
       onClick={() => setActive(true)}
       aria-label={label || t('Tutorial')}
       style={{
-        background: 'var(--surface-2)',
         border: '1.5px solid color-mix(in srgb,var(--acc) 30%,transparent)',
-        borderRadius: '50%', width: 32, height: 32,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', color: 'var(--acc)', fontSize: 15, fontWeight: 700,
+        color: 'var(--acc)', fontWeight: 600,
         flexShrink: 0,
       }}
     >
-      ?
+      {label || t('Tutorial')}
     </button>
     {active && <TutorialOverlay steps={steps} onEnd={() => setActive(false)} />}
   </>

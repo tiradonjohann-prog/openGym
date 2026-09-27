@@ -253,7 +253,15 @@ function SectionHead({ title, action, onAction }) {
     <div className="row between" style={{ marginBottom: 2 }}>
       <h3 className="font-display" style={{ margin: 0, fontSize: 14, fontWeight: 700, letterSpacing: '.002em' }}>{title}</h3>
       {action && (
-        <button className="iconbtn" style={{ width: 'auto', height: 'auto', padding: 0, fontSize: 11, fontWeight: 600, color: 'var(--acc)' }} onClick={onAction}>
+        <button
+          type="button"
+          style={{
+            background: 'none', border: 'none', width: 'auto', height: 'auto',
+            padding: '8px 4px', margin: '-8px -4px', fontSize: 11, fontWeight: 600,
+            color: 'var(--acc)', cursor: 'pointer',
+          }}
+          onClick={onAction}
+        >
           {action}
         </button>
       )}
