@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
+import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, bwTrend, weekDayVolumes, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
 import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, addAdHocSessionSheet } from '../sheets.jsx'
@@ -489,12 +489,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
   const [bannerOff, setBannerOff] = useState(() => localStorage.getItem('banner_prog') === '1')
   const dismissBanner = () => { localStorage.setItem('banner_prog', '1'); setBannerOff(true) }
   const todayOvr = S.dayPlan[todayISO()] !== undefined
-  const bw = lastBW(S)
-  const prevBW = S.bodyweight.length > 1 ? S.bodyweight[S.bodyweight.length - 2] : null
-  const delta = bw && prevBW ? bw.w - prevBW.w : null
-  const firstBW = S.bodyweight.length > 1 ? S.bodyweight[0] : null
-  const totalDelta = bw && firstBW ? Math.round((bw.w - firstBW.w) * 10) / 10 : null
-  const trendDir = delta === null ? null : Math.abs(delta) < 0.3 ? 'stable' : delta > 0 ? 'up' : 'down'
+  const { bw, delta, trendDir, totalDelta, firstBW } = bwTrend(S)
 
   const monday = new Date(today); monday.setDate(today.getDate() - ((today.getDay() + 6) % 7) + weekOffset * 7)
   const doneDays = new Set(S.workouts.map(w => w.d))
