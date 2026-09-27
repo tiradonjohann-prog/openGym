@@ -1395,12 +1395,21 @@ input.num.imc-input{
 .anatomy-body{display:flex;flex-direction:column;flex:1;min-height:0}
 .anatomy-canvas-wrap{position:relative;flex:1;min-height:0;min-width:0}
 .anatomy-panel{
-  flex:0 0 auto;max-height:45vh;overflow-y:auto;
+  flex:0 0 auto;max-height:45vh;overflow-y:auto;overflow-x:hidden;
   background:var(--glass-fill);border-top:1px solid var(--glass-border);
   border-radius:var(--r-xl) var(--r-xl) 0 0;
   padding:8px 16px calc(128px + var(--sab));
   box-shadow:inset 0 1px 0 var(--glass-highlight),0 -12px 30px -14px rgba(0,0,0,.4);
 }
+/* Always a single vertically-scrolling column, even at the desktop
+   breakpoint where #app .list (index.css above) switches every other list
+   in the app to a 2-column grid — this panel is a fixed 340px side column
+   there (see the desktop override below), too narrow for two columns of
+   exercise name + percentage pill + chevron without horizontal overflow.
+   Higher specificity than "#app .list" (1 id + 2 classes vs 1 id + 1
+   class) so this wins regardless of source order. */
+#app .anatomy-panel .list{display:flex;flex-direction:column}
+.anatomy-panel .item .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .anatomy-panel-handle{width:34px;height:4px;border-radius:2px;background:var(--label-4);opacity:.4;margin:0 auto 10px}
 .anatomy-panel-hdr{
   display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;

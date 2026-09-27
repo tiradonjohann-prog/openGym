@@ -55,6 +55,12 @@ export default function AnatomyView() {
   const location = useLocation()
   const sex = useStore(s => s.S.nutrition.sex)
   const modelUrl = sex === 'female' ? '/models/female.glb' : '/models/male.glb'
+  // Same tokens as --bg in index.css — the scene's clear color (via gl.alpha:
+  // false, three.js ignores any CSS background and paints its own) and the
+  // loading placeholder both need to follow the theme, not stay hardcoded
+  // dark: a white canvas in light mode was requested explicitly.
+  const theme = useStore(s => s.S.theme)
+  const bg = theme === 'light' ? '#EEF1F6' : '#090D16'
 
   // The caller (exercise detail sheet) passes the exercise's own
   // `exercise_muscles` object directly ({ [muscleCode]: pct }) — this is
@@ -133,7 +139,7 @@ export default function AnatomyView() {
         onPointerDown={e => dragGuard.start(e.clientX, e.clientY)}
         onPointerMove={e => dragGuard.check(e.clientX, e.clientY)}
       >
-        {showIntro && <LoadingIntro />}
+        {showIntro && <LoadingIntro bg={bg} />}
         {effectiveHeatmap && (
           <div className="anatomy-legend">
             <div className="anatomy-legend-bar" />
@@ -147,9 +153,14 @@ export default function AnatomyView() {
         <Canvas
           camera={{ position: CAMERA_POSITION, fov: 36, near: 0.1, far: 100 }}
           gl={{ antialias: true, alpha: false }}
-          style={{ width: '100%', height: '100%', display: 'block', background: '#131519' }}
+          style={{ width: '100%', height: '100%', display: 'block', background: bg }}
           onPointerMissed={deselect}
         >
+          {/* gl.alpha is false, so three.js paints its own opaque clear
+              color over the DOM style background above — both need to
+              track the theme, not just the CSS one, or the canvas stays
+              dark in light mode. */}
+          <color attach="background" args={[bg]} />
           <hemisphereLight skyColor="#ffe4cc" groundColor="#1a0000" intensity={0.65} />
           <directionalLight position={[3, 8, 6]} intensity={1.8} />
           <directionalLight position={[-4, 3, -2]} intensity={0.45} color="#ffaa88" />
@@ -179,7 +190,7 @@ export default function AnatomyView() {
       </div>
 
       {selected && (
-        <div className="anatomy-panel">
+        <div className="anatomy-panel no-scrollbar">
           <div className="anatomy-panel-handle" />
           <div className="anatomy-panel-hdr">
             <h3 className="font-display">{muscleLabel(selected.muscleKey)}</h3>

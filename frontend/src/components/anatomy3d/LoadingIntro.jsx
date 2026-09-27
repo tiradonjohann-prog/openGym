@@ -15,11 +15,11 @@ import { t } from '../../lib/i18n.js'
 // box collapses to near-zero height (its only in-flow content,
 // .anatomy-view, is position:absolute). Portaling escapes that entirely, so
 // this always covers the true viewport from the very first paint.
-export default function LoadingIntro() {
+export default function LoadingIntro({ bg }) {
   return createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 40,
-      background: '#131519', // matches the <Canvas> background — no flash when it unmounts
+      background: bg, // matches the <Canvas> background for this theme — no flash when it unmounts
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <div className="font-display" style={{ color: 'var(--label-3)', fontSize: 15 }}>{t('Loading in progress…')}</div>
