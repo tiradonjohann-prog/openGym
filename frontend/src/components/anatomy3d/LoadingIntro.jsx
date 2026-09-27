@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { useRive, Layout, Fit, Alignment, RuntimeLoader } from '@rive-app/react-webgl2'
 
 // By default the Rive runtime fetches its ~2.2MB WASM binary from unpkg.com
@@ -8,11 +9,21 @@ import { useRive, Layout, Fit, Alignment, RuntimeLoader } from '@rive-app/react-
 // Must run before the first useRive() call below.
 RuntimeLoader.setWasmUrl('/rive/rive.wasm')
 
-// Full-screen Rive animation shown for a fixed duration while the 3D screen
-// opens — AnatomyView owns the 5s timer, this component just plays.
-// position:fixed (not absolute inside .anatomy-canvas-wrap) so it covers the
-// whole screen, including the header — everything except the tab bar, which
-// sits on top at a higher z-index (#tabbar is z-index:50).
+// Rive animation shown for a fixed duration while the 3D screen opens —
+// AnatomyView owns the 5s timer, this component just plays. Sized via the
+// .anatomy-intro class (index.css) to match the app's own content column
+// rather than the raw viewport, centered above everything except the tab
+// bar (#tabbar is z-index:50, this is 40).
+//
+// Portaled to document.body rather than rendered in place: #app plays a
+// transform animation on every route mount (.vfade), and a CSS transform on
+// an ancestor makes that ancestor the containing block for any
+// position:fixed descendant. On this route #app itself collapses to near
+// -zero height (its only in-flow content is .anatomy-view, which is
+// position:absolute and so contributes nothing to #app's own box), so for
+// the ~220ms .vfade runs, this element's top:50%/max-height would resolve
+// against that collapsed box instead of the real viewport. Portaling
+// escapes #app entirely, so sizing is always against the viewport.
 export default function LoadingIntro() {
   const { RiveComponent } = useRive({
     src: '/animations/gym.riv',
@@ -20,12 +31,10 @@ export default function LoadingIntro() {
     layout: new Layout({ fit: Fit.Cover, alignment: Alignment.Center }),
   })
 
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 40,
-      background: '#131519', // matches the <Canvas> background — no flash when it unmounts
-    }}>
+  return createPortal(
+    <div className="anatomy-intro">
       <RiveComponent style={{ width: '100%', height: '100%' }} />
-    </div>
+    </div>,
+    document.body,
   )
 }
