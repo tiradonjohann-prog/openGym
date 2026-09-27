@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { DAYN, uid, isoOf } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { SPORTS, isCardioSport, defaultCardioBlocks, routineTotalDuration } from '../lib/sports.js'
+import { SPORTS, isCardioSport, defaultCardioBlocks, routineSubtitle } from '../lib/sports.js'
 import { isProgrammeComplete, completedWeekCount, activeProgramme, addRoutineToProgramme } from '../lib/programme.js'
 import { dayAssignSheet, loadStarterPlan, planToolsSheet, programmeCreateSheet, programmeEditSheet, deleteProgramme } from '../sheets.jsx'
 import { pickImage, isUserImage } from '../lib/imageUtils.js'
@@ -37,16 +37,6 @@ function SportPicker({ close, onCreate }) {
   </>
 }
 
-function routineTileSubtitle(r) {
-  if (isCardioSport(r.sport)) {
-    const min = routineTotalDuration(r.blocks || [])
-    const label = t(SPORTS[r.sport]?.label || r.sport)
-    return min ? `${label} · ${min} min` : label
-  }
-  const n = r.ex?.length || r.items?.filter(i => i.kind === 'ex').length || 0
-  return `${n} ${t('exercices')}`
-}
-
 function RoutineLibraryRow({ routines, nav, onAddToProgramme, canAdd }) {
   return (
     <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 10, paddingBottom: 2 }}>
@@ -75,7 +65,7 @@ function RoutineLibraryRow({ routines, nav, onAddToProgramme, canAdd }) {
                   {r.name}
                 </div>
                 <div style={{ fontSize: 10, color: 'rgba(255,255,255,.75)', marginTop: 1, textShadow: '0 1px 3px rgba(0,0,0,.5)' }}>
-                  {routineTileSubtitle(r)}
+                  {routineSubtitle(r)}
                 </div>
               </div>
             </div>

@@ -68,14 +68,20 @@ export function addRoutineToProgramme(prog, routineId) {
   for (let w = 1; w <= prog.totalWeeks; w++) wasCompleteByWeek[w] = isWeekComplete(prog, w)
 
   prog.routineIds = [...prog.routineIds, routineId]
-  const newIndex = prog.routineIds.length - 1
+  const newLength = prog.routineIds.length
 
   prog.weekProgress = prog.weekProgress || {}
   for (let w = 1; w <= prog.totalWeeks; w++) {
-    if (!wasCompleteByWeek[w]) continue
     const key = String(w)
-    const done = prog.weekProgress[key] ? [...prog.weekProgress[key]] : []
-    done[newIndex] = true
+    // A week with no entry at all is left absent — it picks up the new,
+    // full-length routineIds template the first time it's touched. A week
+    // that already has an entry (complete or still in progress) must be
+    // padded to the new length now: leaving an in-progress week's array
+    // short would let a later completed session make `.every(Boolean)`
+    // read "all done" without the newly-added routine ever being done.
+    if (!prog.weekProgress[key]) continue
+    const done = [...prog.weekProgress[key]]
+    while (done.length < newLength) done.push(!!wasCompleteByWeek[w])
     prog.weekProgress[key] = done
   }
 }

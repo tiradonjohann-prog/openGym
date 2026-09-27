@@ -138,8 +138,18 @@ describe('addRoutineToProgramme', () => {
   it('backfills the new slot as done for weeks that were already fully complete', () => {
     const prog = { totalWeeks: 2, routineIds: ['a'], weekProgress: { 1: [true], 2: [false] } }
     addRoutineToProgramme(prog, 'b')
-    expect(prog.weekProgress['1']).toEqual([true, true])  // week 1 was complete — backfilled
-    expect(prog.weekProgress['2']).toEqual([false])        // week 2 wasn't — untouched, new slot absent (falsy/pending)
+    expect(prog.weekProgress['1']).toEqual([true, true])   // week 1 was complete — backfilled
+    expect(prog.weekProgress['2']).toEqual([false, false]) // week 2 wasn't — new slot padded pending, not just absent
+  })
+
+  it('pads an in-progress week (has an entry, not yet complete) so a later fill-in cannot wrongly mark the week done', () => {
+    // Review finding: sheets.jsx's finishWorkout checks weekProgress[key].every(Boolean),
+    // not routineIds.length — a short array for an in-progress week would let it read as
+    // "all done" the moment the routines that existed before the append are finished,
+    // even though the newly-added routine is still pending.
+    const prog = { totalWeeks: 2, routineIds: ['a', 'b'], weekProgress: { 2: [true, false] } }
+    addRoutineToProgramme(prog, 'c')
+    expect(prog.weekProgress['2']).toEqual([true, false, false])
   })
 
   it('does not mutate weekProgress for a week that had no entry at all (never started, not complete)', () => {
