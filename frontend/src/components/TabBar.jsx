@@ -35,10 +35,10 @@ export default function TabBar({ onStart }) {
     if (r && r.ex.length) { confirmStartSheet(r, () => onStart(r.id)); return }
     nav('/workout')
   }
-  const Tab = ({ k, icon, to, label }) => {
+  const Tab = ({ k, icon, to, label, onPointerDown }) => {
     const active = on(k)
     return (
-      <button className={active ? 'on' : ''} onClick={() => nav(to)}>
+      <button className={active ? 'on' : ''} onPointerDown={onPointerDown} onClick={() => nav(to)}>
         {active
           ? <span className="tab-pill"><Icon name={icon} /><span>{label}</span></span>
           : <><Icon name={icon} /><span>{label}</span></>}
@@ -50,7 +50,10 @@ export default function TabBar({ onStart }) {
     <nav id="tabbar">
       <Tab k="home" icon="house" to="/home" label={t('Home')} />
       <Tab k="plan" icon="calendar" to="/plan" label={t('Plan')} />
-      <Tab k="anatomy" icon="cube" to="/anatomy" label={t('3D')} />
+      <Tab
+        k="anatomy" icon="cube" to="/anatomy" label={t('3D')}
+        onPointerDown={() => import('../views/AnatomyView.jsx')}
+      />
       <button
         className={'start' + (S.active ? ' rec' : '')}
         onClick={startWorkout}
