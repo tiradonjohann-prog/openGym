@@ -42,14 +42,14 @@ export default function ProgrammeCard({ prog }) {
         <img
           src={prog.imageUrl}
           alt=""
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', padding: 6, boxSizing: 'border-box' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', padding: 3, boxSizing: 'border-box' }}
         />
       )}
 
       {/* Bottom scrim so text stays readable */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.65) 100%)',
+        background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.72) 100%)',
         pointerEvents: 'none',
       }} />
 

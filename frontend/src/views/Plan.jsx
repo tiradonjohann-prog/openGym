@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
@@ -46,20 +45,20 @@ function RoutineLibraryRow({ routines, nav, onAddToProgramme, canAdd }) {
         const icon = isCardio ? (SPORTS[r.sport]?.icon || 'bolt') : glyphOf(r.emoji)
         const hasImg = !!r.imageUrl
         return (
-          <div key={r.id} style={{ flex: '0 0 160px', scrollSnapAlign: 'start' }}>
+          <div key={r.id} style={{ flex: '0 0 188px', scrollSnapAlign: 'start' }}>
             <div style={{
               position: 'relative', aspectRatio: '1', borderRadius: 14, overflow: 'hidden',
               border: `2px solid color-mix(in srgb,${color} 40%,transparent)`,
               background: hasImg ? 'var(--surface-2)' : `linear-gradient(135deg,color-mix(in srgb,${color} 22%,var(--surface-2)),var(--surface-3))`,
             }}>
               {hasImg ? (
-                <img src={r.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 8, boxSizing: 'border-box' }} />
+                <img src={r.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 3, boxSizing: 'border-box' }} />
               ) : (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon name={icon} style={{ fontSize: 34, color, opacity: .45 }} />
                 </div>
               )}
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 45%,rgba(0,0,0,.65) 100%)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.72) 100%)', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 9px' }}>
                 <div className="capitalize" style={{ fontWeight: 700, fontSize: 12.5, lineHeight: 1.25, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 4px rgba(0,0,0,.5)' }}>
                   {r.name}
@@ -101,7 +100,6 @@ export default function Plan() {
 
   const programmes = S.programmes || []
   const hasActiveProgramme = activeProgramme(S) != null
-  const [showClassic, setShowClassic] = useState(false)
 
   const addRoutine = () => {
     openSheet(close => (
@@ -160,36 +158,11 @@ export default function Plan() {
       )}
     </div>
 
-    {/* ── Week schedule grid (collapsed behind a toggle once a programme is active) ── */}
-    {hasActiveProgramme && !showClassic ? (
-      <div style={{ marginBottom: 24 }}>
-        <button
-          onClick={() => setShowClassic(true)}
-          style={{
-            width: '100%', background: 'transparent', border: '1px solid var(--glass-border)',
-            color: 'var(--label-2)', fontWeight: 500, fontSize: 13, padding: 11,
-            borderRadius: 12, cursor: 'pointer',
-          }}
-        >
-          {t('Voir le planning classique')}
-        </button>
-      </div>
-    ) : (
+    {/* ── Week schedule grid (only shown without an active programme — a programme's
+         own weekly rotation replaces the need for day-by-day assignment) ── */}
+    {!hasActiveProgramme && (
     <div data-tuto="plan-week" style={{ marginBottom: 24 }}>
-      <div className="row between" style={{ marginBottom: 4 }}>
-        <h4 className="sec" style={{ margin: 0 }}>{t('Week schedule')}</h4>
-        {hasActiveProgramme && (
-          <button
-            onClick={() => setShowClassic(false)}
-            style={{
-              background: 'none', border: 'none', padding: '8px 4px', margin: '-8px -4px',
-              fontSize: 12, fontWeight: 600, color: 'var(--acc)', cursor: 'pointer',
-            }}
-          >
-            {t('Masquer')}
-          </button>
-        )}
-      </div>
+      <h4 className="sec" style={{ margin: '0 0 4px' }}>{t('Week schedule')}</h4>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
         {[1, 2, 3, 4, 5, 6, 0].map(d => {
           const r = S.routines.find(x => x.id === S.week[d])
