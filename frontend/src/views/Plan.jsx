@@ -108,7 +108,14 @@ export default function Plan() {
     {/* ── Week schedule grid (collapsed behind a toggle once a programme is active) ── */}
     {hasActiveProgramme && !showClassic ? (
       <div style={{ marginBottom: 24 }}>
-        <button className="chip" onClick={() => setShowClassic(true)}>
+        <button
+          onClick={() => setShowClassic(true)}
+          style={{
+            width: '100%', background: 'transparent', border: '1px solid var(--glass-border)',
+            color: 'var(--label-2)', fontWeight: 500, fontSize: 13, padding: 11,
+            borderRadius: 12, cursor: 'pointer',
+          }}
+        >
           {t('Voir le planning classique')}
         </button>
       </div>
@@ -117,7 +124,13 @@ export default function Plan() {
       <div className="row between" style={{ marginBottom: 4 }}>
         <h4 className="sec" style={{ margin: 0 }}>{t('Week schedule')}</h4>
         {hasActiveProgramme && (
-          <button className="chip" style={{ fontSize: 12 }} onClick={() => setShowClassic(false)}>
+          <button
+            onClick={() => setShowClassic(false)}
+            style={{
+              background: 'none', border: 'none', padding: '8px 4px', margin: '-8px -4px',
+              fontSize: 12, fontWeight: 600, color: 'var(--acc)', cursor: 'pointer',
+            }}
+          >
             {t('Masquer')}
           </button>
         )}
