@@ -4,7 +4,6 @@ import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Stepper } from '../components/ui.jsx'
 import { SasoianMark, SasoianLockup } from '../components/SasoianLogo.jsx'
-import { loadStarterPlan } from '../sheets.jsx'
 import { ACTIVITY_LEVELS, ACTIVITY_LABEL, ACTIVITY_DESC, calcBMR, calcTDEE } from '../lib/nutrition.js'
 import { GOALS, GOAL_LABEL, GOAL_DESC, GOAL_DEFAULT_DELTA, calcTargetKcal } from '../lib/goals.js'
 import { calcMacros } from '../lib/macros.js'
@@ -199,7 +198,7 @@ export default function Onboarding() {
 
   const back = () => setStep(s => s - 1)
 
-  const finish = (loadPlan, weight) => {
+  const finish = weight => {
     if (weight && weight > 0) {
       update(s => {
         const now = Date.now()
@@ -217,7 +216,6 @@ export default function Onboarding() {
       })
     }
     update(s => { s.onboardingDone = true })
-    if (loadPlan) loadStarterPlan()
   }
 
   /* ── Rendu ────────────────────────────────────────────────────── */
@@ -636,16 +634,12 @@ function Step3({ unit, onBack, onFinish }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <Button variant="primary" icon="sparkles"
             style={{ width: '100%', padding: '15px 0', fontSize: 16, borderRadius: 14 }}
-            onClick={() => onFinish(true, weight)}>
-            {"Charger un plan starter (PPL)"}
-          </Button>
-          <Button style={{ width: '100%', padding: '12px 0', fontSize: 14, borderRadius: 12 }}
-            onClick={() => onFinish(false, weight)}>
-            {"Je configure mon plan manuellement"}
+            onClick={() => onFinish(weight)}>
+            {"C'est parti"}
           </Button>
           <button
             style={{ width: '100%', padding: '8px', fontSize: 13, color: 'var(--label-3)', background: 'none', border: 'none', cursor: 'pointer' }}
-            onClick={() => onFinish(false, null)}>
+            onClick={() => onFinish(null)}>
             {"Je me pèserai demain matin →"}
           </button>
         </div>
