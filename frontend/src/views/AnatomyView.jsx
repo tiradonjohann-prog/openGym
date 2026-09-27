@@ -79,7 +79,11 @@ export default function AnatomyView() {
 
   const [showIntro, setShowIntro] = useState(true)
   useEffect(() => {
-    const id = setTimeout(() => setShowIntro(false), 5000)
+    // Was 5000ms while this covered a Rive animation's own asset loading; now
+    // that it's a plain placeholder (nothing to fetch), the model itself —
+    // prefetched on the 3D tab's pointerdown — is comfortably ready well
+    // before this fires. Shortened by 2s per user feedback.
+    const id = setTimeout(() => setShowIntro(false), 3000)
     return () => clearTimeout(id)
   }, [])
 
