@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { effectiveRoutine, effectiveRoutineId, streakWeeks, bwTrend, setsDoneActive } from '../lib/history.js'
+import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, bwTrend, setsDoneActive } from '../lib/history.js'
+import { calcMacros } from '../lib/macros.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
 import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, resumeWorkout } from '../sheets.jsx'
@@ -28,37 +29,37 @@ function NutriWidget({ S, nav, withHeader }) {
   const remaining = target - totals.kcal
   const over = remaining < 0
   const barColor = over ? 'var(--orange)' : pct > 0.85 ? 'var(--green)' : 'var(--acc)'
+  const n = S.nutrition || {}
+  const bw = lastBW(S)
+  const weightKg = bw ? (S.unit === 'lb' ? bw.w / 2.2046 : bw.w) : null
+  const macros = n.macros?.protG ? n.macros : calcMacros(target, weightKg, n.goal, n.workoutsPerWeek)
   const widget = (
     <div
       className="card tap"
-      style={{ padding: '12px 14px', marginBottom: 0 }}
+      style={{ padding: '14px' }}
       onClick={() => nav('/nutrition')}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--label-2)' }}>
-          <Icon name="flame" style={{ fontSize: 13, color: 'var(--nut-kcal)', marginRight: 5 }} />
-          {t('Today')}
-        </span>
-        <span style={{ fontSize: 13, color: over ? 'var(--orange)' : 'var(--label-3)' }}>
-          {over
-            ? '+' + fmtNum(Math.abs(remaining)) + ' ' + t('over')
-            : fmtNum(remaining) + ' ' + t('remaining')}
-        </span>
+      <div className="row between" style={{ alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 22, lineHeight: 1.2 }}>
+            {fmtNum(totals.kcal)} <span style={{ color: 'var(--label-3)', fontWeight: 600, fontSize: 17 }}>/ {fmtNum(target)}</span>
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--label-3)', marginTop: 3 }}>
+            {t('kcal consommées')} · {over
+              ? '+' + fmtNum(Math.abs(remaining)) + ' ' + t('over')
+              : fmtNum(remaining) + ' ' + t('restantes')}
+          </div>
+        </div>
+        <Icon name="utensils" style={{ fontSize: 17, color: 'var(--acc)', flexShrink: 0, marginTop: 2 }} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-        <span style={{ fontWeight: 700, fontSize: 22 }}>{fmtNum(totals.kcal)}</span>
-        <span style={{ color: 'var(--label-3)', fontSize: 13 }}>/ {fmtNum(target)} kcal</span>
-      </div>
-      <div style={{ height: 4, background: 'var(--surface-3)', borderRadius: 4, overflow: 'hidden' }}>
+      <div style={{ height: 4, background: 'var(--surface-3)', borderRadius: 4, overflow: 'hidden', marginTop: 10 }}>
         <div style={{ height: '100%', width: (pct * 100) + '%', background: barColor, borderRadius: 4, transition: 'width .5s var(--ease)' }} />
       </div>
-      {(totals.prot > 0 || totals.carbs > 0 || totals.fat > 0) && (
-        <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-          {totals.prot  > 0 && <span className="small" style={{ color: 'var(--nut-prot)',  fontWeight: 600 }}>{totals.prot}g P</span>}
-          {totals.carbs > 0 && <span className="small" style={{ color: 'var(--nut-carbs)', fontWeight: 600 }}>{totals.carbs}g G</span>}
-          {totals.fat   > 0 && <span className="small" style={{ color: 'var(--nut-fat)',   fontWeight: 600 }}>{totals.fat}g L</span>}
-        </div>
-      )}
+      <div style={{ display: 'flex', gap: 14, marginTop: 9 }}>
+        <span className="small" style={{ color: 'var(--nut-prot)', fontWeight: 600 }}>P {totals.prot}{macros ? '/' + macros.protG : ''} g</span>
+        <span className="small" style={{ color: 'var(--nut-carbs)', fontWeight: 600 }}>G {totals.carbs}{macros ? '/' + macros.carbsG : ''} g</span>
+        <span className="small" style={{ color: 'var(--nut-fat)', fontWeight: 600 }}>L {totals.fat}{macros ? '/' + macros.fatG : ''} g</span>
+      </div>
     </div>
   )
   if (!withHeader) return widget
@@ -526,27 +527,30 @@ function ProgrammeHome({ S, user, nav }) {
             <SectionHead title={t('Prochaine séance')} action={weekBrowserOpen ? t('Masquer') : t('Voir les semaines')} onAction={() => setWeekBrowserOpen(o => !o)} />
             {S.active ? (
               <div className="card" style={{
+                position: 'relative', overflow: 'hidden',
                 border: '1.5px solid color-mix(in srgb,var(--orange) 32%,transparent)',
                 background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 7%,var(--glass-fill)),var(--glass-fill))',
                 padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
               }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.6px', color: 'var(--orange)', textTransform: 'uppercase' }}>
+                <div className="hairline" />
+                <div style={{ position: 'relative', fontSize: 10, fontWeight: 700, letterSpacing: '.6px', color: 'var(--orange)', textTransform: 'uppercase' }}>
                   {S.active.pausedAt ? t('En pause') : t('Séance en cours')}
                 </div>
-                <div className="font-display" style={{ fontWeight: 700, fontSize: 19 }}>{S.active.name}</div>
-                <button className="btn cta" onClick={() => { if (S.active.pausedAt) { resumeWorkout(); nav(activeRoute) } else nav(activeRoute) }}>
+                <div className="font-display" style={{ position: 'relative', fontWeight: 700, fontSize: 19 }}>{S.active.name}</div>
+                <button className="btn cta" style={{ position: 'relative' }} onClick={() => { if (S.active.pausedAt) { resumeWorkout(); nav(activeRoute) } else nav(activeRoute) }}>
                   <Icon name={S.active.pausedAt ? 'play' : 'timer'} />
                   <span>{S.active.pausedAt ? t('Reprendre') : t('Continuer')}</span>
                 </button>
               </div>
             ) : ns && ns.routine ? (
               <div style={{
-                position: 'relative', border: '1px solid color-mix(in srgb,var(--acc) 32%,transparent)', borderRadius: 18,
+                position: 'relative', overflow: 'hidden', border: '1px solid color-mix(in srgb,var(--acc) 32%,transparent)', borderRadius: 18,
                 background: 'linear-gradient(165deg,color-mix(in srgb,var(--acc) 7%,var(--glass-fill)),var(--glass-fill))',
                 padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
                 boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
               }}>
-                <div className="row between">
+                <div className="hairline" />
+                <div className="row between" style={{ position: 'relative' }}>
                   <div className="row" style={{ gap: 6 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--acc)', display: 'inline-block' }} />
                     <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.6px', color: 'var(--acc)', textTransform: 'uppercase' }}>
@@ -554,13 +558,13 @@ function ProgrammeHome({ S, user, nav }) {
                     </span>
                   </div>
                 </div>
-                <div>
+                <div style={{ position: 'relative' }}>
                   <div className="font-display" style={{ fontWeight: 700, fontSize: 19 }}>{ns.routine.name}</div>
                   {ns.routine.ex?.length > 0 && (
                     <div style={{ fontSize: 11.5, color: 'var(--label-2)', marginTop: 2 }}>{t('{0} exercises', ns.routine.ex.length)}</div>
                   )}
                 </div>
-                <button className="btn cta" onClick={() => confirmStartSheet(ns.routine, () => startFlowForProgramme(prog.id, ns.weekNum, ns.sessionIdx))}>
+                <button className="btn cta" style={{ position: 'relative' }} onClick={() => confirmStartSheet(ns.routine, () => startFlowForProgramme(prog.id, ns.weekNum, ns.sessionIdx))}>
                   <Icon name="play" />
                   <span>{t('Démarrer la séance')}</span>
                 </button>
