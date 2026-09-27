@@ -8,19 +8,14 @@ import { todayISO } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import Icon from './Icon.jsx'
 
-// Warms the 3D screen's lazy JS chunk AND its two runtime-fetched assets
-// (Rive's wasm engine, the .riv animation itself) on pointerdown — before
-// the click/navigation even lands — so LoadingIntro's useRive() call
-// resolves from an already-warm browser cache instead of starting three
-// cold network fetches after the route has already mounted. Guarded so a
-// second tap doesn't re-issue the same requests.
+// Warms the 3D screen's lazy JS chunk on pointerdown — before the
+// click/navigation even lands — so the route mounts without a Suspense
+// wait. Guarded so a second tap doesn't re-issue the same request.
 let anatomyPrefetched = false
 function prefetchAnatomy() {
   if (anatomyPrefetched) return
   anatomyPrefetched = true
   import('../views/AnatomyView.jsx')
-  fetch('/rive/rive.wasm')
-  fetch('/animations/gym.riv')
 }
 
 export default function TabBar({ onStart }) {

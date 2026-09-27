@@ -395,6 +395,7 @@ export default {
   'Explore anatomy': 'Explorer l\'anatomie',
   '3D body, muscles and matching exercises': 'Corps en 3D, muscles et exercices associés',
   'Loading…': 'Chargement…',
+  'Loading in progress…': 'Chargement en cours…',
   '3D Explorer': 'Explorateur 3D',
   'Select a muscle': 'Sélectionne un muscle',
   '3D view is not available on this device.': 'La vue 3D n\'est pas disponible sur cet appareil.',

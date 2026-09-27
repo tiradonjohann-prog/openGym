@@ -1394,24 +1394,6 @@ input.num.imc-input{
 .anatomy-view{position:absolute;inset:0;display:flex;flex-direction:column}
 .anatomy-body{display:flex;flex-direction:column;flex:1;min-height:0}
 .anatomy-canvas-wrap{position:relative;flex:1;min-height:0;min-width:0}
-/* Sized to match #app's own content column (max-width:560px, --pad:16px
-   gutters — same box every button and card in the app already sits inside)
-   instead of the full viewport: at desktop widths the app's content is a
-   centered column, not edge-to-edge, so an inset:0 overlay looked oversized
-   next to it. Height follows from width via aspect-ratio rather than
-   stretching to fill the screen. */
-.anatomy-intro{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  z-index:40;width:min(calc(100% - 32px),528px);aspect-ratio:1/1;
-  /* On a portrait phone (the real target) width is always the binding
-     constraint, so this only ever engages on unusually wide/short
-     viewports — without it a strict 1:1 square driven by a ~1000px+
-     desktop content width overflows above/below the viewport entirely,
-     recreating the full-black-screen problem this was meant to fix. */
-  max-height:calc(100% - 16px);
-  border-radius:var(--r-xl);overflow:hidden;background:#131519;
-}
-@media(min-width:1000px){.anatomy-intro{width:min(calc(100% - 32px),1048px)}}
 .anatomy-panel{
   flex:0 0 auto;max-height:45vh;overflow-y:auto;
   background:var(--glass-fill);border-top:1px solid var(--glass-border);
