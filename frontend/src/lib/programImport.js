@@ -92,6 +92,7 @@ function parseRows(rows, exercises = EXDB) {
   let cardioTypeCol = -1, cardioSportCol = -1, cardioDurCol = -1, cardioDistCol = -1
   let cardioIntCol = -1, cardioRepCol = -1, cardioWorkCol = -1, cardioRestCol = -1
   let imageUrlCol = -1
+  let typeCol = -1
 
   let programName = 'Imported program'
   let programImageUrl = null
@@ -128,6 +129,9 @@ function parseRows(rows, exercises = EXDB) {
     cardioWorkCol  = colOf('travail s', 'travail')
     cardioRestCol  = colOf('recup s', 'recup', 'recuperation s')
     imageUrlCol    = colOf('image url', 'image programme', 'image', 'cover')
+    // Deliberately not just "type" — colOf's partial-match fallback would let a
+    // bare "type" collide with the "type cardio"/"type bloc" keywords above.
+    typeCol        = colOf('type exercice', 'exercise type')
 
     // Fall back to positional if detection fails
     if (progCol    < 0) progCol    = 0
@@ -160,8 +164,14 @@ function parseRows(rows, exercises = EXDB) {
     const exName   = String(cells[exCol]      || '').trim()
     const tempo    = String(cells[tempoCol]   || '').trim()
     const sets     = parseInt(cells[setsCol],  10) || 3
-    const reps     = parseInt(cells[repsCol],  10) || 10
     const rest     = parseInt(cells[restCol],  10) || 90
+    // "temps"/"time" makes the Répétitions column a held duration in seconds
+    // instead of a rep count (issue: plank-style exercises had no way to be
+    // imported as timed holds — every row defaulted to mode "reps").
+    const typeRaw  = typeCol >= 0 ? String(cells[typeCol] || '').trim().toLowerCase() : ''
+    const isTimed  = typeRaw === 'temps' || typeRaw === 'time'
+    const repsRaw  = parseInt(cells[repsCol], 10)
+    const reps     = repsRaw > 0 ? repsRaw : (isTimed ? 45 : 10)
 
     const cardioType = cardioTypeCol >= 0 ? String(cells[cardioTypeCol] || '').trim().toLowerCase() : ''
 
@@ -211,10 +221,10 @@ function parseRows(rows, exercises = EXDB) {
     const entry = {
       id: matched.id,
       sets,
-      reps,
       weight: 0,
-      mode: 'reps',
+      mode: isTimed ? 'time' : 'reps',
     }
+    if (isTimed) entry.sec = reps; else entry.reps = reps
 
     if (tempo) entry.tempo = tempo
     if (rest)  entry.restSec = rest

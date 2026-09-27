@@ -17,6 +17,18 @@ const makeCSV = rows =>
     ...rows,
   ].join('\n')
 
+// Same, but with a Répétitions column (for reps-value tests) and a trailing
+// Type Exercice column (reps/time) — mirrors the template once that column is
+// appended at the end, after Repos (sec). Named "Type Exercice" rather than
+// bare "Type": colOf's partial-match fallback would otherwise let a bare
+// "Type" header collide with the existing cardio "Type Cardio"/"Type Bloc"
+// column-detection keywords (a real bug hit while writing this).
+const makeCSVWithType = rows =>
+  [
+    'Programme,Séance,N° Séance,N° Exercice,Groupe Musculaire,Exercice,Tempo,Séries,Répétitions,Poids (kg),Repos (sec),Type Exercice',
+    ...rows,
+  ].join('\n')
+
 describe('parseProgramCSV — column detection', () => {
   it('reads exercise names from the Exercice column (col F), not N° Exercice (col D)', () => {
     const csv = makeCSV([
@@ -71,6 +83,48 @@ describe('parseProgramCSV — column detection', () => {
     expect(routines).toHaveLength(2)
     expect(routines[0].name).toBe('Push')
     expect(routines[1].name).toBe('Lower')
+  })
+})
+
+describe('parseProgramCSV — Type column (reps vs time)', () => {
+  it('defaults to mode "reps" and reads the Répétitions column as reps when Type is blank', () => {
+    const csv = makeCSVWithType([
+      'PPL,Push,1,1,chest,Barbell Bench Press,,4,8,,90,',
+    ])
+    const { routines } = parseProgramCSV(csv, MOCK_DB)
+    const entry = routines[0].ex[0]
+    expect(entry.mode).toBe('reps')
+    expect(entry.reps).toBe(8)
+    expect(entry.sec).toBeUndefined()
+  })
+
+  it('sets mode "time" and reads the Répétitions column as seconds when Type is "temps"', () => {
+    const csv = makeCSVWithType([
+      'PPL,Push,1,1,back,Pull-up,,3,45,,60,temps',
+    ])
+    const { routines } = parseProgramCSV(csv, MOCK_DB)
+    const entry = routines[0].ex[0]
+    expect(entry.mode).toBe('time')
+    expect(entry.sec).toBe(45)
+    expect(entry.reps).toBeUndefined()
+  })
+
+  it('also accepts the English "time" value', () => {
+    const csv = makeCSVWithType([
+      'PPL,Push,1,1,back,Pull-up,,3,30,,60,time',
+    ])
+    const { routines } = parseProgramCSV(csv, MOCK_DB)
+    expect(routines[0].ex[0].mode).toBe('time')
+    expect(routines[0].ex[0].sec).toBe(30)
+  })
+
+  it('falls back to a 45s default when Type is "temps" but the value cell is blank', () => {
+    const csv = makeCSVWithType([
+      'PPL,Push,1,1,back,Pull-up,,3,,,60,temps',
+    ])
+    const { routines } = parseProgramCSV(csv, MOCK_DB)
+    expect(routines[0].ex[0].mode).toBe('time')
+    expect(routines[0].ex[0].sec).toBe(45)
   })
 })
 

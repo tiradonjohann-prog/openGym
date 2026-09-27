@@ -126,8 +126,13 @@ export async function downloadExcelTemplate() {
     ["  1. Remplissez l'onglet Programme ci-dessous"],                                                  // 47
     ["  2. Dans l'app : Plan => icone partage => Import programme Excel/CSV"],                          // 48
     ["  3. Selectionnez ce fichier .xlsx directement (pas besoin de convertir en CSV)"],                // 49
+    [""],                                                                                                // 50
+    ["TYPE EXERCICE (derniere colonne, tout a droite)"],                                                // 51
+    ["  reps (par defaut) : la colonne Repetitions est un nombre de repetitions"],                      // 52
+    ["  temps              : la colonne Repetitions est un temps tenu, en secondes"],                   // 53
+    ["                        (utile pour la planche/gainage, le gainage lateral, etc.)"],               // 54
   ]
-  const boldIdxs = new Set([2, 21, 31, 36, 46])
+  const boldIdxs = new Set([2, 21, 31, 36, 46, 51])
   instr.forEach((row, i) => {
     const cell = instrWs.getCell(i + 1, 1)
     cell.value = row[0]
@@ -158,6 +163,7 @@ export async function downloadExcelTemplate() {
     { header: 'Intervalles (×)',   key: 'cardioRep',  width: 14 },
     { header: 'Travail (s)',       key: 'cardioWork', width: 12 },
     { header: 'Récup. (s)',        key: 'cardioRest', width: 12 },
+    { header: 'Type Exercice',     key: 'exType',     width: 14 },
   ]
 
   // Header styling
@@ -182,21 +188,23 @@ export async function downloadExcelTemplate() {
   // Example rows — demonstrate normal, superset, and tri-set
   const C = ''  // empty cell shorthand
   const examples = [
-    // ── Upper A — pure strength with superset ──────────────────────────────
-    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 1,    bp: 'Pectoraux', ex: 'Barbell Bench Press',      tempo: '4010', sets: 4, reps: 8,  weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2A', bp: 'Épaules',   ex: 'Barbell Overhead Press',   tempo: '',     sets: 3, reps: 10, weight: C, rest: 0,   cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2B', bp: 'Triceps',   ex: 'Cable Triceps Pushdown',   tempo: '',     sets: 3, reps: 12, weight: C, rest: 60,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 3,    bp: 'Dos',       ex: 'Pull-Up',                  tempo: '3010', sets: 4, reps: 8,  weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    // ── Upper A — pure strength with superset + a timed core finisher ──────
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 1,    bp: 'Pectoraux', ex: 'Barbell Bench Press',      tempo: '4010', sets: 4, reps: 8,  weight: C, rest: 90,  exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2A', bp: 'Épaules',   ex: 'Barbell Overhead Press',   tempo: '',     sets: 3, reps: 10, weight: C, rest: 0,   exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2B', bp: 'Triceps',   ex: 'Cable Triceps Pushdown',   tempo: '',     sets: 3, reps: 12, weight: C, rest: 60,  exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 3,    bp: 'Dos',       ex: 'Pull-Up',                  tempo: '3010', sets: 4, reps: 8,  weight: C, rest: 90,  exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    // Timed hold example — reps=45 here means "45 secondes tenues", not 45 reps
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 4,    bp: 'Abdominaux',ex: 'Plank',                    tempo: '',     sets: 3, reps: 45, weight: C, rest: 60,  exType: 'temps', cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
     // ── Lower A — pure strength ────────────────────────────────────────────
-    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 1,    bp: 'Jambes',    ex: 'Barbell Squat',            tempo: '4010', sets: 4, reps: 6,  weight: C, rest: 120, cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 2,    bp: 'Jambes',    ex: 'Dumbbell Romanian Deadlift', tempo: '',   sets: 3, reps: 10, weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 3,    bp: 'Jambes',    ex: 'Standing Calf Raise',      tempo: '',     sets: 4, reps: 15, weight: C, rest: 60,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 1,    bp: 'Jambes',    ex: 'Barbell Squat',            tempo: '4010', sets: 4, reps: 6,  weight: C, rest: 120, exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 2,    bp: 'Jambes',    ex: 'Dumbbell Romanian Deadlift', tempo: '',   sets: 3, reps: 10, weight: C, rest: 90,  exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Lower A', sesNum: 2, exNum: 3,    bp: 'Jambes',    ex: 'Standing Calf Raise',      tempo: '',     sets: 4, reps: 15, weight: C, rest: 60,  exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
     // ── Full Body — hybride force + cardio ─────────────────────────────────
-    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: C, bp: C, ex: C, tempo: C, sets: C, reps: C, weight: C, rest: C, cardioType: 'warmup',   cardioSport: 'run', cardioDur: 10, cardioDist: C, cardioInt: '2 - Facile',    cardioRep: C, cardioWork: C,  cardioRest: C  },
-    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: 1,  bp: 'Pectoraux', ex: 'Barbell Bench Press',      tempo: '4010', sets: 3, reps: 10, weight: C, rest: 90,  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: 2,  bp: 'Jambes',    ex: 'Barbell Squat',            tempo: '4010', sets: 3, reps: 8,  weight: C, rest: 120, cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
-    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: C, bp: C, ex: C, tempo: C, sets: C, reps: C, weight: C, rest: C, cardioType: 'interval', cardioSport: 'run', cardioDur: C,  cardioDist: C, cardioInt: '4 - Difficile', cardioRep: 6, cardioWork: 60, cardioRest: 90 },
-    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: C, bp: C, ex: C, tempo: C, sets: C, reps: C, weight: C, rest: C, cardioType: 'cooldown', cardioSport: 'run', cardioDur: 5,  cardioDist: C, cardioInt: '1 - Tres facile',cardioRep: C, cardioWork: C,  cardioRest: C  },
+    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: C, bp: C, ex: C, tempo: C, sets: C, reps: C, weight: C, rest: C, exType: C, cardioType: 'warmup',   cardioSport: 'run', cardioDur: 10, cardioDist: C, cardioInt: '2 - Facile',    cardioRep: C, cardioWork: C,  cardioRest: C  },
+    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: 1,  bp: 'Pectoraux', ex: 'Barbell Bench Press',      tempo: '4010', sets: 3, reps: 10, weight: C, rest: 90,  exType: 'reps', cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: 2,  bp: 'Jambes',    ex: 'Barbell Squat',            tempo: '4010', sets: 3, reps: 8,  weight: C, rest: 120, exType: 'reps', cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: C, bp: C, ex: C, tempo: C, sets: C, reps: C, weight: C, rest: C, exType: C, cardioType: 'interval', cardioSport: 'run', cardioDur: C,  cardioDist: C, cardioInt: '4 - Difficile', cardioRep: 6, cardioWork: 60, cardioRest: 90 },
+    { prog: 'Mon Programme', session: 'Full Body', sesNum: 3, exNum: C, bp: C, ex: C, tempo: C, sets: C, reps: C, weight: C, rest: C, exType: C, cardioType: 'cooldown', cardioSport: 'run', cardioDur: 5,  cardioDist: C, cardioInt: '1 - Tres facile',cardioRep: C, cardioWork: C,  cardioRest: C  },
   ]
 
   examples.forEach((ex, i) => {
@@ -204,7 +212,7 @@ export async function downloadExcelTemplate() {
       ex.prog, ex.session, ex.sesNum, ex.exNum,
       ex.bp, ex.ex, ex.tempo, ex.sets, ex.reps, ex.weight, ex.rest,
       ex.cardioType, ex.cardioSport, ex.cardioDur, ex.cardioDist,
-      ex.cardioInt, ex.cardioRep, ex.cardioWork, ex.cardioRest,
+      ex.cardioInt, ex.cardioRep, ex.cardioWork, ex.cardioRest, ex.exType,
     ])
     row.height = 18
     const isSS = typeof ex.exNum === 'string' && /^[0-9]+[A-Z]$/i.test(ex.exNum)
@@ -237,6 +245,9 @@ export async function downloadExcelTemplate() {
   ws.dataValidations.add('L2:L2000', { type: 'list', allowBlank: true, formulae: ['"warmup,steady,interval,cooldown"'], showErrorMessage: false })
   ws.dataValidations.add('M2:M2000', { type: 'list', allowBlank: true, formulae: ['"run,walk,bike,swim,aqua"'], showErrorMessage: false })
   ws.dataValidations.add('P2:P2000', { type: 'list', allowBlank: true, formulae: ['"1 - Tres facile,2 - Facile,3 - Modere,4 - Difficile,5 - Maximal"'], showErrorMessage: false })
+
+  // ── 5c. Data validation: Type Exercice (T) — reps (par defaut) ou temps ─
+  ws.dataValidations.add('T2:T2000', { type: 'list', allowBlank: true, formulae: ['"reps,temps"'], showErrorMessage: false })
 
   // ── 6. Data validation: Exercise (F2:F2000) — cascading via VLOOKUP ──
   // Helper column (far right of Lists) mapping French label -> range name, used by

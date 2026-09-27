@@ -25,6 +25,7 @@ describe('excelTemplate example data availability', () => {
     { bp: 'LEGS', ex: 'Barbell Squat' },
     { bp: 'LEGS', ex: 'Dumbbell Romanian Deadlift' },
     { bp: 'LEGS', ex: 'Standing Calf Raise' },
+    { bp: 'ABS', ex: 'Plank' },
   ]
 
   it.each(usedExamples)('example exercise "$ex" exists under body part $bp', ({ bp, ex }) => {
