@@ -1460,6 +1460,10 @@ input.num.imc-input{
   .narrow{max-width:640px;margin:0 auto}
   .tiles{grid-template-columns:repeat(4,1fr)}
   .cols .tiles{grid-template-columns:1fr 1fr}
+  /* .center sheets stay a narrow 340px dialog on desktop (below) — 4 columns of
+     stat tiles (e.g. FinishSummary's Duration/Volume/Sets/PRs) don't fit that
+     width and overflow it. Scope back to the base 2-column layout. */
+  .center .tiles{grid-template-columns:1fr 1fr}
   #tabbar{
     left:50%;right:auto;bottom:16px;transform:translateX(-50%);width:520px;
     border:var(--hair) solid var(--sep-op);border-radius:var(--r-xl);

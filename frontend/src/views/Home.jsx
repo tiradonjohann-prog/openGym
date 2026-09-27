@@ -248,9 +248,12 @@ export default function Home() {
 }
 
 // ── Mockup-style section header: title + a small right-aligned action ──
+// Matches h4.sec's established 22px/8px rhythm (index.css) — this component
+// previously had no top margin and only 2px below, reading as glued to the
+// card above and the one below it.
 function SectionHead({ title, action, onAction }) {
   return (
-    <div className="row between" style={{ marginBottom: 2 }}>
+    <div className="row between" style={{ marginTop: 22, marginBottom: 8 }}>
       <h3 className="font-display" style={{ margin: 0, fontSize: 14, fontWeight: 700, letterSpacing: '.002em' }}>{title}</h3>
       {action && (
         <button
