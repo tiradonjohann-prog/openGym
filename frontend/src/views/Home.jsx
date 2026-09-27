@@ -579,8 +579,12 @@ function ProgrammeHome({ S, user, nav }) {
       <SmartNudge S={S} />
       <LastWorkoutCard S={S} />
 
-      {/* compact nutrition widget */}
-      <NutriWidget S={S} nav={nav} />
+      {(S.nutrition?.targetKcal) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          <SectionHead title={t('Nutrition')} action={t('Ajouter')} onAction={() => nav('/nutrition')} />
+          <NutriWidget S={S} nav={nav} />
+        </div>
+      )}
 
       {/* Quick-log buttons: poids corporel + mensurations */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
