@@ -16,6 +16,7 @@ import { Button, SelectRow, Switch } from '../components/ui.jsx'
 import { POLICIES_FOR, POLICY_NAME, POLICY_DESC } from '../lib/progression.js'
 import BodyMap from '../components/BodyMap.jsx'
 import { loadOfRoutine, rankOf, MUSCLE_NAME } from '../lib/muscles.js'
+import { activeProgramme } from '../lib/programme.js'
 
 /* ─── block config sheet ─── */
 function IntensityPicker({ value, onChange }) {
@@ -289,6 +290,8 @@ export default function RoutineEdit() {
   const S = useStore(s => s.S)
   const update = useStore(s => s.update)
   const r = S.routines.find(x => x.id === id)
+  const linkedProgramme = activeProgramme(S)
+  const inActiveProgramme = !!(linkedProgramme && linkedProgramme.routineIds.includes(id))
   const [initSnap] = useState(() => r ? JSON.stringify(r) : null)
   const [showNameError, setShowNameError] = useState(false)
   useEffect(() => { if (!r) nav('/plan') }, [!!r])
@@ -417,6 +420,19 @@ export default function RoutineEdit() {
     {showNameError && isNew && (
       <div style={{ color: 'var(--red)', fontSize: 12, margin: '4px 2px 12px', padding: '7px 10px', background: 'rgba(220,38,38,0.08)', borderRadius: 8, lineHeight: 1.5 }}>
         {t('Donnez un nom à cette séance avant de sauvegarder.')}
+      </div>
+    )}
+    {inActiveProgramme && (
+      <div style={{
+        display: 'flex', alignItems: 'flex-start', gap: 8, margin: '0 2px 14px',
+        padding: '10px 12px', borderRadius: 10,
+        background: 'color-mix(in srgb,var(--acc) 8%,var(--surface-2))',
+        border: '1px solid color-mix(in srgb,var(--acc) 22%,transparent)',
+      }}>
+        <Icon name="info" style={{ fontSize: 15, color: 'var(--acc)', flexShrink: 0, marginTop: 1 }} />
+        <div style={{ fontSize: 12, color: 'var(--label-2)', lineHeight: 1.5 }}>
+          {t('Cette séance fait partie du programme actif « {0} ». Toute modification s\'appliquera à ses prochaines occurrences dans le programme.', linkedProgramme.name)}
+        </div>
       </div>
     )}
 
