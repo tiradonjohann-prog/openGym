@@ -6,7 +6,7 @@ import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, bwTrend, set
 import { calcMacros } from '../lib/macros.js'
 import { fmtNum, fmtDate, fmtDur, fmtVol, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
-import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, loadStarterPlan, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, resumeWorkout } from '../sheets.jsx'
+import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, bwDeltaColor, cardioLogSheet, workoutDetailSheet, measurementsSheet, startFlowForProgramme, confirmStartSheet, resumeWorkout } from '../sheets.jsx'
 import { isCardioSport } from '../lib/sports.js'
 import { activeProgramme, nextSession, sessionStates, workoutForProgSession } from '../lib/programme.js'
 import { dayTotals } from '../lib/foodSearch.js'
@@ -24,7 +24,10 @@ function NutriWidget({ S, nav, withHeader }) {
   const target = S.nutrition?.targetKcal
   const log = S.nutritionLog || {}
   const totals = dayTotals(log, todayISO())
-  if (!target || totals.kcal === 0) return null
+  // Shown as long as a target is configured, even at 0 kcal logged today —
+  // an empty day is still useful information ("0 / 2200"), not a reason to
+  // hide the whole card.
+  if (!target) return null
   const pct = Math.min(1, totals.kcal / target)
   const remaining = target - totals.kcal
   const over = remaining < 0
@@ -377,20 +380,35 @@ function ProgrammeWeekCarousel({ S, prog }) {
                       }}
                       onClick={() => tileClick(routine, wk, i, state)}
                     >
-                      {hasImg ? (
+                      {hasImg && (
                         <img src={routine.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 8, boxSizing: 'border-box' }} />
-                      ) : (
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon name={routine ? glyphOf(routine.emoji) : 'dumbbell'} style={{ fontSize: 30, color, opacity: .45 }} />
-                        </div>
                       )}
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 45%,rgba(0,0,0,.65) 100%)', pointerEvents: 'none' }} />
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 9px' }}>
-                        <div className="capitalize" style={{ fontWeight: 700, fontSize: 12, lineHeight: 1.25, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 4px rgba(0,0,0,.5)' }}>
-                          {routine ? routine.name : t('Séance')}
+                      {hasImg ? (
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 9px' }}>
+                          <div className="capitalize" style={{ fontWeight: 700, fontSize: 12, lineHeight: 1.25, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 4px rgba(0,0,0,.5)' }}>
+                            {routine ? routine.name : t('Séance')}
+                          </div>
+                          {state === 'next' && <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--yellow)', marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,.5)' }}>{t('Prochaine')}</div>}
                         </div>
-                        {state === 'next' && <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--yellow)', marginTop: 2, textShadow: '0 1px 3px rgba(0,0,0,.5)' }}>{t('Prochaine')}</div>}
-                      </div>
+                      ) : (
+                        /* No cover image: small icon up top, name vertically
+                           centered and large below it — fills the tile
+                           instead of one thin elided line at the bottom. */
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '8px 7px' }}>
+                          <Icon name={routine ? glyphOf(routine.emoji) : 'dumbbell'} style={{ fontSize: 15, color, opacity: .5, alignSelf: 'center' }} />
+                          <div style={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: 0 }}>
+                            <div className="capitalize font-display" style={{
+                              fontWeight: 700, fontSize: 13, lineHeight: 1.15, color: '#fff', overflow: 'hidden',
+                              display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+                              textShadow: '0 1px 4px rgba(0,0,0,.5)',
+                            }}>
+                              {routine ? routine.name : t('Séance')}
+                            </div>
+                          </div>
+                          {state === 'next' && <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--yellow)', textShadow: '0 1px 3px rgba(0,0,0,.5)' }}>{t('Prochaine')}</div>}
+                        </div>
+                      )}
                       {state === 'done' && (
                         <div style={{ position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: '50%', background: 'var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <Icon name="check" style={{ fontSize: 11, color: '#06110E' }} />
@@ -771,9 +789,8 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
           <span className="lrow-i"><Icon name="sparkles" /></span>
           <div className="big" style={{ fontSize: 22 }}>{t('Welcome!')}</div>
         </div>
-        <div className="muted small" style={{ marginBottom: 12 }}>{t('Créez votre planning hebdomadaire pour démarrer — ou chargez un plan Push / Pull / Legs prêt à l\'emploi.')}</div>
-        <Button variant="primary" icon="sparkles" onClick={loadStarterPlan}>{t('Load starter plan (PPL)')}</Button>
-        <div style={{ height: 8 }} /><Button onClick={() => nav('/plan')}>{t('Build my own plan')}</Button>
+        <div className="muted small" style={{ marginBottom: 12 }}>{t('Créez votre planning hebdomadaire pour démarrer.')}</div>
+        <Button variant="primary" icon="sparkles" onClick={() => nav('/plan')}>{t('Build my own plan')}</Button>
       </div>
     )}
 

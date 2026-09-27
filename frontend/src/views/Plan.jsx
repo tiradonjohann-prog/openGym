@@ -51,22 +51,40 @@ function RoutineLibraryRow({ routines, nav, onAddToProgramme, canAdd }) {
               border: `2px solid color-mix(in srgb,${color} 40%,transparent)`,
               background: hasImg ? 'var(--surface-2)' : `linear-gradient(135deg,color-mix(in srgb,${color} 22%,var(--surface-2)),var(--surface-3))`,
             }}>
-              {hasImg ? (
+              {hasImg && (
                 <img src={r.imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 3, boxSizing: 'border-box' }} />
-              ) : (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name={icon} style={{ fontSize: 34, color, opacity: .45 }} />
-                </div>
               )}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.72) 100%)', pointerEvents: 'none' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 9px' }}>
-                <div className="capitalize" style={{ fontWeight: 700, fontSize: 12.5, lineHeight: 1.25, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 4px rgba(0,0,0,.5)' }}>
-                  {r.name}
+              {hasImg ? (
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 9px' }}>
+                  <div className="capitalize" style={{ fontWeight: 700, fontSize: 12.5, lineHeight: 1.25, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 1px 4px rgba(0,0,0,.5)' }}>
+                    {r.name}
+                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,.75)', marginTop: 1, textShadow: '0 1px 3px rgba(0,0,0,.5)' }}>
+                    {routineSubtitle(r)}
+                  </div>
                 </div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.75)', marginTop: 1, textShadow: '0 1px 3px rgba(0,0,0,.5)' }}>
-                  {routineSubtitle(r)}
+              ) : (
+                /* No cover image: a small icon up top, then the name
+                   vertically centered and large in the remaining space — a
+                   short name still fills most of the tile instead of sitting
+                   as one compact line at the bottom. */
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '9px 9px' }}>
+                  <Icon name={icon} style={{ fontSize: 18, color, opacity: .5, alignSelf: 'center' }} />
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: 0 }}>
+                    <div className="capitalize font-display" style={{
+                      fontWeight: 700, fontSize: 16, lineHeight: 1.15, color: '#fff', overflow: 'hidden',
+                      display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+                      textShadow: '0 1px 4px rgba(0,0,0,.5)',
+                    }}>
+                      {r.name}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,.75)', textShadow: '0 1px 3px rgba(0,0,0,.5)' }}>
+                    {routineSubtitle(r)}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 6, marginTop: 7 }}>
               <button

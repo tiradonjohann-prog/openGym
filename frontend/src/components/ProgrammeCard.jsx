@@ -80,29 +80,59 @@ export default function ProgrammeCard({ prog }) {
         <Icon name="trash" />
       </button>
 
-      {/* Bottom info */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 10 }}>
-        <div style={{
-          fontWeight: 700, fontSize: 13, lineHeight: 1.3,
-          color: '#fff',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          letterSpacing: '-.01em',
-          textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-        }}>
-          {prog.name}
-        </div>
-        <div style={{ fontSize: 11, marginTop: 2, color: 'rgba(255,255,255,.75)', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-          {complete
-            ? t('{0} sem. — terminé', prog.totalWeeks)
-            : `S${prog.currentWeek}/${prog.totalWeeks}`
-          }{' · '}{sessionCount} {t('séances')}
-        </div>
-        {!complete && !paused && (
-          <div style={{ height: 3, background: 'rgba(255,255,255,.25)', borderRadius: 99, marginTop: 6, overflow: 'hidden' }}>
-            <div style={{ height: '100%', background: 'var(--acc)', width: (Math.min(1, progressPct) * 100) + '%', borderRadius: 99 }} />
+      {hasImg ? (
+        /* With a cover image, the name is a thin overlay strip at the bottom,
+           same as before. */
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 10 }}>
+          <div style={{
+            fontWeight: 700, fontSize: 13, lineHeight: 1.3, color: '#fff',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            letterSpacing: '-.01em', textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+          }}>
+            {prog.name}
           </div>
-        )}
-      </div>
+          <div style={{ fontSize: 11, marginTop: 2, color: 'rgba(255,255,255,.75)', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+            {complete
+              ? t('{0} sem. — terminé', prog.totalWeeks)
+              : `S${prog.currentWeek}/${prog.totalWeeks}`
+            }{' · '}{sessionCount} {t('séances')}
+          </div>
+          {!complete && !paused && (
+            <div style={{ height: 3, background: 'rgba(255,255,255,.25)', borderRadius: 99, marginTop: 6, overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'var(--acc)', width: (Math.min(1, progressPct) * 100) + '%', borderRadius: 99 }} />
+            </div>
+          )}
+        </div>
+      ) : (
+        /* No cover image: nothing else fills the tile, so the name is
+           vertically centered and set large — a short name still dominates
+           the square instead of sitting as a compact single line at the
+           bottom with the rest of the tile empty above it. Secondary info
+           (week/session count, progress) stays anchored at the bottom,
+           small, matching the image variant's proportions. */
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: 12 }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: 0 }}>
+            <div className="font-display" style={{
+              fontWeight: 700, fontSize: 22, lineHeight: 1.15, color: '#fff',
+              overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical',
+              letterSpacing: '-.015em', textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+            }}>
+              {prog.name}
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,.75)', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+            {complete
+              ? t('{0} sem. — terminé', prog.totalWeeks)
+              : `S${prog.currentWeek}/${prog.totalWeeks}`
+            }{' · '}{sessionCount} {t('séances')}
+          </div>
+          {!complete && !paused && (
+            <div style={{ height: 3, background: 'rgba(255,255,255,.25)', borderRadius: 99, marginTop: 6, overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'var(--acc)', width: (Math.min(1, progressPct) * 100) + '%', borderRadius: 99 }} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
