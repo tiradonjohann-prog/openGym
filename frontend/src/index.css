@@ -306,7 +306,7 @@ h4.sec{
 .btn.sm .icn{font-size:16px}
 .btn.xs{padding:5px 10px;width:auto;font-size:13px;border-radius:7px;gap:4px}
 
-@keyframes cta-sweep{0%{transform:translateX(-130%) skewX(-18deg)}55%,100%{transform:translateX(230%) skewX(-18deg)}}
+@keyframes cta-sweep{0%{transform:translateX(-130%) skewX(-18deg)}100%{transform:translateX(230%) skewX(-18deg)}}
 .btn.cta{
   position:relative;overflow:hidden;
   background:linear-gradient(160deg,#8FF0DF,#5FCDB6);
@@ -316,13 +316,18 @@ h4.sec{
 .btn.cta::before{
   content:'';position:absolute;top:0;left:0;width:36%;height:100%;
   background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);
-  animation:cta-sweep 4.5s ease-in-out infinite;
+  animation:cta-sweep 2.4s linear infinite;
 }
 @media(prefers-reduced-motion:reduce){.btn.cta::before{animation:none}}
 .btn.cta.orange{
   background:linear-gradient(160deg,#FFC08A,#F0863D);
   color:#2B1200;
   box-shadow:0 8px 20px -6px color-mix(in srgb,var(--orange) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.btn.cta.blue{
+  background:linear-gradient(160deg,#8FC4FF,#3D82F0);
+  color:#03122B;
+  box-shadow:0 8px 20px -6px color-mix(in srgb,var(--blue) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.5);
 }
 .btn:disabled{opacity:.32;pointer-events:none}
 
