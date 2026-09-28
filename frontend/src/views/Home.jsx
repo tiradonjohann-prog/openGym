@@ -689,7 +689,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
       </div>
     </div>
 
-    {!S.simpleMode && (() => {
+    {(() => {
       const showMeasTile = !!S.nutrition?.showMeasurements
       return (
         <div style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8 }}>
@@ -790,6 +790,27 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
           : routine ? <span className="tag acc pop">{t('Start')}</span>
           : <Icon name="plus" className="chev" />}
       </div>
+    </div>
+
+    {/* ── Ad-hoc activity CTA — positioned right under the day's workout
+         CTA, matching ProgrammeHome, instead of at the very bottom of the
+         page. ── */}
+    <div data-tuto="home-activity" style={{
+      position: 'relative', overflow: 'hidden', borderRadius: 18,
+      border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
+      background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
+      padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
+      boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
+    }}>
+      <div className="hairline" />
+      <div style={{ position: 'relative' }}>
+        <div className="font-display" style={{ fontWeight: 700, fontSize: 16 }}>{t('Activité supplémentaire')}</div>
+        <div style={{ fontSize: 11.5, color: 'var(--label-2)', marginTop: 2 }}>{t('Running, cycling, swimming…')}</div>
+      </div>
+      <button className="btn cta orange" style={{ position: 'relative' }} onClick={cardioLogSheet}>
+        <Icon name="figureRun" />
+        <span>{t('Log activity')}</span>
+      </button>
     </div>
 
     <SmartNudge S={S} />
@@ -906,29 +927,5 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
         </div>
       </div>
     )}
-
-    {/* ── Ad-hoc activity CTA — same .btn.cta shimmer family as the workout
-         start flow, orange accent + hairline texture, matching ProgrammeHome.
-         marginTop: the hero card above is custom-styled rather than .card,
-         so it contributes no bottom margin of its own — without this the
-         two touch directly. ── */}
-    <div data-tuto="home-activity" style={{
-      position: 'relative', overflow: 'hidden', borderRadius: 18,
-      border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
-      background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
-      padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
-      boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
-      marginTop: 14,
-    }}>
-      <div className="hairline" />
-      <div style={{ position: 'relative' }}>
-        <div className="font-display" style={{ fontWeight: 700, fontSize: 16 }}>{t('Activité supplémentaire')}</div>
-        <div style={{ fontSize: 11.5, color: 'var(--label-2)', marginTop: 2 }}>{t('Running, cycling, swimming…')}</div>
-      </div>
-      <button className="btn cta orange" style={{ position: 'relative' }} onClick={cardioLogSheet}>
-        <Icon name="figureRun" />
-        <span>{t('Log activity')}</span>
-      </button>
-    </div>
   </div>
 }
