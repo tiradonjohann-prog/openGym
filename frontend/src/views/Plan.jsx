@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { DAYN, uid, isoOf } from '../lib/format.js'
+import { DAYN, uid } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { SPORTS, isCardioSport, defaultCardioBlocks, routineSubtitle } from '../lib/sports.js'
 import { isProgrammeComplete, completedWeekCount, activeProgramme, addRoutineToProgramme } from '../lib/programme.js'
-import { dayAssignSheet, loadStarterPlan, planToolsSheet, programmeCreateSheet, programmeEditSheet, deleteProgramme } from '../sheets.jsx'
+import { loadStarterPlan, planToolsSheet, programmeCreateSheet, programmeEditSheet, deleteProgramme } from '../sheets.jsx'
 import { pickImage, isUserImage } from '../lib/imageUtils.js'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
@@ -14,7 +14,6 @@ import { PLAN_STEPS } from '../lib/tutorials.js'
 import { glyphOf, DEFAULT_GLYPH } from '../lib/glyphs.js'
 import ProgrammeCard from '../components/ProgrammeCard.jsx'
 
-const DAYN_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 
 function SportPicker({ close, onCreate }) {
   return <>
@@ -134,12 +133,6 @@ export default function Plan() {
     ))
   }
 
-  const now = new Date()
-  const todayDow = now.getDay()
-  const mondayOffset = todayDow === 0 ? -6 : 1 - todayDow
-  const monday = new Date(now)
-  monday.setDate(monday.getDate() + mondayOffset)
-
   return <>
     <div className="hdr">
       <div><h1 className="font-display">{t('Plan')}</h1><div className="sub">{t('Votre planning hebdomadaire')}</div></div>
@@ -175,92 +168,6 @@ export default function Plan() {
         </div>
       )}
     </div>
-
-    {/* ── Week schedule grid (only shown without an active programme — a programme's
-         own weekly rotation replaces the need for day-by-day assignment) ── */}
-    {!hasActiveProgramme && (
-    <div data-tuto="plan-week" style={{ marginBottom: 24 }}>
-      <h4 className="sec" style={{ margin: '0 0 4px' }}>{t('Week schedule')}</h4>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
-        {[1, 2, 3, 4, 5, 6, 0].map(d => {
-          const r = S.routines.find(x => x.id === S.week[d])
-          const isCardio = r && isCardioSport(r.sport)
-          const color = r ? (isCardio ? 'var(--teal)' : 'var(--acc)') : null
-          const isToday = d === todayDow
-          const offset = d === 0 ? 6 : d - 1
-          const cellDate = new Date(monday)
-          cellDate.setDate(monday.getDate() + offset)
-          const isoDate = isoOf(cellDate)
-          const doneWorkouts = (S.workouts || []).filter(w => w.d === isoDate)
-          return (
-            <button key={d} onClick={() => dayAssignSheet(d)} style={{
-              background: color
-                ? `linear-gradient(160deg,color-mix(in srgb,${color} 18%,var(--surface-2)),color-mix(in srgb,${color} 8%,var(--surface-2)))`
-                : 'var(--surface-2)',
-              border: isToday
-                ? `2px solid ${color || 'var(--acc)'}44`
-                : `1px solid ${color ? `color-mix(in srgb,${color} 18%,transparent)` : 'var(--sep)'}`,
-              borderRadius: 12,
-              padding: '10px 4px 8px',
-              cursor: 'pointer',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-              position: 'relative',
-            }}>
-              {isToday && (
-                <div style={{
-                  position: 'absolute', top: 4, right: 4,
-                  width: 5, height: 5, borderRadius: '50%',
-                  background: color || 'var(--acc)',
-                }} />
-              )}
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: color || 'var(--label-4)', textTransform: 'uppercase' }}>
-                {DAYN_SHORT[d]}
-              </span>
-              {r ? (
-                <div style={{
-                  width: 28, height: 28, borderRadius: 8,
-                  background: color ? `color-mix(in srgb,${color} 22%,transparent)` : 'var(--surface-3)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: color || 'var(--label-2)', fontSize: 14,
-                }}>
-                  <Icon name={isCardio ? (SPORTS[r.sport]?.icon || 'bolt') : glyphOf(r.emoji)} />
-                </div>
-              ) : (
-                <div style={{
-                  width: 28, height: 28, borderRadius: 8,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--label-4)', fontSize: 14,
-                }}>
-                  <Icon name="moon" />
-                </div>
-              )}
-              <span style={{ fontSize: 9, color: color || 'var(--label-4)', fontWeight: r ? 600 : 400, textAlign: 'center', lineHeight: 1.2, letterSpacing: '.01em', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 2px' }}>
-                {r ? r.name : t('Rest')}
-              </span>
-              {doneWorkouts.length > 0 && (
-                <>
-                  {doneWorkouts.slice(0, 2).map(w => (
-                    <span key={w.id} style={{
-                      fontSize: 8, color: 'var(--teal)', fontWeight: 700,
-                      textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      padding: '1px 3px', maxWidth: '100%',
-                      background: 'color-mix(in srgb,var(--teal) 14%,transparent)',
-                      borderRadius: 3, lineHeight: 1.3,
-                    }}>
-                      ✓ {w.name}
-                    </span>
-                  ))}
-                  {doneWorkouts.length > 2 && (
-                    <span style={{ fontSize: 8, color: 'var(--teal)', fontWeight: 700, textAlign: 'center' }}>+{doneWorkouts.length - 2}</span>
-                  )}
-                </>
-              )}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-    )}
 
     {/* ── Routines list ── */}
     <div data-tuto="plan-routines">
