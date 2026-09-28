@@ -1164,19 +1164,21 @@ input.num::-webkit-inner-spin-button{display:none}
 .nutri-tip .tip-close{flex-shrink:0;opacity:.5;padding:2px}
 .nutri-tip .tip-close:hover{opacity:1}
 
-/* Nutrition sub-navigation */
+/* Nutrition sub-navigation — filled pills, matching the redesign's tab
+   pattern, instead of the old underline-tab style */
 .nut-nav{
-  display:flex;gap:0;padding:0 16px 16px;
+  display:flex;gap:6px;padding:0 16px 16px;
   overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
 }
 .nut-nav::-webkit-scrollbar{display:none}
 .nut-nav button{
-  flex:0 0 auto;padding:7px 10px;font-size:14px;font-weight:500;white-space:nowrap;
-  color:var(--label-2);border-bottom:2px solid var(--sep);
-  transition:color var(--fast),border-color var(--fast);
+  flex:0 0 auto;padding:7px 12px;font-size:12.5px;font-weight:600;white-space:nowrap;
+  color:var(--label-3);background:var(--glass-fill);border:1px solid var(--glass-border);
+  border-radius:999px;
+  transition:color var(--fast),background var(--fast),border-color var(--fast);
 }
-.nut-nav button.on{color:var(--acc);border-color:var(--acc)}
-@media(hover:hover){.nut-nav button:not(.on):hover{color:var(--label);border-color:var(--label-3)}}
+.nut-nav button.on{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
+@media(hover:hover){.nut-nav button:not(.on):hover{color:var(--label)}}
 
 /* Food log list */
 .meal-slot{margin-bottom:4px}
@@ -1241,6 +1243,7 @@ input.num.imc-input{
   animation:cardIn var(--med) var(--ease) both;
 }
 .balance-total .bt-delta{
+  font-family:var(--font-display);
   font-size:42px;font-weight:700;letter-spacing:-.03em;line-height:1;
   font-variant-numeric:tabular-nums;
   animation:badgePop 360ms var(--ease) both;

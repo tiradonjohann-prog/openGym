@@ -556,7 +556,7 @@ export default function FoodsView() {
           onClick={openCreateFood}
           style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
-            background: 'color-mix(in srgb,var(--teal) 12%,var(--surface))',
+            background: 'color-mix(in srgb,var(--teal) 12%,var(--glass-fill))',
             border: '1.5px solid color-mix(in srgb,var(--teal) 28%,transparent)',
             borderRadius: 12, cursor: 'pointer', color: 'var(--teal)',
           }}
@@ -568,7 +568,7 @@ export default function FoodsView() {
           onClick={openCreateDish}
           style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
-            background: 'color-mix(in srgb,var(--purple) 12%,var(--surface))',
+            background: 'color-mix(in srgb,var(--purple) 12%,var(--glass-fill))',
             border: '1.5px solid color-mix(in srgb,var(--purple) 28%,transparent)',
             borderRadius: 12, cursor: 'pointer', color: 'var(--purple)',
           }}

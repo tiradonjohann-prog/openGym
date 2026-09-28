@@ -248,9 +248,9 @@ export default function DayView() {
     <div style={{ paddingBottom: 24 }}>
 
       {/* ── Date navigation ── */}
-      <div style={{
+      <div className="card" style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 12px 6px', gap: 8,
+        margin: '10px 16px 6px', padding: '6px 8px', gap: 8,
       }}>
         <button
           className="iconbtn"
@@ -333,7 +333,7 @@ export default function DayView() {
 
       {/* ── Macro bars ── */}
       {macros?.protG ? (
-        <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="card" style={{ margin: '0 16px', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <NutriBar label={t('Protein')}       value={totals.prot}  max={macros.protG}       color="var(--nut-prot)"  unit="g" important />
           <NutriBar label={t('Carbohydrates')} value={totals.carbs} max={macros.carbsG}      color="var(--nut-carbs)" unit="g" />
           <NutriBar label={t('Fat')}           value={totals.fat}   max={macros.fatG}         color="var(--nut-fat)"   unit="g" />

@@ -29,7 +29,7 @@ export default function Nutrition() {
         <button className="iconbtn" onClick={() => window.history.state?.idx > 0 ? nav(-1) : nav('/home', { replace: true })} aria-label={t('Home')}>
           <Icon name="chevronLeft" />
         </button>
-        <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Nutrition')}</h1></div>
+        <div style={{ flex: 1, marginLeft: 10 }}><h1 className="font-display">{t('Nutrition')}</h1></div>
         <TutorialButton steps={NUTRITION_STEPS} />
         <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
       </div>

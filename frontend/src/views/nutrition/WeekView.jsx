@@ -113,10 +113,11 @@ export default function WeekView() {
         const statCard = (color, value, label) => (
           <div style={{
             flex: 1, padding: '12px 10px 10px', borderRadius: 14, textAlign: 'center',
-            background: `linear-gradient(135deg,color-mix(in srgb,${color} 15%,var(--surface)),color-mix(in srgb,${color} 5%,var(--surface)))`,
+            background: `linear-gradient(135deg,color-mix(in srgb,${color} 15%,var(--glass-fill)),color-mix(in srgb,${color} 5%,var(--glass-fill)))`,
             border: `1px solid color-mix(in srgb,${color} 22%,transparent)`,
+            boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
           }}>
-            <div style={{ fontWeight: 700, fontSize: 22, lineHeight: 1, color, letterSpacing: '-.02em', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+            <div className="font-display" style={{ fontWeight: 700, fontSize: 22, lineHeight: 1, color, letterSpacing: '-.02em', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
             <div style={{ fontSize: 11, color: 'var(--label-3)', marginTop: 4, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.04em' }}>{label}</div>
           </div>
         )
