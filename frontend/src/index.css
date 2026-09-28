@@ -815,6 +815,7 @@ input.num::-webkit-inner-spin-button{display:none}
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   width:min(84vw,300px);background:var(--bg-el);border-radius:var(--r-lg);padding:20px;
   box-shadow:0 20px 60px -12px rgba(0,0,0,.5);
+  max-height:min(85vh,640px);overflow-y:auto;-webkit-overflow-scrolling:touch;
   animation:pop .28s var(--ease);
 }
 :root[data-theme="light"] .center{background:#fff}
