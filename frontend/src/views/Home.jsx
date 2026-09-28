@@ -614,17 +614,18 @@ function ProgrammeHome({ S, user, nav }) {
 
       {/* Ad-hoc activity CTA — same .btn.cta shimmer family as "Démarrer la séance", in
           the orange accent so the two calls-to-action read as visually distinct, plus
-          the mockup's hairline texture on the surrounding card. marginTop compensates
-          for this card (and "Prochaine séance"'s hero cards above it) being custom-
-          styled rather than .card, so neither side contributes the usual 12px
-          bottom margin — without it the two touch directly. */}
+          the mockup's hairline texture on the surrounding card. marginTop/marginBottom
+          compensate for this card (and its neighbours above/below) being custom-styled
+          rather than .card, so none of them contributes the usual 12px margin on their
+          own — without this, whatever follows (NutriWidget when no target is set,
+          or a SmartNudge reminder banner) sits glued directly underneath. */}
       <div style={{
         position: 'relative', overflow: 'hidden', borderRadius: 18,
         border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
         background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
         padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
         boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
-        marginTop: 14,
+        marginTop: 14, marginBottom: 14,
       }}>
         <div className="hairline" />
         <div style={{ position: 'relative' }}>
@@ -794,13 +795,16 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
 
     {/* ── Ad-hoc activity CTA — positioned right under the day's workout
          CTA, matching ProgrammeHome, instead of at the very bottom of the
-         page. ── */}
+         page. marginBottom compensates for this card being custom-styled
+         rather than .card, so it doesn't sit glued to whatever follows
+         (SmartNudge's reminder banners in particular). ── */}
     <div data-tuto="home-activity" style={{
       position: 'relative', overflow: 'hidden', borderRadius: 18,
       border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
       background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
       padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
       boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
+      marginBottom: 14,
     }}>
       <div className="hairline" />
       <div style={{ position: 'relative' }}>
