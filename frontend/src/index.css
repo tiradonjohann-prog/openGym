@@ -1268,8 +1268,9 @@ input.num.imc-input{
 .stat-card{
   display:flex;flex-direction:column;align-items:flex-start;gap:4px;
   padding:14px 14px 12px;border-radius:var(--r-lg);
-  background:linear-gradient(135deg,color-mix(in srgb,var(--card-color,var(--acc)) 17%,var(--surface)),color-mix(in srgb,var(--card-color,var(--acc)) 6%,var(--surface)));
+  background:linear-gradient(135deg,color-mix(in srgb,var(--card-color,var(--acc)) 17%,var(--glass-fill)),color-mix(in srgb,var(--card-color,var(--acc)) 6%,var(--glass-fill)));
   border:1px solid color-mix(in srgb,var(--card-color,var(--acc)) 22%,transparent);
+  box-shadow:inset 0 1px 0 var(--glass-highlight);
   transition:transform var(--fast),opacity var(--fast);
   cursor:default;
   animation:cardIn var(--med) var(--ease) both;
@@ -1285,6 +1286,7 @@ input.num.imc-input{
   display:flex;align-items:center;
 }
 .stat-card__val{
+  font-family:var(--font-display);
   font-size:28px;font-weight:700;letter-spacing:-.04em;line-height:1;
   color:var(--card-color,var(--acc));font-variant-numeric:tabular-nums;
 }
@@ -1315,6 +1317,7 @@ input.num.imc-input{
   pointer-events:none;
 }
 .streak-badge__num{
+  font-family:var(--font-display);
   font-size:24px;font-weight:800;letter-spacing:-.05em;
   color:var(--orange);line-height:1;
 }

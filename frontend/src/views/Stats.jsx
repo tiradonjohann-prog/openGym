@@ -594,7 +594,7 @@ export default function Stats() {
   return <>
     {/* ── header ── */}
     <div className="hdr">
-      <div><h1>{t('Stats')}</h1><div className="sub">{t('Progress & history')}</div></div>
+      <div><h1 className="font-display">{t('Stats')}</h1><div className="sub">{t('Progress & history')}</div></div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <TutorialButton steps={STATS_STEPS} />
         <button className="iconbtn" onClick={() => nav('/history')} aria-label={t('History')}><Icon name="history" /></button>

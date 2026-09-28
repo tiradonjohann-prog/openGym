@@ -136,8 +136,8 @@ export default function Heatmap({ S, onDay }) {
                 background: hasWork
                   ? 'var(--acc)'
                   : isToday
-                    ? 'color-mix(in srgb, var(--acc) 18%, var(--surface-2))'
-                    : inMonth ? 'var(--surface-2)' : 'transparent',
+                    ? 'color-mix(in srgb, var(--acc) 18%, var(--glass-fill))'
+                    : inMonth ? 'var(--glass-fill)' : 'transparent',
                 border: isToday && !hasWork
                   ? '2px solid var(--acc)'
                   : hasWork ? '2px solid color-mix(in srgb, var(--acc) 70%, transparent)'
