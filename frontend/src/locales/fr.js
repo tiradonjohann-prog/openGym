@@ -1225,18 +1225,18 @@ export default {
   'Tip': 'Astuce',
   '{0} / {1}': '{0} / {1}',
 
-  // tutorial step content
-  'Your training starts here. This screen shows your programme for today and a quick overview of your progress.': 'L\'entraînement commence ici. Cet écran affiche le programme du jour et un résumé rapide de ta progression.',
-  'Weekly calendar': 'Calendrier hebdomadaire',
-  'Tap a day to see or change the planned workout. The coloured dot shows: <b>planned</b>, <b>modified</b>, or <b>done</b>.': 'Appuie sur un jour pour voir ou modifier la séance prévue. Le point coloré indique : <b>prévu</b>, <b>modifié</b> ou <b>réalisé</b>.',
-  "Today's workout": "Séance du jour",
-  "Tap here to start the session planned for today. If no routine is assigned, you can pick one or add a rest day.": "Appuie ici pour lancer la séance prévue aujourd\'hui. Si aucune routine n\'est attribuée, tu peux en choisir une ou marquer un jour de repos.",
+  // tutorial step content — home
+  'Your training starts here. This screen shows what to do today and a quick overview of your progress.': 'L\'entraînement commence ici. Cet écran affiche ce qu\'il y a à faire aujourd\'hui et un résumé rapide de ta progression.',
+  'Quick glance': 'Coup d\'œil rapide',
+  'This week\'s progress, your latest weigh-in, and — if enabled in your nutrition profile — your measurements. Tap <b>Poids</b> to log a new weigh-in in one tap.': 'La progression de la semaine, ta dernière pesée, et — si activé dans ton profil nutrition — tes mensurations. Appuie sur <b>Poids</b> pour noter une pesée en un geste.',
+  'Next session': 'Prochaine séance',
+  'Your programme\'s next planned session. Tap <b>Démarrer</b> to start it, or <b>Voir les semaines</b> to browse other weeks.': 'La prochaine séance prévue dans ton programme. Appuie sur <b>Démarrer</b> pour la lancer, ou <b>Voir les semaines</b> pour parcourir les autres semaines.',
+  'Weekly plan & today': 'Plan de la semaine & aujourd\'hui',
+  'Assign a routine to each day of the week, then tap <b>Today</b> to start the session planned for today. Leave a day empty for rest.': 'Attribue une routine à chaque jour de la semaine, puis appuie sur <b>Aujourd\'hui</b> pour lancer la séance du jour. Laisse un jour vide pour le repos.',
   'Body weight': 'Poids corporel',
-  'Log your weight daily — ideally fasted and after using the toilet for consistent readings. Tap the graph to see your full history.': 'Note ton poids quotidiennement — idéalement à jeun et après être allé(e) aux toilettes. Appuie sur le graphique pour voir ton historique complet.',
-  'Quick log': 'Saisie rapide',
-  'Log your body weight or body measurements in one tap. The more regularly you track, the more accurate your progress data becomes.': 'Enregistre ton poids ou tes mensurations en un seul appui. Plus tu te pèses régulièrement, plus tes données de progression sont fiables.',
+  'A closer look at your weight curve and progress toward your goal. Tap to open the full history.': 'Un aperçu détaillé de ta courbe de poids et de ta progression vers ton objectif. Appuie pour ouvrir l\'historique complet.',
   'Streak': 'Série',
-  "Your consecutive training weeks. The arc shows how much of this week's sessions you've completed vs. planned.": "Tes semaines d\'entraînement consécutives. L\'arc montre la progression de cette semaine par rapport aux séances prévues.",
+  "Your consecutive training weeks. The bars show how much of this week's sessions you've completed vs. planned.": "Tes semaines d\'entraînement consécutives. Les barres montrent la part des séances réalisées cette semaine par rapport aux séances prévues.",
   'Log activity': 'Saisir une activité',
   'Log a cardio session: running, cycling, rowing… The app calculates estimated calorie burn from your profile.': 'Enregistre une session cardio : course, vélo, aviron… L\'app calcule les calories brûlées estimées à partir de ton profil.',
 
@@ -1252,19 +1252,19 @@ export default {
   'Personal records': 'Records personnels',
   "Your all-time PRs per exercise. A trophy appears on your home screen every time you break one during a workout.": "Tes records de tous les temps par exercice. Un trophée apparaît à l\'accueil à chaque fois que tu en bats un pendant une séance.",
   'Measurements': 'Mensurations',
-  'Track changes in chest, waist, arm, thigh and calf over time. Each zone has its own colour for easy reading.': 'Suis l\'évolution de la poitrine, taille, bras, cuisse et mollet dans le temps. Chaque zone a sa propre couleur pour une lecture facile.',
+  'Track changes in chest, waist, arm, thigh and calf over time. Enable <b>Suivre les mensurations</b> in your nutrition profile to see this section.': 'Suis l\'évolution de la poitrine, taille, bras, cuisse et mollet dans le temps. Active <b>Suivre les mensurations</b> dans ton profil nutrition pour voir cette section.',
 
   // workout tutorial
   'Active workout': 'Séance en cours',
-  "You are now in a live session. The timer starts automatically. Finish at your own pace — the session is saved when you tap <b>Finish</b>.": "Tu es dans une session en direct. Le chrono démarre automatiquement. Termine à ton rythme — la séance est enregistrée quand tu appuies sur <b>Terminer</b>.",
+  "You are now in a live session. The timer starts automatically. Finish at your own pace — the session is saved when you tap the checkmark.": "Tu es dans une session en direct. Le chrono démarre automatiquement. Termine à ton rythme — la séance est enregistrée quand tu appuies sur la coche.",
   'Exercises': 'Exercices',
-  "Each card is one exercise from your routine. Expand it to log sets. The last session's values are pre-filled to save time.": "Chaque carte correspond à un exercice de ta routine. Développe-la pour saisir les séries. Les valeurs de la dernière séance sont pré-remplies.",
+  "Each chip is one exercise in this session — supersets share a group (2A, 2B…). Tap any chip to jump straight to it.": "Chaque pastille correspond à un exercice de la séance — les supersets partagent un groupe (2A, 2B…). Appuie sur une pastille pour y aller directement.",
   'Logging a set': 'Saisir une série',
-  'Enter the weight and reps. Tap <b>✓</b> to validate the set. A new row appears automatically so you can log the next set without extra taps.': 'Entre le poids et les reps. Appuie sur <b>✓</b> pour valider. Une nouvelle ligne apparaît automatiquement pour enchaîner.',
+  'Enter the weight and reps (pre-filled from your last session), then tap <b>✓</b> to validate the set.': 'Entre le poids et les reps (pré-remplis depuis ta dernière séance), puis appuie sur <b>✓</b> pour valider la série.',
   'Rest timer': 'Chrono de repos',
-  "The timer starts after each completed set. You can adjust the duration or skip it. A vibration alerts you when time is up.": "Le chrono démarre après chaque série validée. Tu peux ajuster la durée ou le passer. Une vibration te prévient quand le temps est écoulé.",
+  "Starts automatically after a completed set. Adjust the duration or skip it — a vibration alerts you when time is up.": "Démarre automatiquement après une série validée. Ajuste la durée ou passe-le — une vibration te prévient quand le temps est écoulé.",
   'Finishing the session': 'Terminer la séance',
-  'Tap <b>Finish</b> to save the workout. The app calculates total volume, PRs, and updates your stats automatically.': 'Appuie sur <b>Terminer</b> pour enregistrer la séance. L\'app calcule le volume total, les PRs et met à jour tes stats automatiquement.',
+  'Tap here to save the workout. The app calculates total volume, PRs, and updates your stats automatically.': 'Appuie ici pour enregistrer la séance. L\'app calcule le volume total, les PRs et met à jour tes stats automatiquement.',
 
   // body weight tutorial
   'Current stats': 'Stats actuelles',
@@ -1274,7 +1274,7 @@ export default {
   'Goal tracking': 'Suivi d\'objectif',
   'Set a target weight. The app estimates how many days to reach it based on your current trend or calorie deficit — whichever gives a realistic answer.': 'Définis un poids cible. L\'app estime le nombre de jours pour l\'atteindre selon ta tendance ou ton déficit calorique.',
   'History & measurements': 'Historique & mensurations',
-  'Tap any past entry to delete it. Below is a summary of your latest body measurements — tap to add a new set.': 'Appuie sur une entrée passée pour la supprimer. En dessous, un résumé de tes dernières mensurations — appuie pour en ajouter un nouveau relevé.',
+  'Tap any past entry to delete it. Below, a summary of your latest body measurements — tap <b>Log</b> to add a new set.': 'Appuie sur une entrée passée pour la supprimer. En dessous, un résumé de tes dernières mensurations — appuie sur <b>Enregistrer</b> pour en ajouter un nouveau relevé.',
 
   // settings tutorial
   'Profile': 'Profil',
@@ -1287,16 +1287,18 @@ export default {
   'Export all your data as JSON. Import it on another device to restore everything — workouts, weight history, routines, and settings.': 'Exporte toutes tes données en JSON. Importe-les sur un autre appareil pour tout restaurer — séances, poids, routines et paramètres.',
 
   // plan tutorial
-  'Weekly plan': 'Plan hebdomadaire',
-  'Assign a routine to each day of the week. Leave a day empty for rest. You can reassign any day without losing logged workouts.': 'Attribue une routine à chaque jour de la semaine. Laisse un jour vide pour le repos. Tu peux modifier n\'importe quel jour sans perdre les séances enregistrées.',
+  'Create a programme': 'Créer un programme',
+  'Build a multi-week training plan from scratch — pick your routines, set the number of weeks, and let the app rotate sessions automatically.': 'Construis un plan d\'entraînement sur plusieurs semaines — choisis tes routines, le nombre de semaines, et laisse l\'app faire tourner les séances automatiquement.',
+  'Your programmes': 'Tes programmes',
+  'Every programme you\'ve created, active or paused. Tap one to open it, track progress week by week, or resume where you left off.': 'Tous les programmes que tu as créés, actifs ou en pause. Appuie sur l\'un d\'eux pour l\'ouvrir, suivre sa progression semaine par semaine, ou reprendre où tu en étais.',
   'Your routines': 'Tes routines',
-  'Each routine is a named workout template with a fixed list of exercises. Tap to edit exercises, order, and set targets.': 'Chaque routine est un modèle de séance avec une liste fixe d\'exercices. Appuie pour modifier les exercices, l\'ordre et les objectifs.',
-  'Training programmes': 'Programmes d\'entraînement',
-  "A programme is a multi-week plan that rotates routines automatically. Great for progressive overload phases like PPL, 5/3/1, or hypertrophy blocks.": "Un programme est un plan sur plusieurs semaines qui fait tourner les routines automatiquement. Idéal pour les phases de surcharge progressive : PPL, 5/3/1, blocs d\'hypertrophie.",
+  'Each routine is a named workout template with a fixed list of exercises. Tap to edit exercises, order, and set targets. Add routines to a programme with <b>+ Programme</b>.': 'Chaque routine est un modèle de séance avec une liste fixe d\'exercices. Appuie pour modifier les exercices, l\'ordre et les objectifs. Ajoute une routine à un programme avec <b>+ Programme</b>.',
 
   // nutrition tutorial
+  'Nutrition sections': 'Sections nutrition',
+  'Switch between today\'s log, the weekly view, your calorie balance, the food database, and your profile.': 'Bascule entre le journal du jour, la vue hebdomadaire, ton bilan calorique, la base d\'aliments et ton profil.',
   'Nutrition profile': 'Profil nutritionnel',
-  'Enter your stats to calculate your TDEE (total daily energy expenditure). The app uses this to set your calorie target based on your goal.': 'Entre tes données pour calculer ta TDEE (dépense énergétique totale journalière). L\'app s\'en sert pour définir ton objectif calorique.',
+  'Enter your stats to calculate your TDEE (total daily energy expenditure) and set your calorie target based on your goal. Enable <b>Suivre les mensurations</b> here to track measurements in Home and Stats.': 'Entre tes données pour calculer ta TDEE (dépense énergétique totale journalière) et définir ton objectif calorique. Active <b>Suivre les mensurations</b> ici pour suivre tes mensurations dans Accueil et Stats.',
   "Today's intake": 'Apports du jour',
   'Search for foods or enter them manually. Each entry shows calories, protein, carbs, and fat. The ring fills as you approach your daily target.': 'Recherche des aliments ou saisis-les manuellement. Chaque entrée affiche calories, protéines, glucides et lipides. L\'anneau se remplit au fur et à mesure.',
   'Weekly view': 'Vue hebdomadaire',

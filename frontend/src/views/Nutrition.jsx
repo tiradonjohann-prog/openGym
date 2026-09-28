@@ -9,7 +9,7 @@ import DayBalance  from './nutrition/DayBalance.jsx'
 import CardioSection from './nutrition/CardioEntry.jsx'
 import FoodsView  from './nutrition/FoodsView.jsx'
 import { TutorialButton } from '../components/TutorialOverlay.jsx'
-import { NUTRITION_STEPS } from '../lib/tutorials.js'
+import { nutritionSteps } from '../lib/tutorials.js'
 
 const TABS = [
   { key: 'today',   label: 'Today' },
@@ -30,12 +30,12 @@ export default function Nutrition() {
           <Icon name="chevronLeft" />
         </button>
         <div style={{ flex: 1, marginLeft: 10 }}><h1 className="font-display">{t('Nutrition')}</h1></div>
-        <TutorialButton steps={NUTRITION_STEPS} />
+        <TutorialButton steps={nutritionSteps(setTab)} />
         <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
       </div>
 
       {/* Sub-navigation */}
-      <nav className="nut-nav" aria-label={t('Nutrition sections')}>
+      <nav className="nut-nav" data-tuto="nutri-nav" aria-label={t('Nutrition sections')}>
         {TABS.map(({ key, label }) => (
           <button
             key={key}
@@ -49,7 +49,7 @@ export default function Nutrition() {
       </nav>
 
       {/* Tab content */}
-      <div key={tab} style={{ animation: 'viewfade var(--med) var(--ease) both' }}>
+      <div key={tab} data-tuto={'nutri-' + tab} style={{ animation: 'viewfade var(--med) var(--ease) both' }}>
         {tab === 'today'   && <><DayView /><CardioSection /></>}
         {tab === 'week'    && <WeekView />}
         {tab === 'balance' && <DayBalance />}

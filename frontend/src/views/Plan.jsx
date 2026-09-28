@@ -135,7 +135,7 @@ export default function Plan() {
 
   return <>
     <div className="hdr">
-      <div><h1 className="font-display">{t('Plan')}</h1><div className="sub">{t('Votre planning hebdomadaire')}</div></div>
+      <div><h1 className="font-display">{t('Plan')}</h1><div className="sub">{t('Vos programmes et séances')}</div></div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <TutorialButton steps={PLAN_STEPS} />
         <button className="iconbtn" onClick={planToolsSheet} aria-label={t('Share your plan')} title={t('Share your plan')}><Icon name="upload" /></button>
@@ -143,7 +143,7 @@ export default function Plan() {
       </div>
     </div>
 
-    <button className="btn cta" style={{ marginBottom: 20 }} onClick={programmeCreateSheet}>
+    <button className="btn cta" data-tuto="plan-create" style={{ marginBottom: 20 }} onClick={programmeCreateSheet}>
       <Icon name="plus" />
       <span>{t('Créer un programme')}</span>
     </button>

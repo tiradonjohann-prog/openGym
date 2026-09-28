@@ -467,7 +467,7 @@ function MeasurementsCard({ S, range, onRange }) {
   const lastDate = Object.values(latest).map(e => e.d).sort().pop() || ''
 
   return (
-    <div className="card">
+    <div className="card" data-tuto="stats-measurements">
       <div className="row between" style={{ marginBottom: 8 }}>
         <h2 style={{ margin: 0 }}>{t('Measurements')}</h2>
         <Button size="sm" icon="plus" onClick={() => measurementsSheet()}>{t('Log')}</Button>

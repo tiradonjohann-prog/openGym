@@ -17,7 +17,7 @@ import { glyphOf } from '../lib/glyphs.js'
 import { SasoianMark, SasoianWordmark } from '../components/SasoianLogo.jsx'
 import { bwReminderDue, measReminderDue } from '../lib/reminders.js'
 import { TutorialButton } from '../components/TutorialOverlay.jsx'
-import { HOME_STEPS } from '../lib/tutorials.js'
+import { HOME_STEPS_PROGRAMME, HOME_STEPS_CLASSIC } from '../lib/tutorials.js'
 
 // ── Compact nutrition widget for home screen ──────────────────────────────────
 function NutriWidget({ S, nav, withHeader }) {
@@ -479,7 +479,7 @@ function ProgrammeHome({ S, user, nav }) {
           <div style={{ fontSize: 11, color: 'var(--label-4)', fontStyle: 'italic', marginTop: 1, letterSpacing: '.01em' }}>Sois en forme, reste en forme</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <TutorialButton steps={HOME_STEPS} />
+          <TutorialButton steps={HOME_STEPS_PROGRAMME} />
           <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
         </div>
       </div>
@@ -493,7 +493,7 @@ function ProgrammeHome({ S, user, nav }) {
         const { bw, trendDir, delta } = bwTrend(S)
         const showMeasTile = !!S.nutrition?.showMeasurements
         return (
-          <div style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8, marginBottom: 14 }}>
+          <div data-tuto="home-grid" style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8, marginBottom: 14 }}>
             <div className="card" style={{ padding: '11px 12px', marginBottom: 0 }}>
               <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
@@ -543,7 +543,7 @@ function ProgrammeHome({ S, user, nav }) {
           // all), unlike the "Programme terminé" branch below which needs
           // a mid-programme prog with no sessions left, in practice unreachable.
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            <div data-tuto="home-next" style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
               <SectionHead title={t('Prochaine séance')} />
               <div className="card" style={{ padding: 16, textAlign: 'center' }}>
                 <div className="font-display" style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{t('Aucun programme actif')}</div>
@@ -555,7 +555,7 @@ function ProgrammeHome({ S, user, nav }) {
         const ns = nextSession(prog, S.routines)
         const activeRoute = S.active && isCardioSport(S.active.sport) ? '/cardio' : '/workout'
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          <div data-tuto="home-next" style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             <SectionHead title={t('Prochaine séance')} action={weekBrowserOpen ? t('Masquer') : t('Voir les semaines')} onAction={() => setWeekBrowserOpen(o => !o)} />
             {S.active ? (
               <div className="card" style={{
@@ -683,7 +683,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
         <div style={{ fontSize: 11, color: 'var(--label-4)', fontStyle: 'italic', marginTop: 1, letterSpacing: '.01em' }}>Sois en forme, reste en forme</div>
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <TutorialButton steps={HOME_STEPS} />
+        <TutorialButton steps={HOME_STEPS_CLASSIC} />
         <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
       </div>
     </div>
@@ -691,7 +691,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
     {(() => {
       const showMeasTile = !!S.nutrition?.showMeasurements
       return (
-        <div style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8, marginBottom: 14 }}>
+        <div data-tuto="home-grid" style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8, marginBottom: 14 }}>
           <div className="card" style={{ padding: '11px 12px', marginBottom: 0 }}>
             <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
@@ -764,7 +764,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
     )}
 
     <SectionHead title={t('Cette semaine')} action={weekViewOpen ? t('Masquer') : t('Voir les semaines')} onAction={() => setWeekViewOpen(o => !o)} />
-    <div data-tuto="home-week">
+    <div data-tuto="home-next">
       {weekViewOpen && (
         <div className="card">
           <div className="row between" style={{ marginBottom: 8 }}>
@@ -775,7 +775,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
           <div className="week">{strip}</div>
         </div>
       )}
-      <div className="card tap" data-tuto="home-today" onClick={onToday} style={S.active ? { background: 'color-mix(in srgb,var(--orange) 8%,var(--surface-2))' } : undefined}>
+      <div className="card tap" onClick={onToday} style={S.active ? { background: 'color-mix(in srgb,var(--orange) 8%,var(--surface-2))' } : undefined}>
         <div className="row" style={{ gap: 9, minWidth: 0 }}>
           <span className="lrow-i" style={{ background: S.active ? 'var(--orange)' : routine ? 'var(--acc)' : 'var(--surface-3)' }}>
             <Icon name={S.active ? 'timer' : routine ? glyphOf(routine.emoji) : 'moon'} />

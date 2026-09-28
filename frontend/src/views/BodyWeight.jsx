@@ -177,7 +177,7 @@ export default function BodyWeight() {
             </div>
           )}
           {S.targetW && latest && (
-            <div className="tile colored tappable" style={{ '--card-color': goalReached ? 'var(--teal)' : trendGoingRight ? 'var(--yellow)' : bestDays !== null ? 'var(--yellow)' : 'var(--label-3)' }} onClick={goalSheet}>
+            <div className="tile colored tappable" data-tuto="bw-goal" style={{ '--card-color': goalReached ? 'var(--teal)' : trendGoingRight ? 'var(--yellow)' : bestDays !== null ? 'var(--yellow)' : 'var(--label-3)' }} onClick={goalSheet}>
               <div className="l">{t('To goal')}</div>
               {goalReached ? (
                 <div className="v" style={{ fontSize: '1rem', fontWeight: 700 }}>{t('Reached!')}</div>
@@ -275,7 +275,7 @@ export default function BodyWeight() {
       </div>
 
       {/* ── History list (collapsible) ── */}
-      <div className="card">
+      <div className="card" data-tuto="bw-history">
         <div className="row between" style={{ marginBottom: sorted.length > 0 ? 10 : 0 }}>
           <h2 style={{ margin: 0 }}>{t('History')}</h2>
           {sorted.length > HISTORY_LIMIT && (
@@ -343,7 +343,7 @@ export default function BodyWeight() {
         }
 
         return (
-          <div className="card">
+          <div className="card" data-tuto="bw-measurements">
             <div className="row between" style={{ marginBottom: hasAny ? 14 : 0 }}>
               <h2 style={{ margin: 0 }}>{t('Measurements')}</h2>
               <Button size="sm" icon="plus" onClick={measurementsSheet}>{t('Log')}</Button>

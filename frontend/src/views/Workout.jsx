@@ -18,6 +18,8 @@ import { nextPrescription, applyPrescription } from '../lib/progression.js'
 import { historicalBests, prKindOf, foldSetsIntoBests } from '../lib/prs.js'
 import { estimate1RM } from '../lib/onerm.js'
 import { glyphOf } from '../lib/glyphs.js'
+import { TutorialButton } from '../components/TutorialOverlay.jsx'
+import { WORKOUT_STEPS } from '../lib/tutorials.js'
 
 /* Muscle-group accent colors — drives card left-border + tag tint
    (kept identical to Library.jsx's BP_COLOR so both screens agree) */
@@ -369,7 +371,7 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
       <Icon name={plan.kind === 'up' ? 'arrowUp' : plan.kind === 'deload' ? 'arrowDown' : 'lightbulb'} />
       <span>{t(...plan.why)}</span>
     </div>}
-    <div className="card" style={{
+    <div className="card" data-tuto="workout-set" style={{
       marginTop: 10, marginBottom: 0,
       borderLeft: `3px solid color-mix(in srgb,${bpColor} 55%,transparent)`,
     }}>
@@ -526,7 +528,7 @@ function ActiveWorkout() {
   }, 0)
 
   return <div className="narrow">
-    <div className="hdr">
+    <div className="hdr" data-tuto="workout-header">
       <button className="iconbtn" aria-label={t('Discard')} onClick={() => confirmSheet({ title: t('Discard workout?'), message: t('The sets you logged in this session will be lost.'), confirmText: t('Discard'), danger: true, onConfirm: () => { update(s => { s.active = null }); stopRest(); nav('/home') } })}><Icon name="xmark" /></button>
       <div style={{ textAlign: 'center' }}>
         <div className="font-display" style={{ fontWeight: 600 }}>{A.name}</div>
@@ -534,13 +536,16 @@ function ActiveWorkout() {
           <Elapsed start={A.start} pausedAt={A.pausedAt} pausedMs={A.pausedMs} /> · {t('{0} sets', done + '/' + total)}{!S.simpleMode && volume > 0 ? ' · ' + fmtNum(Math.round(volume)) + ' ' + S.unit : ''}
         </div>
       </div>
-      <button className="iconbtn" style={{ color: 'var(--acc)' }} aria-label={t('Finish')} onClick={finishWorkout}><Icon name="check" /></button>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <TutorialButton steps={WORKOUT_STEPS} />
+        <button className="iconbtn" style={{ color: 'var(--acc)' }} aria-label={t('Finish')} onClick={finishWorkout}><Icon name="check" /></button>
+      </div>
     </div>
     <div className="wprog"><i style={{ width: (total ? done / total * 100 : 0) + '%' }} /></div>
 
     {A.entries.length ? <>
       {/* Exercise position chips — labeled with number+letter so supersets are unambiguous */}
-      <div style={{ display: 'flex', overflowX: 'auto', gap: 5, marginBottom: 10, scrollbarWidth: 'none', WebkitScrollbarWidth: 'none', paddingBottom: 2 }}>
+      <div data-tuto="workout-exercises" style={{ display: 'flex', overflowX: 'auto', gap: 5, marginBottom: 10, scrollbarWidth: 'none', WebkitScrollbarWidth: 'none', paddingBottom: 2 }}>
         {units.map((u, i) => {
           const isDone = u.every(idx => {
             const e = A.entries[idx]
@@ -692,7 +697,7 @@ function ActiveWorkout() {
         return (e.sets?.length ?? 0) > 0 && (e.sets || []).every(s => s.done)
       }).length
       const allDone = A.entries.length > 0 && exDone === A.entries.length
-      return <button key={allDone ? 'done' : 'early'} style={allDone ? { position: 'relative' } : undefined} className={allDone ? 'btn cta finish-cta' : 'btn ghost dim'} onClick={finishWorkout}>
+      return <button key={allDone ? 'done' : 'early'} data-tuto="workout-finish" style={allDone ? { position: 'relative' } : undefined} className={allDone ? 'btn cta finish-cta' : 'btn ghost dim'} onClick={finishWorkout}>
         {allDone ? t('Finish workout') : t('Finish workout early · {0} exercises', exDone + '/' + A.entries.length)}
       </button>
     })()}
