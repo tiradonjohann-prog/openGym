@@ -650,9 +650,7 @@ function ProgrammeHome({ S, user, nav }) {
 function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
   const today = new Date()
   const routine = effectiveRoutine(S, todayISO())
-  const [bannerOff, setBannerOff] = useState(() => localStorage.getItem('banner_prog') === '1')
   const [weekViewOpen, setWeekViewOpen] = useState(false)
-  const dismissBanner = () => { localStorage.setItem('banner_prog', '1'); setBannerOff(true) }
   const todayOvr = S.dayPlan[todayISO()] !== undefined
   const { bw, delta, trendDir, totalDelta, firstBW } = bwTrend(S)
 
@@ -831,20 +829,6 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
       </div>
     )}
 
-
-    {!bannerOff && (
-      <div className="card" style={{ border: '1.5px solid var(--acc-line)', background: 'color-mix(in srgb,var(--acc) 7%,var(--surface))', padding: '12px 14px', position: 'relative' }}>
-        <button className="iconbtn" style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, fontSize: 13, color: 'var(--label-4)' }} onClick={dismissBanner} aria-label={t('Dismiss')}>
-          <Icon name="xmark" />
-        </button>
-        <div className="row" style={{ gap: 8, marginBottom: 4, marginRight: 32 }}>
-          <span className="tag acc" style={{ fontSize: 10, fontWeight: 700 }}>{t('New')}</span>
-          <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-.015em' }}>{t('Training programmes')}</span>
-        </div>
-        <div className="muted small" style={{ marginBottom: 10, lineHeight: 1.5 }}>{t('Structure your training into multi-week plans.')}</div>
-        <button className="chip on" style={{ fontSize: 13 }} onClick={() => { dismissBanner(); nav('/plan') }}>{t('Go to Plan')} →</button>
-      </div>
-    )}
 
     <NutriWidget S={S} nav={nav} />
 
