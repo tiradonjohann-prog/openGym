@@ -10,8 +10,9 @@ import { t } from '../lib/i18n.js'
 
 const PAD = 12      // spotlight padding around target
 const GAP = 16      // gap between spotlight edge and bubble
-const MIN_H = 120   // minimum bubble height to reserve
+const MIN_H = 120   // fallback bubble height before the real one is measured
 const BUBBLE_W = 268
+const EDGE = 8      // minimum gap kept between the bubble and any screen edge
 
 // Resolves a step's selector to the real DOM element(s) it targets — never
 // just their rects — so the engine can scroll them into view itself before
@@ -47,7 +48,11 @@ function scrollTargetsIntoView(elements) {
   window.scrollBy({ top: center - vh / 2, left: 0, behavior: 'auto' })
 }
 
-function bubblePos(rects, vw, vh) {
+// bubbleH is the bubble's real measured height once known (MIN_H as a
+// starting estimate before the first measurement lands) — using the actual
+// height, not a nominal minimum, is what keeps the bubble from being cut
+// off by the bottom of the screen when its text runs to several lines.
+function bubblePos(rects, vw, vh, bubbleH) {
   // rects = array of spotlight rects (padded)
   const combined = {
     left:   Math.min(...rects.map(r => r.left)),
@@ -57,17 +62,22 @@ function bubblePos(rects, vw, vh) {
   }
   const candidates = [
     // below
-    { dir: 'below', x: Math.max(8, Math.min(vw - BUBBLE_W - 8, combined.left + (combined.right - combined.left) / 2 - BUBBLE_W / 2)), y: combined.bottom + GAP, space: vh - combined.bottom - GAP },
+    { dir: 'below', x: Math.max(EDGE, Math.min(vw - BUBBLE_W - EDGE, combined.left + (combined.right - combined.left) / 2 - BUBBLE_W / 2)), y: combined.bottom + GAP, space: vh - combined.bottom - GAP },
     // right
-    { dir: 'right', x: combined.right + GAP, y: Math.max(8, combined.top), space: vw - combined.right - GAP },
+    { dir: 'right', x: combined.right + GAP, y: Math.max(EDGE, combined.top), space: vw - combined.right - GAP },
     // left
-    { dir: 'left', x: combined.left - BUBBLE_W - GAP, y: Math.max(8, combined.top), space: combined.left - GAP },
+    { dir: 'left', x: combined.left - BUBBLE_W - GAP, y: Math.max(EDGE, combined.top), space: combined.left - GAP },
     // above
-    { dir: 'above', x: Math.max(8, Math.min(vw - BUBBLE_W - 8, combined.left + (combined.right - combined.left) / 2 - BUBBLE_W / 2)), y: combined.top - GAP - MIN_H, space: combined.top - GAP },
+    { dir: 'above', x: Math.max(EDGE, Math.min(vw - BUBBLE_W - EDGE, combined.left + (combined.right - combined.left) / 2 - BUBBLE_W / 2)), y: combined.top - GAP - bubbleH, space: combined.top - GAP },
   ]
-  const valid = candidates.filter(c => c.space >= MIN_H && c.x >= 0 && c.x + BUBBLE_W <= vw)
+  const valid = candidates.filter(c => c.space >= bubbleH && c.x >= 0 && c.x + BUBBLE_W <= vw)
   const best = valid.length ? valid[0] : candidates.reduce((a, b) => a.space > b.space ? a : b)
-  return { x: Math.max(8, best.x), y: Math.max(8, best.y) }
+  // Final safety net: whichever direction won, never let the bubble's own
+  // box cross a screen edge — a direction can be "best available" while
+  // still not having enough room for the full height.
+  const x = Math.max(EDGE, Math.min(vw - BUBBLE_W - EDGE, best.x))
+  const y = Math.max(EDGE, Math.min(vh - bubbleH - EDGE, best.y))
+  return { x, y }
 }
 
 export default function TutorialOverlay({ steps, onEnd }) {
@@ -76,6 +86,7 @@ export default function TutorialOverlay({ steps, onEnd }) {
   const [spotRects, setSpotRects] = useState([])
   const bubbleRef = useRef(null)
   const rafRef = useRef(null)
+  const bubbleHRef = useRef(MIN_H) // real measured bubble height, kept in a ref so reposition() always reads the latest without depending on it
 
   const step = steps[idx] || steps[0]
   const total = steps.filter(s => !s.bonus).length
@@ -104,11 +115,12 @@ export default function TutorialOverlay({ steps, onEnd }) {
       }
       setSpotRects(rects)
       if (rects.length) {
-        const bp = bubblePos(rects, vw, vh)
+        const bp = bubblePos(rects, vw, vh, bubbleHRef.current)
         setPos(bp)
       } else {
-        // No target — center on screen
-        setPos({ x: vw / 2 - BUBBLE_W / 2, y: vh * 0.35 })
+        // No target — center on screen, still clamped to the real height
+        // so a long tip can't run off the bottom of a short viewport.
+        setPos({ x: vw / 2 - BUBBLE_W / 2, y: Math.min(vh * 0.35, vh - bubbleHRef.current - EDGE) })
       }
     })
   }, [idx, steps])
@@ -118,6 +130,24 @@ export default function TutorialOverlay({ steps, onEnd }) {
     reposition()
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
   }, [idx, step, reposition])
+
+  // Track the bubble's real rendered height (it varies with title/body
+  // length) so bubblePos() can use it instead of a nominal minimum —
+  // otherwise a multi-line step can still be tall enough to get clipped by
+  // the bottom of the screen even though positioning "succeeded".
+  useEffect(() => {
+    const el = bubbleRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(entries => {
+      const h = entries[0]?.contentRect.height
+      if (h && Math.abs(h - bubbleHRef.current) > 1) {
+        bubbleHRef.current = h
+        reposition()
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [pos, reposition]) // re-attach if the bubble element identity ever changes
 
   useEffect(() => {
     const handler = () => reposition()
@@ -240,6 +270,11 @@ export default function TutorialOverlay({ steps, onEnd }) {
           position: 'absolute',
           left: pos.x, top: pos.y,
           width: BUBBLE_W,
+          // Last-resort safety net for a viewport too short to fit the
+          // bubble at all even when pinned to the top edge (EDGE): the
+          // bubble scrolls internally rather than spilling off-screen.
+          maxHeight: `calc(100vh - ${EDGE * 2}px)`,
+          overflowY: 'auto',
           background: 'var(--surface)',
           borderRadius: 16,
           boxShadow: '0 12px 40px rgba(0,0,0,.38), 0 2px 8px rgba(0,0,0,.22), 0 0 0 1px color-mix(in srgb,var(--acc) 18%,transparent)',
