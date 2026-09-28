@@ -27,8 +27,8 @@ export function FoodQty({ item, onAdd, onCancel }) {
   const scaled = scaleItem(item, qty)
   const macroLine = [
     scaled.prot  != null ? scaled.prot  + 'g P' : null,
-    scaled.carbs != null ? scaled.carbs + 'g C' : null,
-    scaled.fat   != null ? scaled.fat   + 'g F' : null,
+    scaled.carbs != null ? scaled.carbs + 'g G' : null,
+    scaled.fat   != null ? scaled.fat   + 'g L' : null,
   ].filter(Boolean).join(' · ')
 
   const handleFavorite = () => {

@@ -4,8 +4,8 @@ import Icon from './Icon.jsx'
 export default function RecipeCard({ recipe, onAdd }) {
   const macros = [
     recipe.prot  != null ? recipe.prot  + 'g P' : null,
-    recipe.carbs != null ? recipe.carbs + 'g C' : null,
-    recipe.fat   != null ? recipe.fat   + 'g F' : null,
+    recipe.carbs != null ? recipe.carbs + 'g G' : null,
+    recipe.fat   != null ? recipe.fat   + 'g L' : null,
   ].filter(Boolean).join(' · ')
 
   return (

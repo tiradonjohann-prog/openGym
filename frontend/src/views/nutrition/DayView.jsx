@@ -373,7 +373,7 @@ export default function DayView() {
               <div style={{ color: 'var(--nut-carbs)', fontWeight: 700, fontSize: 18, lineHeight: 1.1 }}>
                 {totals.carbs}<span style={{ fontSize: 11, fontWeight: 500 }}>g</span>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--label-3)', marginTop: 2 }}>{t('Carbs')}</div>
+              <div style={{ fontSize: 11, color: 'var(--label-3)', marginTop: 2 }}>{t('Carbohydrates')}</div>
               <div style={{ fontSize: 11, color: 'var(--label-4)', marginTop: 1 }}>/ {macros.carbsG}g</div>
             </div>
             <div>

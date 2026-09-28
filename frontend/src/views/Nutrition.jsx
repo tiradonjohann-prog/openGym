@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { t } from '../lib/i18n.js'
 import Icon from '../components/Icon.jsx'
@@ -22,6 +22,23 @@ const TABS = [
 export default function Nutrition() {
   const nav = useNavigate()
   const [tab, setTab] = useState('today')
+  const navRef = useRef(null)
+  const [scroll, setScroll] = useState({ active: 0, scrollable: false })
+
+  useEffect(() => {
+    const el = navRef.current
+    if (!el) return
+    const onScroll = () => {
+      const max = el.scrollWidth - el.clientWidth
+      if (max <= 2) { setScroll({ active: 0, scrollable: false }); return }
+      const pct = el.scrollLeft / max
+      setScroll({ active: Math.round(pct * (TABS.length - 1)), scrollable: true })
+    }
+    onScroll()
+    el.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => { el.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll) }
+  }, [])
 
   return (
     <div className="narrow">
@@ -35,7 +52,7 @@ export default function Nutrition() {
       </div>
 
       {/* Sub-navigation */}
-      <nav className="nut-nav" data-tuto="nutri-nav" aria-label={t('Nutrition sections')}>
+      <nav className="nut-nav" ref={navRef} data-tuto="nutri-nav" aria-label={t('Nutrition sections')}>
         {TABS.map(({ key, label }) => (
           <button
             key={key}
@@ -47,6 +64,11 @@ export default function Nutrition() {
           </button>
         ))}
       </nav>
+      {scroll.scrollable && (
+        <div className="nut-nav-dots" aria-hidden="true">
+          {TABS.map((_, i) => <span key={i} className={i === scroll.active ? 'on' : ''} />)}
+        </div>
+      )}
 
       {/* Tab content */}
       <div key={tab} data-tuto={'nutri-' + tab} style={{ animation: 'viewfade var(--med) var(--ease) both' }}>

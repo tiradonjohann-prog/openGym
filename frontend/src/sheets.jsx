@@ -1068,6 +1068,7 @@ function PlanImport({ bundle, close }) {
 /* ============================ import program from CSV ============================ */
 function ImportProgram({ result, close }) {
   const { programName, routines, warnings, programImageUrl } = result
+  const [weeks, setWeeks] = useState(Math.min(52, Math.max(1, result.totalWeeks || 1)))
 
   const apply = () => {
     if (routines.length === 0) { close(); return }
@@ -1078,7 +1079,7 @@ function ImportProgram({ result, close }) {
         id: uid(),
         name: programName || t('Imported program'),
         routineIds: routines.map(r => r.id),
-        totalWeeks: 1,
+        totalWeeks: weeks,
         currentWeek: 1,
         weekProgress: {},
         ...(programImageUrl ? { imageUrl: programImageUrl } : {}),
@@ -1105,6 +1106,10 @@ function ImportProgram({ result, close }) {
             </div>
           </div>
         ))}
+      </div>
+      <Stepper label={t('Durée du programme (semaines)')} value={weeks} step={1} decimal={false} onChange={v => setWeeks(Math.min(52, Math.max(1, v)))} />
+      <div className="dim small" style={{ margin: '7px 2px 14px', lineHeight: 1.4 }}>
+        {t('Ajoutez une colonne "Semaines" dans votre fichier pour pré-remplir cette valeur au prochain import.')}
       </div>
     </> : (
       <div className="muted small" style={{ marginBottom: 14 }}>{t('No exercises could be imported. Check your file and try again.')}</div>

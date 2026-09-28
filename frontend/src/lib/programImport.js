@@ -93,9 +93,11 @@ function parseRows(rows, exercises = EXDB) {
   let cardioIntCol = -1, cardioRepCol = -1, cardioWorkCol = -1, cardioRestCol = -1
   let imageUrlCol = -1
   let typeCol = -1
+  let weeksCol = -1
 
   let programName = 'Imported program'
   let programImageUrl = null
+  let programWeeks = 0
   let dataStartRow = 0
 
   if (headerRow) {
@@ -137,6 +139,7 @@ function parseRows(rows, exercises = EXDB) {
     // Deliberately not just "type" — colOf's partial-match fallback would let a
     // bare "type" collide with the "type cardio"/"type bloc" keywords above.
     typeCol        = colOf('type exercice', 'exercise type')
+    weeksCol       = colOf('semaines', 'nombre de semaines', 'nb semaines', 'weeks')
 
     // Fall back to positional if detection fails
     if (progCol    < 0) progCol    = 0
@@ -188,6 +191,11 @@ function parseRows(rows, exercises = EXDB) {
     if (!programImageUrl && imageUrlCol >= 0) {
       const v = String(cells[imageUrlCol] || '').trim()
       if (v) programImageUrl = v
+    }
+    // A program-level setting, not per-exercise — filled once (any row) and kept.
+    if (weeksCol >= 0) {
+      const w = parseInt(cells[weeksCol], 10)
+      if (w > 0) programWeeks = Math.max(programWeeks, w)
     }
 
     if (!workoutMap.has(session)) {
@@ -275,7 +283,7 @@ function parseRows(rows, exercises = EXDB) {
     return { id: uid(), name: sessionName, emoji: null, ex, prog: 'linear' }
   })
 
-  return { programName: programName || 'Imported program', routines, warnings, programImageUrl }
+  return { programName: programName || 'Imported program', routines, warnings, programImageUrl, totalWeeks: programWeeks > 0 ? programWeeks : 1 }
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -312,7 +320,7 @@ export function parseProgramCSV(csvText, exercises = EXDB) {
   }
 
   if (!dataRows.length) {
-    return { programName, routines: [], warnings: ['No data found in file.'] }
+    return { programName, routines: [], warnings: ['No data found in file.'], totalWeeks: 1 }
   }
 
   const result = parseRows(dataRows, exercises)

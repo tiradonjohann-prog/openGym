@@ -608,7 +608,12 @@ button.tag:active{opacity:.65}
   flex:1;min-width:0;display:flex;align-items:baseline;justify-content:center;gap:3px;padding:0 2px;
 }
 .stp .val i{font-style:normal;font-size:12px;color:var(--label-2);flex:none}
-input.num{background:none;border:none;outline:none;color:var(--label);-moz-appearance:textfield;appearance:textfield;}
+/* type="text" always (see NumberField) — there's no native spin button to
+   strip, so appearance is reset to none rather than "textfield". iOS Safari
+   renders an explicit non-none appearance as a native form control and can
+   override the custom `color` with its own text color, making digits
+   invisible on a dark background. */
+input.num{background:none;border:none;outline:none;color:var(--label);-webkit-appearance:none;-moz-appearance:none;appearance:none;}
 input.num::-webkit-inner-spin-button{display:none}
 .stp .num{
   width:100%;min-width:0;text-align:center;
@@ -1180,6 +1185,11 @@ input.num::-webkit-inner-spin-button{display:none}
 }
 .nut-nav button.on{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
 @media(hover:hover){.nut-nav button:not(.on):hover{color:var(--label)}}
+/* Under the pill nav, a horizontal-scroll hint — dots track scroll position,
+   only rendered when the tabs actually overflow the viewport. */
+.nut-nav-dots{display:flex;justify-content:center;gap:5px;margin-top:-10px;padding-bottom:14px}
+.nut-nav-dots span{width:5px;height:5px;border-radius:50%;background:var(--label-4);transition:background var(--fast),transform var(--fast)}
+.nut-nav-dots span.on{background:var(--label-2);transform:scale(1.3)}
 
 /* Food log list */
 .meal-slot{margin-bottom:4px}

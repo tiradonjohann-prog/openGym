@@ -127,12 +127,17 @@ export async function downloadExcelTemplate() {
     ["  2. Dans l'app : Plan => icone partage => Import programme Excel/CSV"],                          // 48
     ["  3. Selectionnez ce fichier .xlsx directement (pas besoin de convertir en CSV)"],                // 49
     [""],                                                                                                // 50
-    ["TYPE EXERCICE (derniere colonne, tout a droite)"],                                                // 51
+    ["TYPE EXERCICE (avant-derniere colonne)"],                                                          // 51
     ["  reps (par defaut) : la colonne Repetitions est un nombre de repetitions"],                      // 52
     ["  temps              : la colonne Repetitions est un temps tenu, en secondes"],                   // 53
     ["                        (utile pour la planche/gainage, le gainage lateral, etc.)"],               // 54
+    [""],                                                                                                // 55
+    ["SEMAINES (derniere colonne)"],                                                                     // 56
+    ["  Nombre de semaines que dure le programme (ex: 8, 12...)"],                                       // 57
+    ["  Reglage du programme entier — a remplir une seule fois, sur n'importe quelle ligne"],            // 58
+    ["  Laisser vide => le programme sera importe sur 1 semaine (modifiable ensuite dans l'app)"],      // 59
   ]
-  const boldIdxs = new Set([2, 21, 31, 36, 46, 51])
+  const boldIdxs = new Set([2, 21, 31, 36, 46, 51, 56])
   instr.forEach((row, i) => {
     const cell = instrWs.getCell(i + 1, 1)
     cell.value = row[0]
@@ -164,6 +169,7 @@ export async function downloadExcelTemplate() {
     { header: 'Travail (s)',       key: 'cardioWork', width: 12 },
     { header: 'Récup. (s)',        key: 'cardioRest', width: 12 },
     { header: 'Type Exercice',     key: 'exType',     width: 14 },
+    { header: 'Semaines',          key: 'weeks',       width: 12 },
   ]
 
   // Header styling
@@ -189,7 +195,7 @@ export async function downloadExcelTemplate() {
   const C = ''  // empty cell shorthand
   const examples = [
     // ── Upper A — pure strength with superset + a timed core finisher ──────
-    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 1,    bp: 'Pectoraux', ex: 'Barbell Bench Press',      tempo: '4010', sets: 4, reps: 8,  weight: C, rest: 90,  exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
+    { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 1,    bp: 'Pectoraux', ex: 'Barbell Bench Press',      tempo: '4010', sets: 4, reps: 8,  weight: C, rest: 90,  exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C, weeks: 8 },
     { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2A', bp: 'Épaules',   ex: 'Barbell Overhead Press',   tempo: '',     sets: 3, reps: 10, weight: C, rest: 0,   exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
     { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: '2B', bp: 'Triceps',   ex: 'Cable Triceps Pushdown',   tempo: '',     sets: 3, reps: 12, weight: C, rest: 60,  exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
     { prog: 'Mon Programme', session: 'Upper A', sesNum: 1, exNum: 3,    bp: 'Dos',       ex: 'Pull-Up',                  tempo: '3010', sets: 4, reps: 8,  weight: C, rest: 90,  exType: 'reps',  cardioType: C, cardioSport: C, cardioDur: C, cardioDist: C, cardioInt: C, cardioRep: C, cardioWork: C, cardioRest: C },
@@ -213,6 +219,7 @@ export async function downloadExcelTemplate() {
       ex.bp, ex.ex, ex.tempo, ex.sets, ex.reps, ex.weight, ex.rest,
       ex.cardioType, ex.cardioSport, ex.cardioDur, ex.cardioDist,
       ex.cardioInt, ex.cardioRep, ex.cardioWork, ex.cardioRest, ex.exType,
+      ex.weeks ?? C,
     ])
     row.height = 18
     const isSS = typeof ex.exNum === 'string' && /^[0-9]+[A-Z]$/i.test(ex.exNum)

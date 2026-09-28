@@ -97,8 +97,8 @@ export default function MacroDonut({ kcal = 0, target, prot = 0, carbs = 0, fat 
       {hasMacros && (
         <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
           {protKcal  > 0 && <LegendDot color="var(--nut-prot)"  label={`${Math.round(prot)}g P`} />}
-          {carbsKcal > 0 && <LegendDot color="var(--nut-carbs)" label={`${Math.round(carbs)}g C`} />}
-          {fatKcal   > 0 && <LegendDot color="var(--nut-fat)"   label={`${Math.round(fat)}g F`} />}
+          {carbsKcal > 0 && <LegendDot color="var(--nut-carbs)" label={`${Math.round(carbs)}g G`} />}
+          {fatKcal   > 0 && <LegendDot color="var(--nut-fat)"   label={`${Math.round(fat)}g L`} />}
         </div>
       )}
 

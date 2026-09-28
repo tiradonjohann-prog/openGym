@@ -239,8 +239,8 @@ export default function WeekView() {
                     <span className="lrow-t">{fmtDate(d, true)}</span>
                     <span className="lrow-s">
                       {tot.prot > 0 ? tot.prot + 'g P · ' : ''}
-                      {tot.carbs > 0 ? tot.carbs + 'g C · ' : ''}
-                      {tot.fat > 0 ? tot.fat + 'g F' : ''}
+                      {tot.carbs > 0 ? tot.carbs + 'g G · ' : ''}
+                      {tot.fat > 0 ? tot.fat + 'g L' : ''}
                     </span>
                   </span>
                   <span className="lrow-v">{fmtNum(tot.kcal)} kcal</span>

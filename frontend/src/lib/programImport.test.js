@@ -86,6 +86,39 @@ describe('parseProgramCSV — column detection', () => {
   })
 })
 
+describe('parseProgramCSV — Semaines column', () => {
+  const makeCSVWithWeeks = rows =>
+    [
+      'Programme,Séance,N° Séance,N° Exercice,Groupe Musculaire,Exercice,Tempo,Séries,Poids (kg),Repos (sec),Semaines',
+      ...rows,
+    ].join('\n')
+
+  it('reads the program duration from the Semaines column', () => {
+    const csv = makeCSVWithWeeks([
+      'PPL,Push,1,1,chest,Barbell Bench Press,,4,,90,8',
+    ])
+    const { totalWeeks } = parseProgramCSV(csv, MOCK_DB)
+    expect(totalWeeks).toBe(8)
+  })
+
+  it('defaults to 1 week when the column is absent or blank', () => {
+    const csv = makeCSV([
+      'PPL,Push,1,1,chest,Barbell Bench Press,4010,4,,90',
+    ])
+    const { totalWeeks } = parseProgramCSV(csv, MOCK_DB)
+    expect(totalWeeks).toBe(1)
+  })
+
+  it('only needs the value filled once — any row — for the whole program', () => {
+    const csv = makeCSVWithWeeks([
+      'PPL,Push,1,1,chest,Barbell Bench Press,,4,,90,',
+      'PPL,Push,1,2,back,Pull-up,,4,,90,12',
+    ])
+    const { totalWeeks } = parseProgramCSV(csv, MOCK_DB)
+    expect(totalWeeks).toBe(12)
+  })
+})
+
 describe('parseProgramCSV — image URL column detection', () => {
   it('does not mistake the Programme column for an image URL column', () => {
     // No dedicated image column in this header — imageUrlCol must stay
