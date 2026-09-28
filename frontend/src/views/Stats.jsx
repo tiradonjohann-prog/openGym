@@ -104,7 +104,11 @@ function StreakBadge({ weeks, thisWeek, planned }) {
 }
 
 /* ── muscle balance ───────────────────────────────────────────────── */
-function MuscleBalance({ S }) {
+// Illustrative sample load, used only while a tutorial is open and the
+// user genuinely has no workouts yet — never written to real state.
+const DEMO_MUSCLE_LOAD = { chest: 9, triceps: 7, deltoids: 6, quadriceps: 8, abs: 4 }
+
+function MuscleBalance({ S, demo }) {
   const [win, setWin] = useState(7)
   const [hard, setHard] = useState(false)
   const [sel, setSel] = useState(null)
@@ -115,7 +119,8 @@ function MuscleBalance({ S }) {
         : (w.start || new Date(w.d).getTime()) > now - win * 86400000)
   const rated = inWin.some(w => w.entries.some(e => e.sets.some(s => s.done && isHardSet(s))))
   const on = hard && rated
-  const load = loadOfWorkouts(inWin, on ? isHardSet : null)
+  const showDemo = demo && !inWin.length
+  const load = showDemo ? DEMO_MUSCLE_LOAD : loadOfWorkouts(inWin, on ? isHardSet : null)
   const { worked, missed } = rankOf(load)
   const top = worked.slice(0, 4)
   const max = worked.length ? load[worked[0]] : 0
@@ -136,7 +141,7 @@ function MuscleBalance({ S }) {
     <BodyMap className="tappable" load={load} body={S.body} selected={sel}
       onMuscle={m => setSel(s => (s === m ? null : m))} />
     <BodyMapLegend />
-    {inWin.length ? <>
+    {(inWin.length || showDemo) ? <>
       {sel && <div className="mrow" style={{ borderTop: 'var(--hair) solid var(--sep)', marginTop: 4, paddingTop: 10 }}>
         <span className="nm"><b>{t(MUSCLE_NAME[sel])}</b></span>
         <span className="v">{sets(sel) ? t('{0} sets', sets(sel)) : on ? t('no hard sets') : t('not trained')}</span>
@@ -394,14 +399,49 @@ function VolumeChart({ S }) {
   )
 }
 
+// Illustrative sample records — used only while a tutorial is open and the
+// user has none of their own yet — kept separate from the real EXIDX-driven
+// rows below since there's no real exercise id to key them by.
+const DEMO_PRS = [
+  { name: 'Développé couché', weight: 80, unit: 'kg' },
+  { name: 'Squat', weight: 100, unit: 'kg' },
+  { name: 'Soulevé de terre', weight: 120, unit: 'kg' },
+]
+
 /* ── personal records board ──────────────────────────────────────── */
-function PRBoard({ S }) {
+function PRBoard({ S, demo }) {
   const [showAll, setShowAll] = useState(false)
   const prs = allTimePRs(S)
-  if (!prs.length) return null
+  const showDemo = demo && !prs.length
+  if (!prs.length && !showDemo) return null
+  if (showDemo) {
+    return (
+      <div className="card" data-tuto="stats-prs">
+        <div className="row between" style={{ marginBottom: 10 }}>
+          <h2 style={{ margin: 0 }}>{t('Personal records')}</h2>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {DEMO_PRS.map((pr, rank) => (
+            <div key={pr.name} style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 10,
+              background: rank === 0 ? 'color-mix(in srgb,var(--yellow) 5%,var(--surface-2))' : 'transparent',
+              borderLeft: rank === 0 ? '3px solid color-mix(in srgb,var(--yellow) 65%,transparent)' : '3px solid transparent',
+            }}>
+              <span style={{ fontSize: 11, color: 'var(--label-4)', width: 22, textAlign: 'center', flexShrink: 0 }}>{rank + 1}</span>
+              <div style={{ minWidth: 0, flex: 1, fontWeight: 500, fontSize: 14 }}>{pr.name}</div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--acc)', lineHeight: 1.1 }}>{pr.weight}</div>
+                <div style={{ fontSize: 10, color: 'var(--label-4)' }}>{pr.unit}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
   const visible = showAll ? prs : prs.slice(0, 8)
   return (
-    <div className="card">
+    <div className="card" data-tuto="stats-prs">
       <div className="row between" style={{ marginBottom: 10 }}>
         <h2 style={{ margin: 0 }}>{t('Personal records')}</h2>
         <span className="tag nocap" style={{ background: 'color-mix(in srgb,var(--yellow) 16%,transparent)', color: 'var(--yellow)' }}>
@@ -460,8 +500,16 @@ function PRBoard({ S }) {
   )
 }
 
+// Illustrative sample points for two fields — enough to show the card's
+// layout, delta and mini-chart — used only while a tutorial is open and
+// the user hasn't logged any measurements of their own yet.
+const DEMO_MEASURE_SERIES = {
+  chest: [{ t: Date.now() - 21 * 86400000, y: 96 }, { t: Date.now() - 7 * 86400000, y: 97.5 }],
+  arm:   [{ t: Date.now() - 21 * 86400000, y: 33 }, { t: Date.now() - 7 * 86400000, y: 33.5 }],
+}
+
 /* ── measurements card ────────────────────────────────────────────── */
-function MeasurementsCard({ S, range, onRange }) {
+function MeasurementsCard({ S, range, onRange, demo }) {
   const now = Date.now()
   const latest = latestMeasurements(S)
   const lastDate = Object.values(latest).map(e => e.d).sort().pop() || ''
@@ -476,8 +524,8 @@ function MeasurementsCard({ S, range, onRange }) {
         options={[{ value: 90, label: '3M' }, { value: 365, label: '1A' }, { value: 0, label: t('All') }]} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(128px, 1fr))', gap: 10, marginTop: 14 }}>
         {MEASURE_FIELDS.map(({ key, name }) => {
-          const pts = measureSeries(S, key)
-            .filter(p => range === 0 || p.t > now - range * 86400000)
+          const real = measureSeries(S, key).filter(p => range === 0 || p.t > now - range * 86400000)
+          const pts = (demo && !real.length) ? (DEMO_MEASURE_SERIES[key] || []) : real
           if (!pts.length) return null
           const last = pts[pts.length - 1]
           const prev = pts.length >= 2 ? pts[pts.length - 2] : null
@@ -531,6 +579,11 @@ export default function Stats() {
   const [exId, setExId] = useState(null)
   const [exMetric, setExMetric] = useState('top')
   const [measRange, setMeasRange] = useState(90)
+  // While the tutorial is open, sections that would otherwise be empty for
+  // a new user (no workouts, no PRs, no measurements logged yet) render
+  // illustrative sample data instead — purely visual, never written to
+  // the real store, so there's nothing to restore when the tutorial ends.
+  const [demo, setDemo] = useState(false)
   const now = Date.now()
   const anyEffort = hasEffort(S)
   const kind = displayScale(S)
@@ -600,16 +653,18 @@ export default function Stats() {
     <div className="hdr">
       <div><h1 className="font-display">{t('Stats')}</h1><div className="sub">{t('Progress & history')}</div></div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <TutorialButton steps={STATS_STEPS} />
+        <TutorialButton steps={STATS_STEPS} onOpen={() => setDemo(true)} onClose={() => setDemo(false)} />
         <button className="iconbtn" onClick={() => nav('/history')} aria-label={t('History')}><Icon name="history" /></button>
         <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
       </div>
     </div>
 
-    {/* ── streak badge (only when there's data) ── */}
-    {S.workouts.length > 0 && (
+    {/* ── streak badge (real data, or a sample while the tutorial is open) ── */}
+    {(S.workouts.length > 0 || demo) && (
       <div className="card tap" data-tuto="stats-streak" onClick={calendarSheet}>
-        <StreakBadge weeks={streakWeeks(S)} thisWeek={wThisWeek} planned={plannedPerWeek} />
+        {S.workouts.length > 0
+          ? <StreakBadge weeks={streakWeeks(S)} thisWeek={wThisWeek} planned={plannedPerWeek} />
+          : <StreakBadge weeks={3} thisWeek={2} planned={3} />}
       </div>
     )}
 
@@ -644,8 +699,8 @@ export default function Stats() {
     {/* ── weekly training volume ── */}
     {S.workouts.length >= 2 && <VolumeChart S={S} />}
 
-    {/* ── muscle balance ── */}
-    {S.workouts.length > 0 && <div data-tuto="stats-muscles"><MuscleBalance S={S} /></div>}
+    {/* ── muscle balance (real data, or a sample while the tutorial is open) ── */}
+    {(S.workouts.length > 0 || demo) && <div data-tuto="stats-muscles"><MuscleBalance S={S} demo={demo} /></div>}
     {anyEffort && <EffortCard S={S} />}
 
     {/* ── body weight + exercise progress ── */}
@@ -703,9 +758,9 @@ export default function Stats() {
     </div>
 
     {/* ── body measurements ── */}
-    {S.nutrition?.showMeasurements && (S.measurements || []).length >= 1 && <MeasurementsCard S={S} range={measRange} onRange={setMeasRange} />}
+    {(S.nutrition?.showMeasurements || demo) && ((S.measurements || []).length >= 1 || demo) && <MeasurementsCard S={S} range={measRange} onRange={setMeasRange} demo={demo && !(S.measurements || []).length} />}
 
-    <PRBoard S={S} />
+    <PRBoard S={S} demo={demo} />
 
     {/* ── recent workouts — wrapped in a .card like every other section here
          (Personal records included), instead of sitting bare on the page

@@ -361,15 +361,19 @@ export default function TutorialOverlay({ steps, onEnd }) {
   )
 }
 
-// Convenience trigger button — "Tutoriel" pill
-export function TutorialButton({ steps, label }) {
+// Convenience trigger button — "Tutoriel" pill.
+// onOpen/onClose let a screen switch into a "demo" rendering mode for the
+// duration of the tutorial — e.g. showing sample data in an empty section
+// so a step can actually illustrate what it describes — without ever
+// touching the real, persisted app state.
+export function TutorialButton({ steps, label, onOpen, onClose }) {
   const [active, setActive] = useState(false)
   if (!steps || !steps.length) return null
   return <>
     <button
       data-tutorial-btn
       className="chip"
-      onClick={() => setActive(true)}
+      onClick={() => { setActive(true); onOpen?.() }}
       aria-label={label || t('Tutorial')}
       style={{
         border: '1.5px solid color-mix(in srgb,var(--acc) 30%,transparent)',
@@ -379,6 +383,6 @@ export function TutorialButton({ steps, label }) {
     >
       {label || t('Tutorial')}
     </button>
-    {active && <TutorialOverlay steps={steps} onEnd={() => setActive(false)} />}
+    {active && <TutorialOverlay steps={steps} onEnd={() => { setActive(false); onClose?.() }} />}
   </>
 }

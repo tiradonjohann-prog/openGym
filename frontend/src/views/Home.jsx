@@ -619,7 +619,7 @@ function ProgrammeHome({ S, user, nav }) {
           rather than .card, so none of them contributes the usual 12px margin on their
           own — without this, whatever follows (NutriWidget when no target is set,
           or a SmartNudge reminder banner) sits glued directly underneath. */}
-      <div style={{
+      <div data-tuto="home-activity" style={{
         position: 'relative', overflow: 'hidden', borderRadius: 18,
         border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
         background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
@@ -651,6 +651,9 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
   const today = new Date()
   const routine = effectiveRoutine(S, todayISO())
   const [weekViewOpen, setWeekViewOpen] = useState(false)
+  // While the tutorial is open, show the streak card even with zero real
+  // workouts — purely illustrative, never written to the real store.
+  const [demo, setDemo] = useState(false)
   const todayOvr = S.dayPlan[todayISO()] !== undefined
   const { bw, delta, trendDir, totalDelta, firstBW } = bwTrend(S)
 
@@ -683,7 +686,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
         <div style={{ fontSize: 11, color: 'var(--label-4)', fontStyle: 'italic', marginTop: 1, letterSpacing: '.01em' }}>Sois en forme, reste en forme</div>
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <TutorialButton steps={HOME_STEPS_CLASSIC} />
+        <TutorialButton steps={HOME_STEPS_CLASSIC} onOpen={() => setDemo(true)} onClose={() => setDemo(false)} />
         <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
       </div>
     </div>
@@ -879,7 +882,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
       </> : <div className="muted small">{t("No entries yet — log your weight to start the curve. It's also asked before every workout.")}</div>}
     </div>
 
-    {S.workouts.length > 0 && (
+    {(S.workouts.length > 0 || demo) && (
       <div
         className="card tappable"
         data-tuto="home-streak"
@@ -895,17 +898,19 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--orange)', lineHeight: 1.2 }}>
-              {t('{0} week streak', streakWeeks(S))}
+              {S.workouts.length > 0 ? t('{0} week streak', streakWeeks(S)) : t('{0} week streak', 2)}
             </div>
             <div className="muted small" style={{ marginTop: 3 }}>
-              {wThisWeek}{plannedPerWeek ? ' / ' + plannedPerWeek : ''} {t('this week')}{' · '}{t(S.workouts.length === 1 ? '{0} workout total' : '{0} workouts total', S.workouts.length)}
+              {S.workouts.length > 0
+                ? <>{wThisWeek}{plannedPerWeek ? ' / ' + plannedPerWeek : ''} {t('this week')}{' · '}{t(S.workouts.length === 1 ? '{0} workout total' : '{0} workouts total', S.workouts.length)}</>
+                : <>2 / 3 {t('this week')}{' · '}{t('{0} workouts total', 5)}</>}
             </div>
-            {plannedPerWeek > 0 && (
+            {(plannedPerWeek > 0 || demo) && (
               <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
-                {Array.from({ length: Math.min(plannedPerWeek, 7) }).map((_, i) => (
+                {Array.from({ length: Math.min(plannedPerWeek || 3, 7) }).map((_, i) => (
                   <div key={i} style={{
                     flex: 1, height: 4, borderRadius: 99,
-                    background: i < wThisWeek ? 'var(--orange)' : 'color-mix(in srgb,var(--orange) 22%,var(--surface-3))',
+                    background: i < (S.workouts.length > 0 ? wThisWeek : 2) ? 'var(--orange)' : 'color-mix(in srgb,var(--orange) 22%,var(--surface-3))',
                   }} />
                 ))}
               </div>
