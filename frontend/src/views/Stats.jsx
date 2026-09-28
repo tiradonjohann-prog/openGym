@@ -703,7 +703,7 @@ export default function Stats() {
     </div>
 
     {/* ── body measurements ── */}
-    {(S.measurements || []).length >= 1 && <MeasurementsCard S={S} range={measRange} onRange={setMeasRange} />}
+    {S.nutrition?.showMeasurements && (S.measurements || []).length >= 1 && <MeasurementsCard S={S} range={measRange} onRange={setMeasRange} />}
 
     <PRBoard S={S} />
 

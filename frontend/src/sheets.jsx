@@ -2,13 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { EXDB, EXIDX, BODYPARTS, isCardio, isBodyweightEq, allExercises, equipmentOf } from './lib/exercises.js'
-import { fmtDate, fmtNum, fmtVol, fmtDur, durPart, todayISO, uid, exCount, DAYN, MONTHS_LONG, ACCENTS } from './lib/format.js'
+import { fmtDate, fmtNum, fmtVol, fmtDur, durPart, todayISO, isoOf, uid, exCount, DAYN, MONTHS_LONG, ACCENTS } from './lib/format.js'
 import { lastEntryFor, bestWeightFor, buildSets, effectiveRoutineId, workoutVolume, setsDone, setsDoneActive, lastBW, supersetUnits, unitOf, setLabel, defaultConfig, cleanupSg, modeOf, effortOf, isBw, isPerSide, sideReps, exLine, swapRoutineExerciseAt } from './lib/history.js'
 import { beep, vibrate } from './lib/sound.js'
 import { t, instrFor, getLang, INSTR_LANGS } from './lib/i18n.js'
 import { muscleLabel, bodyPartLabel, equipmentLabel } from './lib/exerciseLabels.js'
 import { nav } from './lib/nav.js'
-import { starterRoutines } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
 import Stepper from './components/Stepper.jsx'
 import Icon from './components/Icon.jsx'
@@ -50,24 +49,6 @@ export function confirmSheet(opts) {
   ui().openSheet(close => <ConfirmDialog {...opts} close={close} />, { kind: 'center' })
 }
 
-/* ============================ starter plan ============================ */
-export function loadStarterPlan() {
-  const [push, pull, legs] = starterRoutines()
-  const prog = {
-    id: uid(), name: 'Push / Pull / Legs',
-    routineIds: [push.id, pull.id, legs.id],
-    totalWeeks: 8, currentWeek: 1, weekProgress: {},
-    imageUrl: '/assets/covers/ppl.svg',
-  }
-  update(st => {
-    st.routines.push(push, pull, legs)
-    st.week[1] = push.id; st.week[3] = pull.id; st.week[5] = legs.id
-    if (!st.programmes) st.programmes = []
-    st.programmes.push(prog)
-  })
-  toast(t('Starter plan loaded — Mon Push · Wed Pull · Fri Legs'))
-}
-
 /* ============================ weight picker (shared: body weight + goal) ============================ */
 // Fixed range, not a moving window — a window that resizes itself mid-drag (the previous
 // attempt) makes the thumb's position unpredictable: every time it grows, everything already
@@ -100,18 +81,44 @@ function WeightInput({ value, setValue, unit }) {
 }
 
 /* ============================ body weight ============================ */
+const _shiftDate = (iso, days) => {
+  const d = new Date(iso + 'T12:00:00')
+  d.setDate(d.getDate() + days)
+  return isoOf(d)
+}
+
 function BwSheet({ required, onDone, close }) {
   const st = useStore(s => s.S)
   const unit = st.unit
   const bw = lastBW(st)
+  const today = todayISO()
+  // Backdating (issue: no way to log a forgotten day's weigh-in) only makes
+  // sense outside the pre-workout "quick check-in" flow, which is always
+  // about right now.
+  const [selDate, setSelDate] = useState(today)
+  const existingForSelDate = st.bodyweight.find(b => b.d === selDate)
   const [v, setV] = useState(bw ? bw.w : 70)
+  // Re-seed the slider when the selected day changes: show what was already
+  // logged that day, or fall back to the last known weight as a starting
+  // point — never silently carry the previous day's typed-but-unsaved value.
+  const changeDate = days => setSelDate(d => {
+    const next = _shiftDate(d, days)
+    const ex = st.bodyweight.find(b => b.d === next)
+    setV(ex ? ex.w : (bw ? bw.w : 70))
+    return next
+  })
   const save = () => {
     const n = Math.round((v || 0) * 10) / 10
     if (!n || n <= 0) { toast(t('Enter a valid weight')); return }
     update(s => {
-      const iso = todayISO()
+      const iso = selDate
+      // A backdated entry's timestamp must reflect the day it's for, not the
+      // moment it was typed in — charts elsewhere sort/plot bodyweight by
+      // .t when present, and Date.now() here would make a forgotten Tuesday
+      // entered today plot on today's date instead of Tuesday's.
+      const ts = iso === today ? Date.now() : new Date(iso + 'T12:00:00').getTime()
       const ex = s.bodyweight.find(b => b.d === iso)
-      if (ex) { ex.w = n; ex.t = Date.now() } else s.bodyweight.push({ d: iso, w: n, t: Date.now() })
+      if (ex) { ex.w = n; ex.t = ts } else s.bodyweight.push({ d: iso, w: n, t: ts })
       s.bodyweight.sort((a, b) => (a.d < b.d ? -1 : 1))
     })
     close()
@@ -121,7 +128,14 @@ function BwSheet({ required, onDone, close }) {
   const delEntry = d => update(s => { s.bodyweight = s.bodyweight.filter(b => b.d !== d) })
   return <>
     <h3>{required ? t('Quick check-in') : t('Log body weight')}</h3>
-    <div className="muted small">{required ? t('Slide or tap to set your weight — tracked before every workout so your curve stays honest.') : t('Today') + ', ' + fmtDate(todayISO(), true)}</div>
+    <div className="muted small">{required ? t('Slide or tap to set your weight — tracked before every workout so your curve stays honest.') : (selDate === today ? t('Today') : fmtDate(selDate, true)) + (existingForSelDate ? ' · ' + t('editing') : '')}</div>
+    {!required && (
+      <div className="row between" style={{ margin: '10px 0 2px' }}>
+        <button className="iconbtn" onClick={() => changeDate(-1)} aria-label={t('Previous day')}><Icon name="chevronLeft" /></button>
+        <span className="small muted">{fmtDate(selDate, true)}</span>
+        <button className="iconbtn" onClick={() => changeDate(1)} disabled={selDate === today} style={{ opacity: selDate === today ? 0.3 : 1 }} aria-label={t('Next day')}><Icon name="chevronRight" /></button>
+      </div>
+    )}
     <WeightInput value={v} setValue={setV} unit={unit} />
     <div style={{ height: 14 }} />
     <Button variant="primary" onClick={save}>{required ? t('Save & start workout') : t('Save')}</Button>

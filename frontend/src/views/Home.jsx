@@ -491,8 +491,9 @@ function ProgrammeHome({ S, user, nav }) {
         const totalThisWeek = wk.length
         const pct = totalThisWeek ? Math.round((doneThisWeek / totalThisWeek) * 100) : 0
         const { bw, trendDir, delta } = bwTrend(S)
+        const showMeasTile = !!S.nutrition?.showMeasurements
         return (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8 }}>
             <div className="card" style={{ padding: '11px 12px', marginBottom: 0 }}>
               <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
@@ -523,11 +524,13 @@ function ProgrammeHome({ S, user, nav }) {
                 </>
               )}
             </div>
-            <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={measurementsSheet}>
-              <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Measurements')}</div>
-              <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Log')}</div>
-              <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
-            </div>
+            {showMeasTile && (
+              <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={measurementsSheet}>
+                <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Measurements')}</div>
+                <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Log')}</div>
+                <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+              </div>
+            )}
           </div>
         )
       })()}
@@ -611,13 +614,17 @@ function ProgrammeHome({ S, user, nav }) {
 
       {/* Ad-hoc activity CTA — same .btn.cta shimmer family as "Démarrer la séance", in
           the orange accent so the two calls-to-action read as visually distinct, plus
-          the mockup's hairline texture on the surrounding card. */}
+          the mockup's hairline texture on the surrounding card. marginTop compensates
+          for this card (and "Prochaine séance"'s hero cards above it) being custom-
+          styled rather than .card, so neither side contributes the usual 12px
+          bottom margin — without it the two touch directly. */}
       <div style={{
         position: 'relative', overflow: 'hidden', borderRadius: 18,
         border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
         background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
         padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
         boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
+        marginTop: 14,
       }}>
         <div className="hairline" />
         <div style={{ position: 'relative' }}>
@@ -682,45 +689,50 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
       </div>
     </div>
 
-    {!S.simpleMode && (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-        <div className="card" style={{ padding: '11px 12px', marginBottom: 0 }}>
-          <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
-            <span className="font-display" style={{ fontSize: 21, fontWeight: 700 }}>{wThisWeek}</span>
-            {plannedPerWeek > 0 && <span style={{ fontSize: 12, color: 'var(--label-3)', fontWeight: 600 }}>/ {plannedPerWeek}</span>}
+    {!S.simpleMode && (() => {
+      const showMeasTile = !!S.nutrition?.showMeasurements
+      return (
+        <div style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8 }}>
+          <div className="card" style={{ padding: '11px 12px', marginBottom: 0 }}>
+            <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
+              <span className="font-display" style={{ fontSize: 21, fontWeight: 700 }}>{wThisWeek}</span>
+              {plannedPerWeek > 0 && <span style={{ fontSize: 12, color: 'var(--label-3)', fontWeight: 600 }}>/ {plannedPerWeek}</span>}
+            </div>
+            <div style={{ height: 3, background: 'var(--surface-3)', borderRadius: 999, marginTop: 8, overflow: 'hidden' }}>
+              <div style={{ width: (plannedPerWeek ? Math.min(100, Math.round((wThisWeek / plannedPerWeek) * 100)) : 0) + '%', height: '100%', background: 'var(--acc)' }} />
+            </div>
           </div>
-          <div style={{ height: 3, background: 'var(--surface-3)', borderRadius: 999, marginTop: 8, overflow: 'hidden' }}>
-            <div style={{ width: (plannedPerWeek ? Math.min(100, Math.round((wThisWeek / plannedPerWeek) * 100)) : 0) + '%', height: '100%', background: 'var(--acc)' }} />
+          <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={() => bwSheet()}>
+            <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Poids')}</div>
+            {bw ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginTop: 6 }}>
+                  <span className="font-display" style={{ fontSize: 21, fontWeight: 700 }}>{fmtNum(bw.w)}</span>
+                  <span style={{ fontSize: 10, color: 'var(--label-3)', fontWeight: 600 }}>{S.unit}</span>
+                  {trendDir && trendDir !== 'stable' && (
+                    <Icon name={trendDir === 'up' ? 'arrowUp' : 'arrowDown'} style={{ fontSize: 10, marginLeft: 1, color: bwDeltaColor(delta, bw.w) }} />
+                  )}
+                </div>
+                <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+              </>
+            ) : (
+              <>
+                <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Aucune pesée')}</div>
+                <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
+              </>
+            )}
           </div>
-        </div>
-        <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={() => bwSheet()}>
-          <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Poids')}</div>
-          {bw ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginTop: 6 }}>
-                <span className="font-display" style={{ fontSize: 21, fontWeight: 700 }}>{fmtNum(bw.w)}</span>
-                <span style={{ fontSize: 10, color: 'var(--label-3)', fontWeight: 600 }}>{S.unit}</span>
-                {trendDir && trendDir !== 'stable' && (
-                  <Icon name={trendDir === 'up' ? 'arrowUp' : 'arrowDown'} style={{ fontSize: 10, marginLeft: 1, color: bwDeltaColor(delta, bw.w) }} />
-                )}
-              </div>
+          {showMeasTile && (
+            <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={measurementsSheet}>
+              <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Measurements')}</div>
+              <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Log')}</div>
               <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
-            </>
-          ) : (
-            <>
-              <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Aucune pesée')}</div>
-              <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
-            </>
+            </div>
           )}
         </div>
-        <div className="card tap" style={{ padding: '11px 12px', marginBottom: 0 }} onClick={measurementsSheet}>
-          <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Measurements')}</div>
-          <div className="font-display" style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{t('Log')}</div>
-          <div style={{ fontSize: 9, color: 'var(--label-3)', marginTop: 5 }}>{t('Enregistrer')}</div>
-        </div>
-      </div>
-    )}
+      )
+    })()}
 
     {/* ── Beginner mode: large "today" CTA ── */}
     {S.simpleMode && (
@@ -896,13 +908,17 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
     )}
 
     {/* ── Ad-hoc activity CTA — same .btn.cta shimmer family as the workout
-         start flow, orange accent + hairline texture, matching ProgrammeHome ── */}
+         start flow, orange accent + hairline texture, matching ProgrammeHome.
+         marginTop: the hero card above is custom-styled rather than .card,
+         so it contributes no bottom margin of its own — without this the
+         two touch directly. ── */}
     <div data-tuto="home-activity" style={{
       position: 'relative', overflow: 'hidden', borderRadius: 18,
       border: '1px solid color-mix(in srgb,var(--orange) 32%,transparent)',
       background: 'linear-gradient(165deg,color-mix(in srgb,var(--orange) 9%,var(--glass-fill)),var(--glass-fill))',
       padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
       boxShadow: 'inset 0 1px 0 var(--glass-highlight)',
+      marginTop: 14,
     }}>
       <div className="hairline" />
       <div style={{ position: 'relative' }}>

@@ -351,6 +351,9 @@ export default function Profile() {
         <Row icon="arrowUp" iconTint="var(--teal)" title={t('Height')} subtitle="cm">
           <NumberField value={n.heightCm ?? null} decimal={false} nullable onChange={v => setN({ heightCm: v })} style={{ width: 68, textAlign: 'right' }} placeholder="—" />
         </Row>
+        <Row icon="ruler" iconTint="var(--purple)" title={t('Track measurements')} subtitle={t('Show the measurements section in Home and Stats')}>
+          <Check checked={!!n.showMeasurements} onChange={v => setN({ showMeasurements: v })} />
+        </Row>
       </Section>
 
       {/* ── Activity ── */}

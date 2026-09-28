@@ -5,7 +5,7 @@ import { DAYN, uid } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { SPORTS, isCardioSport, defaultCardioBlocks, routineSubtitle } from '../lib/sports.js'
 import { isProgrammeComplete, completedWeekCount, activeProgramme, addRoutineToProgramme } from '../lib/programme.js'
-import { loadStarterPlan, planToolsSheet, programmeCreateSheet, programmeEditSheet, deleteProgramme } from '../sheets.jsx'
+import { planToolsSheet, programmeCreateSheet, programmeEditSheet, deleteProgramme } from '../sheets.jsx'
 import { pickImage, isUserImage } from '../lib/imageUtils.js'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
@@ -190,10 +190,7 @@ export default function Plan() {
           }}
         />
       ) : (
-        <>
-          <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('Aucun entrainement pour l\'instant.')}<br />{t('Créez-en un ou chargez le plan de démarrage.')}</div>
-          <Button icon="sparkles" onClick={loadStarterPlan}>{t('Load starter plan (Push / Pull / Legs)')}</Button>
-        </>
+        <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('Aucun entrainement pour l\'instant.')}<br />{t('Créez-en un ci-dessus.')}</div>
       )}
     </div>
   </>
