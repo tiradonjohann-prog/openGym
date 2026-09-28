@@ -13,30 +13,38 @@ const GAP = 16      // gap between spotlight edge and bubble
 const MIN_H = 120   // minimum bubble height to reserve
 const BUBBLE_W = 268
 
-function getRect(selector) {
-  if (!selector) return null
+// Resolves a step's selector to the real DOM element(s) it targets — never
+// just their rects — so the engine can scroll them into view itself before
+// measuring. The user must never have to scroll during a tutorial: the
+// tutorial moves the page, not the other way around.
+function getElements(selector) {
+  if (!selector) return []
   if (typeof selector === 'function') {
     const result = selector()
-    if (!result) return null
-    if (Array.isArray(result)) {
-      const rects = result.map(el => el && el.getBoundingClientRect()).filter(Boolean)
-      if (!rects.length) return null
-      return {
-        left: Math.min(...rects.map(r => r.left)),
-        top: Math.min(...rects.map(r => r.top)),
-        right: Math.max(...rects.map(r => r.right)),
-        bottom: Math.max(...rects.map(r => r.bottom)),
-        _multi: result,
-      }
-    }
-    return result ? result.getBoundingClientRect() : null
+    if (!result) return []
+    return Array.isArray(result) ? result.filter(Boolean) : [result]
   }
   if (typeof selector === 'string') {
     const el = document.querySelector(selector)
-    return el ? el.getBoundingClientRect() : null
+    return el ? [el] : []
   }
-  if (selector && selector.getBoundingClientRect) return selector.getBoundingClientRect()
-  return null
+  if (selector && selector.getBoundingClientRect) return [selector]
+  return []
+}
+
+// Scrolls just enough that every target rect sits inside the viewport
+// (with a margin) — never fights a step that's already fully visible, and
+// scrolls the whole page as one move rather than each element separately.
+function scrollTargetsIntoView(elements) {
+  if (!elements.length) return
+  const vh = window.innerHeight
+  const margin = 24
+  const rects = elements.map(el => el.getBoundingClientRect())
+  const top = Math.min(...rects.map(r => r.top))
+  const bottom = Math.max(...rects.map(r => r.bottom))
+  if (top >= margin && bottom <= vh - margin) return
+  const center = (top + bottom) / 2
+  window.scrollBy({ top: center - vh / 2, left: 0, behavior: 'auto' })
 }
 
 function bubblePos(rects, vw, vh) {
@@ -82,22 +90,17 @@ export default function TutorialOverlay({ steps, onEnd }) {
       const step = steps[idx]
       if (!step) return
       let rects = []
-      const raw = step.selector ? getRect(step.selector) : null
-      if (raw) {
-        const isMulti = step.multiSpotlight && typeof step.selector === 'function'
-        if (isMulti && step.selector && typeof step.selector === 'function') {
-          const els = step.selector()
-          if (Array.isArray(els)) {
-            rects = els.map(el => {
-              const r = el?.getBoundingClientRect()
-              if (!r) return null
-              return { left: r.left - PAD, top: r.top - PAD, right: r.right + PAD, bottom: r.bottom + PAD, width: r.width + 2 * PAD, height: r.height + 2 * PAD }
-            }).filter(Boolean)
-          }
+      const els = step.selector ? getElements(step.selector) : []
+      if (els.length) {
+        // The tutorial moves the page to its target, never the other way
+        // around — scroll before measuring so the frame is computed from
+        // the element's post-scroll position, not a stale one.
+        scrollTargetsIntoView(els)
+        const toPad = el => {
+          const r = el.getBoundingClientRect()
+          return { left: r.left - PAD, top: r.top - PAD, right: r.right + PAD, bottom: r.bottom + PAD, width: r.width + 2 * PAD, height: r.height + 2 * PAD }
         }
-        if (!rects.length) {
-          rects = [{ left: raw.left - PAD, top: raw.top - PAD, right: raw.right + PAD, bottom: raw.bottom + PAD, width: raw.width + 2 * PAD, height: raw.height + 2 * PAD }]
-        }
+        rects = step.multiSpotlight ? els.map(toPad) : [toPad(els[0])]
       }
       setSpotRects(rects)
       if (rects.length) {
@@ -119,14 +122,37 @@ export default function TutorialOverlay({ steps, onEnd }) {
   useEffect(() => {
     const handler = () => reposition()
     window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
+    // Safety net: if anything still manages to scroll the page (e.g. an
+    // input gaining focus), resync the frame to it rather than let it drift.
+    window.addEventListener('scroll', handler, { passive: true })
+    return () => {
+      window.removeEventListener('resize', handler)
+      window.removeEventListener('scroll', handler)
+    }
   }, [reposition])
 
-  // Lock body scroll while tutorial is open
+  // Lock scrolling while the tutorial is open — the tutorial moves the
+  // screen to its target itself; the user must not be able to scroll away
+  // from it and desync the frame from what it's supposed to highlight.
+  // overflow:hidden on body alone doesn't stop touch-drag scrolling in
+  // every mobile browser, so wheel/touchmove are also blocked at the event
+  // level (except inside the bubble, should its content ever need to
+  // scroll on its own) — this still lets the engine's own scrollBy calls
+  // through, since those aren't user gesture events.
   useEffect(() => {
-    const prev = document.body.style.overflow
+    const prevBodyOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    const preventScroll = e => {
+      if (bubbleRef.current && bubbleRef.current.contains(e.target)) return
+      e.preventDefault()
+    }
+    window.addEventListener('wheel', preventScroll, { passive: false })
+    window.addEventListener('touchmove', preventScroll, { passive: false })
+    return () => {
+      document.body.style.overflow = prevBodyOverflow
+      window.removeEventListener('wheel', preventScroll)
+      window.removeEventListener('touchmove', preventScroll)
+    }
   }, [])
 
   const goNext = () => { if (isLast) { onEnd(); } else { setIdx(i => i + 1) } }
