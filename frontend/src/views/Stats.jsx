@@ -129,10 +129,14 @@ function MuscleBalance({ S }) {
     </div>
     <Segmented className="seg-range" value={win} onChange={v => { setWin(v); setSel(null) }}
       options={[{ value: 7, label: t('Week') }, { value: 30, label: '30j' }, { value: 90, label: '90j' }, { value: 0, label: t('All') }]} />
+    {/* The body diagram itself always shows — even with zero workouts in the
+        selected period, an unfilled outline is still useful (and matches
+        the "Semaine" tab, which is often genuinely empty early in the
+        week) rather than replacing the whole card with a text message. */}
+    <BodyMap className="tappable" load={load} body={S.body} selected={sel}
+      onMuscle={m => setSel(s => (s === m ? null : m))} />
+    <BodyMapLegend />
     {inWin.length ? <>
-      <BodyMap className="tappable" load={load} body={S.body} selected={sel}
-        onMuscle={m => setSel(s => (s === m ? null : m))} />
-      <BodyMapLegend />
       {sel && <div className="mrow" style={{ borderTop: 'var(--hair) solid var(--sep)', marginTop: 4, paddingTop: 10 }}>
         <span className="nm"><b>{t(MUSCLE_NAME[sel])}</b></span>
         <span className="v">{sets(sel) ? t('{0} sets', sets(sel)) : on ? t('no hard sets') : t('not trained')}</span>
@@ -150,7 +154,7 @@ function MuscleBalance({ S }) {
         <div className="muted small" style={{ marginTop: 10 }}>{on
           ? t('Every muscle group got at least one hard set in this period.')
           : t('Every muscle group got some work in this period.')}</div>}
-    </> : <div className="muted small">{t('No workouts in this period yet.')}</div>}
+    </> : <div className="muted small" style={{ marginTop: 10 }}>{t('No workouts in this period yet.')}</div>}
   </div>
 }
 
@@ -703,13 +707,15 @@ export default function Stats() {
 
     <PRBoard S={S} />
 
-    {/* ── recent workouts ── */}
-    {S.workouts.length > 0 && <>
+    {/* ── recent workouts — wrapped in a .card like every other section here
+         (Personal records included), instead of sitting bare on the page
+         background */}
+    {S.workouts.length > 0 && <div className="card">
       <div className="row between" style={{ marginBottom: 10 }}>
-        <h4 className="sec" style={{ margin: 0 }}>{t('Recent workouts')}</h4>
+        <h2 style={{ margin: 0 }}>{t('Recent workouts')}</h2>
         <Button size="sm" variant="ghost" trailingIcon="chevronRight" onClick={() => nav('/history')}>{t('All')} {S.workouts.length}</Button>
       </div>
       <div className="list">{[...S.workouts].reverse().slice(0, 6).map(w => <WorkoutRow key={w.id} w={w} onClick={() => workoutDetailSheet(w)} />)}</div>
-    </>}
+    </div>}
   </>
 }

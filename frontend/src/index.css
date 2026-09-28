@@ -1263,7 +1263,7 @@ input.num.imc-input{
 /* ─── stat grid (Stats page 2×2 metric tiles) ────────────────────────── */
 .stat-grid{
   display:grid;grid-template-columns:1fr 1fr;gap:10px;
-  padding:0 var(--pad) 2px;
+  padding:0 var(--pad);margin-bottom:12px;
 }
 .stat-card{
   display:flex;flex-direction:column;align-items:flex-start;gap:4px;
@@ -1456,7 +1456,7 @@ input.num.imc-input{
 .cols{display:block}
 @media (min-width:1000px){
   #app{max-width:1080px;padding-top:32px}
-  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .cols>*{min-width:0}
   #app .list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #modal-root .list,.narrow .list{display:flex;flex-direction:column}
