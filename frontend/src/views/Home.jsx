@@ -493,7 +493,7 @@ function ProgrammeHome({ S, user, nav }) {
         const { bw, trendDir, delta } = bwTrend(S)
         const showMeasTile = !!S.nutrition?.showMeasurements
         return (
-          <div style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8, marginBottom: 14 }}>
             <div className="card" style={{ padding: '11px 12px', marginBottom: 0 }}>
               <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
@@ -691,7 +691,7 @@ function ClassicHome({ S, user, nav, weekOffset, setWeekOffset }) {
     {(() => {
       const showMeasTile = !!S.nutrition?.showMeasurements
       return (
-        <div style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: showMeasTile ? '1fr 1fr 1fr' : '1fr 1fr', gap: 8, marginBottom: 14 }}>
           <div className="card" style={{ padding: '11px 12px', marginBottom: 0 }}>
             <div className="small" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '.6px', color: 'var(--label-3)', textTransform: 'uppercase' }}>{t('Cette semaine')}</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 6 }}>
