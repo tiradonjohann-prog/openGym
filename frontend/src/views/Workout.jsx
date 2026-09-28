@@ -15,7 +15,7 @@ import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeigh
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
 import { nextPrescription, applyPrescription } from '../lib/progression.js'
-import { historicalBests, prKindOf } from '../lib/prs.js'
+import { historicalBests, prKindOf, foldSetsIntoBests } from '../lib/prs.js'
 import { estimate1RM } from '../lib/onerm.js'
 import { glyphOf } from '../lib/glyphs.js'
 
@@ -450,11 +450,16 @@ function ActiveWorkout() {
     const setWeight = entrySnap.sets[i]?.w || 0
     const setReps = entrySnap.sets[i]?.r || 0
     // Compute bests before the set is mutated (so this set doesn't count against itself).
+    // Folds in sets already checked off earlier THIS session for this same
+    // exercise — historicalBests() only sees S.workouts (saved sessions), so
+    // without this a later, weaker set in the same session read as a PR
+    // against the old all-time best instead of against what this session
+    // already did (the reported bug).
     const histBests = isLoadedReps ? (() => {
       const b = historicalBests(S, entrySnap.id)
       const exW = (S.exWeights[entrySnap.id] || {}).w || 0
       if (exW > b.weight) b.weight = exW
-      return b
+      return foldSetsIntoBests(b, entrySnap.sets, i)
     })() : null
     let askTop = false, exJustDone = false, workoutDone = false, prKind = null
     mutEntry(idx, e => {

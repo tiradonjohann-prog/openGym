@@ -48,6 +48,28 @@ export function historicalBests(S, exId) {
   return { weight, byReps, e1rm }
 }
 
+// historicalBests() only scans S.workouts — saved, completed sessions. It has
+// no idea about sets already checked off earlier in the CURRENT session for
+// this same exercise, since an active workout isn't saved to S.workouts until
+// it finishes. Without folding those in, a later, weaker set in the same
+// session reads as a PR against the old all-time best instead of against
+// what this session already did. Returns a new bests object — `bests` itself
+// is never mutated.
+export function foldSetsIntoBests(bests, sets, excludeIndex) {
+  const weight = { ...bests.byReps }
+  let best = bests.weight || 0
+  let e1rm = bests.e1rm || 0
+  sets.forEach((s, i) => {
+    if (i === excludeIndex || !s.done || !(s.w > 0) || !(s.r > 0)) return
+    if (s.w > best) best = s.w
+    const r = Math.round(s.r)
+    if (!weight[r] || s.w > weight[r]) weight[r] = s.w
+    const est = estimate1RM(s.w, s.r)
+    if (est !== null && est > e1rm) e1rm = est
+  })
+  return { weight: best, byReps: weight, e1rm }
+}
+
 // What kind of PR is this set? Returns 'weight' | 'reprange' | 'e1rm' | null.
 // Pass `bests` from historicalBests() so the caller pays the scan cost once.
 export function prKindOf(bests, weight, reps) {
